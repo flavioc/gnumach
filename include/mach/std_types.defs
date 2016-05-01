@@ -30,18 +30,15 @@
 #ifndef	_MACH_STD_TYPES_DEFS_
 #define _MACH_STD_TYPES_DEFS_
 
-type char = MACH_MSG_TYPE_CHAR;
-type short = MACH_MSG_TYPE_INTEGER_16;
-type int = MACH_MSG_TYPE_INTEGER_32;
 type int32_t = MACH_MSG_TYPE_INTEGER_32;
 type int64_t = MACH_MSG_TYPE_INTEGER_64;
 type boolean_t = MACH_MSG_TYPE_BOOLEAN;
-type unsigned = MACH_MSG_TYPE_INTEGER_32;
-type uint32_t = MACH_MSG_TYPE_INTEGER_32;
-type uint64_t = MACH_MSG_TYPE_INTEGER_64;
+type uint32_t = unsigned int;
+type uint64_t = unsigned long long;
 
 /* Get the definitions for natural_t and integer_t */
-#include <mach/machine/machine_types.defs>
+#include <mach/machine/vm_types.h>
+import <mach/machine/vm_types.h>;
 
 type kern_return_t = int;
 

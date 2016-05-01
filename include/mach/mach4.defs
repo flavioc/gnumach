@@ -97,10 +97,12 @@ skip	/* pc_sampling reserved 4*/;
 #endif
 
 
+inline hard vm_offset_array_t/1024;
+
 /* Create a new proxy memory object from [START;START+LEN) in the
    given OBJECT at OFFSET in the new object with the maximum
    protection MAX_PROTECTION and return it in *PORT.  */
-type vm_offset_array_t = array[*:1024] of vm_offset_t;
+
 routine memory_object_create_proxy(
 		task		: ipc_space_t;
 		max_protection	: vm_prot_t;
