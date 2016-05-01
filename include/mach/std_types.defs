@@ -30,17 +30,47 @@
 #ifndef	_MACH_STD_TYPES_DEFS_
 #define _MACH_STD_TYPES_DEFS_
 
-type int32_t = MACH_MSG_TYPE_INTEGER_32;
-type int64_t = MACH_MSG_TYPE_INTEGER_64;
+#define MIG_COMPILE
+
+import <stdint.h>;
+/* START stdint.h */
+typedef char		int8_t;
+typedef short		int16_t;
+typedef int		int32_t;
+#if __x86_64__
+typedef long int	int64_t;
+#else
+typedef long long int	int64_t;
+#endif /* __x86_64__ */
+
+typedef unsigned char		uint8_t;
+typedef unsigned short		uint16_t;
+typedef unsigned int		uint32_t;
+#if __x86_64__
+typedef unsigned long int	uint64_t;
+#else
+typedef unsigned long long int	uint64_t;
+#endif /* __x86_64__ */
+
+/* Types for `void *' pointers.  */
+#if __x86_64__
+typedef long int		intptr_t;
+typedef unsigned long int	uintptr_t;
+#else
+typedef int			intptr_t;
+typedef unsigned int		uintptr_t;
+#endif /* __x86_64__ */
+
+/* END stdint.h */
+
 type boolean_t = MACH_MSG_TYPE_BOOLEAN;
-type uint32_t = unsigned int;
-type uint64_t = unsigned long long;
 
 /* Get the definitions for natural_t and integer_t */
 #include <mach/machine/vm_types.h>
 import <mach/machine/vm_types.h>;
 
-type kern_return_t = int;
+#include <mach/kern_return.h>
+import <mach/kern_return.h>;
 
 type pointer_t = ^array[] of MACH_MSG_TYPE_BYTE
 	ctype: vm_offset_t;
@@ -53,24 +83,20 @@ type mach_port_t = MACH_MSG_TYPE_COPY_SEND
 #endif	/* MACH_PAYLOAD_TO_PORT */
 #endif	/* KERNEL_SERVER */
 ;
-type mach_port_array_t = array[] of mach_port_t;
+
+#include <mach/port.h>
+import <mach/port.h>;
+
+inline mach_port_array_t/512;
+inline hard rpc_signature_info_t/1024;
 
 type mach_port_name_t = MACH_MSG_TYPE_PORT_NAME
 	ctype: mach_port_t;
 type mach_port_name_array_t = array[] of mach_port_name_t
 	ctype: mach_port_array_t;
 
-type mach_port_right_t = natural_t;
+inline mach_port_type_array_t/512;
 
-type mach_port_type_t = natural_t;
-type mach_port_type_array_t = array[] of mach_port_type_t;
-
-type mach_port_urefs_t = natural_t;
-type mach_port_delta_t = integer_t;
-type mach_port_seqno_t = natural_t;
-type mach_port_mscount_t = unsigned;
-type mach_port_msgcount_t = unsigned;
-type mach_port_rights_t = unsigned;
 type mach_msg_id_t = integer_t;
 type mach_msg_type_name_t = unsigned;
 type mach_msg_type_number_t = natural_t;

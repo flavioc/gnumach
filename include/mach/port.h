@@ -35,11 +35,15 @@
 #ifndef	_MACH_PORT_H_
 #define _MACH_PORT_H_
 
+#ifndef MIG_COMPILE
 #include <mach/boolean.h>
+#endif
 #include <mach/machine/vm_types.h>
 
 
+#ifndef MIG_COMPILE
 typedef vm_offset_t mach_port_t;
+#endif
 typedef mach_port_t *mach_port_array_t;
 typedef int *rpc_signature_info_t;
 

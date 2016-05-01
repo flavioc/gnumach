@@ -58,8 +58,6 @@ userprefix USERPREFIX;
 serverprefix SERVERPREFIX;
 #endif
 
-type mach_port_status_t = struct[9] of integer_t;
-
 type task_t = mach_port_t
 		ctype: mach_port_t
 #if	KERNEL_SERVER
@@ -236,8 +234,6 @@ type kernel_boot_info_t		= (MACH_MSG_TYPE_STRING, 4096*8);
 type time_value_t		= struct[2] of integer_t;
 
 type emulation_vector_t		= ^array[] of vm_offset_t;
-
-type rpc_signature_info_t	= array[*:1024] of int;
 
 #if	KERNEL_SERVER
 simport <kern/ipc_kobject.h>;	/* for null conversion */
