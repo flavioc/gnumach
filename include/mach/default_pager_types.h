@@ -53,6 +53,8 @@ typedef struct default_pager_page {
 
 typedef default_pager_page_t *default_pager_page_array_t;
 
+#ifndef MIG_COMPILE
 typedef char default_pager_filename_t[256];
+#endif
 
 #endif	/* _MACH_DEFAULT_PAGER_TYPES_H_ */

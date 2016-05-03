@@ -41,10 +41,9 @@ subsystem
 
 
 #ifdef MACH_PCSAMPLE
-type sampled_pc_t 	= struct[3]    of natural_t;
-type sampled_pc_array_t = array[*:512] of sampled_pc_t;
-type sampled_pc_seqno_t = unsigned;
-type sampled_pc_flavor_t = natural_t;
+#include <mach/pc_sample.h>
+import <mach/pc_sample.h>;
+inline hard sampled_pc_array_t/512;
 
 routine task_enable_pc_sampling(
 		host          : task_t;
