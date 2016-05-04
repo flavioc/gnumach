@@ -88,7 +88,7 @@ type thread_t = mach_port_t
 		;
 
 import <mach/thread_status.h>;
-#include <mach/thread_status.h>;
+#include <mach/thread_status.h>
 inline hard thread_state_t/THREAD_STATE_MAX;
 
 type task_array_t = ^array[] of task_t;
