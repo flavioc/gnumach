@@ -234,10 +234,6 @@ type processor_set_name_array_t = ^array[] of processor_set_name_t;
 inline hard processor_set_info_t/PROCESSOR_SET_INFO_MAX;
 
 
-type kernel_version_t		= (MACH_MSG_TYPE_STRING, 512*8);
-
-type kernel_boot_info_t		= (MACH_MSG_TYPE_STRING, 4096*8);
-
 type emulation_vector_t		= ^array[] of vm_offset_t;
 
 #if	KERNEL_SERVER
