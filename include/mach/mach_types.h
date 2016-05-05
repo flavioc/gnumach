@@ -54,6 +54,7 @@
 #include <mach/vm_statistics.h>
 #include <mach/vm_cache_statistics.h>
 
+#ifndef __MIG__
 #ifdef	MACH_KERNEL
 #include <kern/task.h>		/* for task_array_t */
 #include <kern/thread.h>	/* for thread_array_t */
@@ -79,6 +80,7 @@ typedef mach_port_t	*processor_set_array_t;
 typedef mach_port_t	*processor_set_name_array_t;
 typedef vm_offset_t	*emulation_vector_t;
 #endif	/* MACH_KERNEL */
+#endif  /* !__MIG__ */
 
 /*
  *	Backwards compatibility, for those programs written

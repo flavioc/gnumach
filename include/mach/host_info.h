@@ -42,6 +42,9 @@ typedef integer_t	*host_info_t;	/* varying array of integers */
 
 #define	HOST_INFO_MAX	(1024)		/* max array size */
 typedef integer_t	host_info_data_t[HOST_INFO_MAX];
+#ifdef __MIG__
+inline hard host_info_t/HOST_INFO_MAX;
+#endif
 
 #define KERNEL_VERSION_MAX (512)
 typedef char	kernel_version_t[KERNEL_VERSION_MAX];

@@ -30,17 +30,9 @@
 #ifndef	_MACH_STD_TYPES_DEFS_
 #define _MACH_STD_TYPES_DEFS_
 
-#define MIG_COMPILE
 #define __MIG__
 
 type boolean_t = MACH_MSG_TYPE_BOOLEAN;
-
-/* Get the definitions for natural_t and integer_t */
-#include <mach/machine/vm_types.h>
-import <mach/machine/vm_types.h>;
-
-#include <mach/kern_return.h>
-import <mach/kern_return.h>;
 
 type mach_port_t = MACH_MSG_TYPE_COPY_SEND
 #ifndef	KERNEL_SERVER
@@ -50,20 +42,18 @@ type mach_port_t = MACH_MSG_TYPE_COPY_SEND
 #endif	/* KERNEL_SERVER */
 ;
 
-#include <mach/std_types.h>
 import <mach/std_types.h>;
+#include <mach/std_types.h>
 
 type pointer_t = ^array[] of MACH_MSG_TYPE_BYTE
 	ctype: vm_offset_t;
-
-#include <mach/port.h>
-import <mach/port.h>;
 
 inline mach_port_array_t/512;
 inline hard rpc_signature_info_t/1024;
 
 type mach_port_name_t = MACH_MSG_TYPE_PORT_NAME
 	ctype: mach_port_t;
+
 type mach_port_name_array_t = array[] of mach_port_name_t
 	ctype: mach_port_array_t;
 

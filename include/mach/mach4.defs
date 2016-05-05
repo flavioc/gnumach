@@ -43,7 +43,6 @@ subsystem
 #ifdef MACH_PCSAMPLE
 #include <mach/pc_sample.h>
 import <mach/pc_sample.h>;
-inline hard sampled_pc_array_t/512;
 
 routine task_enable_pc_sampling(
 		host          : task_t;

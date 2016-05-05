@@ -60,6 +60,10 @@ typedef struct sampled_pc {
 } sampled_pc_t;
 
 typedef sampled_pc_t *sampled_pc_array_t;
+#ifdef __MIG__
+inline hard sampled_pc_array_t/512;
+#endif
+
 typedef unsigned int sampled_pc_seqno_t;
 
 

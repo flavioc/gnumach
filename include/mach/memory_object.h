@@ -40,15 +40,18 @@
 
 #include <mach/port.h>
 
+#ifndef __MIG__
 typedef	mach_port_t	memory_object_t;
 					/* Represents a memory object ... */
 					/*  Used by user programs to specify */
 					/*  the object to map; used by the */
 					/*  kernel to retrieve or store data */
+#endif
 
 typedef	mach_port_t *	memory_object_array_t;
 					/* should be memory_object_t * */
 
+#ifndef __MIG__
 typedef	mach_port_t	memory_object_control_t;
 					/* Provided to a memory manager; ... */
 					/*  used to control a memory object */
@@ -56,6 +59,7 @@ typedef	mach_port_t	memory_object_control_t;
 typedef	mach_port_t	memory_object_name_t;
 					/* Used to describe the memory ... */
 					/*  object in vm_regions() calls */
+#endif
 
 typedef	int		memory_object_copy_strategy_t;
 					/* How memory manager handles copy: */

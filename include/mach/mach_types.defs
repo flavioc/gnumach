@@ -47,6 +47,9 @@
  */
 
 #include <mach/std_types.defs>
+#include <mach/mach_types.h>
+import <mach/mach_types.h>;
+
 #if	KERNEL_SERVER
 #endif	/* KERNEL_SERVER */
 
@@ -87,12 +90,10 @@ type thread_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-import <mach/thread_status.h>;
-#include <mach/thread_status.h>
 inline hard thread_state_t/THREAD_STATE_MAX;
 
-type task_array_t = ^array[] of task_t;
-type thread_array_t = ^array[] of thread_t;
+typedef task_t		*task_array_t;
+typedef	thread_t	*thread_array_t;
 
 type vm_task_t = mach_port_t
 		ctype: mach_port_t
@@ -110,25 +111,7 @@ type ipc_space_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-#include <mach/vm_prot.h>
-import <mach/vm_prot.h>;
-
-#include <mach/vm_inherit.h>
-import <mach/vm_inherit.h>;
-
-import <mach/vm_statistics.h>;
-#include <mach/vm_statistics.h>
-
-import <mach/vm_attributes.h>;
-#include <mach/vm_attributes.h>
-
-import <mach/thread_info.h>;
-#include <mach/thread_info.h>
-
 inline hard thread_info_t/THREAD_INFO_MAX;
-
-import <mach/task_info.h>;
-#include <mach/task_info.h>
 
 inline hard task_info_t/TASK_INFO_MAX;
 
@@ -167,12 +150,6 @@ type memory_object_name_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-type memory_object_copy_strategy_t = int;
-type memory_object_return_t = int;
-
-import <mach/machine.h>;
-#include <mach/machine.h>
-
 type host_t = mach_port_t
 		ctype: mach_port_t
 #if	KERNEL_SERVER
@@ -188,11 +165,6 @@ type host_priv_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-#include <mach/host_info.h>
-import <mach/host_info.h>;
-inline hard host_info_t/HOST_INFO_MAX;
-
-
 type processor_t = mach_port_t
 		ctype: mach_port_t
 #if	KERNEL_SERVER
@@ -201,11 +173,8 @@ type processor_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-import <mach/processor_info.h>;
-#include <mach/processor_info.h>
-type processor_array_t 		= ^array[] of processor_t;
+typedef processor_t *processor_array_t;
 inline hard processor_info_t/PROCESSOR_INFO_MAX;
-
 
 type processor_set_t = mach_port_t
 		ctype: mach_port_t
@@ -216,7 +185,7 @@ type processor_set_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-type processor_set_array_t = ^array[] of processor_set_t;
+typedef processor_set_t *processor_set_array_t;
 
 type processor_set_name_t = mach_port_t
 		ctype: mach_port_t
@@ -227,12 +196,11 @@ type processor_set_name_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-type processor_set_name_array_t = ^array[] of processor_set_name_t;
+typedef processor_set_name_t *processor_set_name_array_t;
 
 inline hard processor_set_info_t/PROCESSOR_SET_INFO_MAX;
 
-
-type emulation_vector_t		= ^array[] of vm_offset_t;
+typedef vm_offset_t	*emulation_vector_t;
 
 #if	KERNEL_SERVER
 simport <kern/ipc_kobject.h>;	/* for null conversion */
@@ -246,7 +214,5 @@ simport <vm/vm_object.h>;	/* for vm_object_t */
 simport <vm/vm_map.h>;		/* for vm_map_t */
 simport <ipc/ipc_space.h>;	/* for ipc_space_t */
 #endif	/* KERNEL_SERVER */
-
-import <mach/mach_types.h>;
 
 #endif	/* _MACH_MACH_TYPES_DEFS_ */

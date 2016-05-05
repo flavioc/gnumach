@@ -28,16 +28,12 @@
 #define _MACH_DEFAULT_PAGER_TYPES_DEFS_
 
 #include <mach/std_types.defs>
-#define MIG_COMPILE
+#define __MIG__
 
 #include <mach/default_pager_types.h>
 import <mach/default_pager_types.h>;
 
 inline default_pager_object_array_t/256;
 inline default_pager_page_array_t/512;
-
-#ifdef MIG_COMPILE
-type default_pager_filename_t = (MACH_MSG_TYPE_STRING_C, 8*256);
-#endif
 
 #endif	/* _MACH_DEFAULT_PAGER_TYPES_DEFS_ */
