@@ -43,6 +43,9 @@
 DEVICE_IMPORTS
 #endif
 
+import <stdint.h>;
+#include <stdint.h>
+
 type recnum_t		= uint32_t;
 type dev_mode_t		= uint32_t;
 type dev_flavor_t	= uint32_t;
