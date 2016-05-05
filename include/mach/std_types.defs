@@ -31,6 +31,7 @@
 #define _MACH_STD_TYPES_DEFS_
 
 #define MIG_COMPILE
+#define __MIG__
 
 type boolean_t = MACH_MSG_TYPE_BOOLEAN;
 
@@ -41,10 +42,6 @@ import <mach/machine/vm_types.h>;
 #include <mach/kern_return.h>
 import <mach/kern_return.h>;
 
-type pointer_t = ^array[] of MACH_MSG_TYPE_BYTE
-	ctype: vm_offset_t;
-
-
 type mach_port_t = MACH_MSG_TYPE_COPY_SEND
 #ifndef	KERNEL_SERVER
 #ifdef	MACH_PAYLOAD_TO_PORT
@@ -52,6 +49,12 @@ type mach_port_t = MACH_MSG_TYPE_COPY_SEND
 #endif	/* MACH_PAYLOAD_TO_PORT */
 #endif	/* KERNEL_SERVER */
 ;
+
+#include <mach/std_types.h>
+import <mach/std_types.h>;
+
+type pointer_t = ^array[] of MACH_MSG_TYPE_BYTE
+	ctype: vm_offset_t;
 
 #include <mach/port.h>
 import <mach/port.h>;
@@ -66,9 +69,9 @@ type mach_port_name_array_t = array[] of mach_port_name_t
 
 inline mach_port_type_array_t/512;
 
-type mach_msg_id_t = integer_t;
-type mach_msg_type_name_t = unsigned;
-type mach_msg_type_number_t = natural_t;
+typedef integer_t mach_msg_id_t;
+typedef unsigned mach_msg_type_name_t;
+typedef natural_t mach_msg_type_number_t;
 
 type mach_port_move_receive_t =		MACH_MSG_TYPE_MOVE_RECEIVE
 	ctype: mach_port_t;
@@ -92,7 +95,5 @@ type mach_port_send_once_t =		MACH_MSG_TYPE_PORT_SEND_ONCE
 
 type mach_port_poly_t = polymorphic
 	ctype: mach_port_t;
-
-import <mach/std_types.h>;
 
 #endif	/* _MACH_STD_TYPES_DEFS_ */

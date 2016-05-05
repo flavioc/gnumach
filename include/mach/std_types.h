@@ -42,7 +42,9 @@ typedef	vm_offset_t	pointer_t;
 typedef	vm_offset_t	vm_address_t;
 
 #ifdef	MACH_KERNEL
+#ifndef __MIG__
 #include <ipc/ipc_port.h>
+#endif
 #endif	/* MACH_KERNEL */
 
 #endif	/* _MACH_STD_TYPES_H_ */

@@ -852,11 +852,11 @@ device_write_get(
 	 * Inband case.
 	 */
 	if (ior->io_op & IO_INBAND) {
-	    assert(ior->io_count <= sizeof (io_buf_ptr_inband_t));
+	    assert(ior->io_count <= IO_INBAND_MAX);
 	    new_addr = kmem_cache_alloc(&io_inband_cache);
 	    memcpy((void*)new_addr, ior->io_data, ior->io_count);
 	    ior->io_data = (io_buf_ptr_t)new_addr;
-	    ior->io_alloc_size = sizeof (io_buf_ptr_inband_t);
+	    ior->io_alloc_size = IO_INBAND_MAX;
 
 	    return (KERN_SUCCESS);
 	}
@@ -890,7 +890,7 @@ device_write_get(
 	    return (result);
 
 	if ((ior->io_data + ior->io_count) >
-	    (((char *)new_addr) + ior->io_alloc_size)) {
+	    (((unsigned char *)new_addr) + ior->io_alloc_size)) {
 
 		/*
 		 *	Operation has to be split.  Reset io_count for how
@@ -899,7 +899,7 @@ device_write_get(
 		assert(vm_map_copy_has_cont(io_copy));
 		assert(ior->io_count == io_copy->size);
 		ior->io_count = ior->io_alloc_size -
-			(ior->io_data - ((char *)new_addr));
+			(ior->io_data - ((unsigned char *)new_addr));
 
 		/*
 		 *	Caller must wait synchronously.
@@ -1176,8 +1176,8 @@ device_read_inband(void			*dev,
 	ior->io_recnum		= recnum;
 	ior->io_data		= 0;		/* driver must allocate data */
 	ior->io_count		=
-	    ((bytes_wanted < sizeof(io_buf_ptr_inband_t)) ?
-		bytes_wanted : sizeof(io_buf_ptr_inband_t));
+	    ((bytes_wanted < IO_INBAND_MAX) ?
+		bytes_wanted : IO_INBAND_MAX);
 	ior->io_alloc_size	= 0;		/* no data allocated yet */
 	ior->io_residual	= 0;
 	ior->io_error		= 0;
@@ -1229,7 +1229,7 @@ kern_return_t device_read_alloc(
 
 	if (ior->io_op & IO_INBAND) {
 	    ior->io_data = (io_buf_ptr_t) kmem_cache_alloc(&io_inband_cache);
-	    ior->io_alloc_size = sizeof(io_buf_ptr_inband_t);
+	    ior->io_alloc_size = IO_INBAND_MAX;
 	} else {
 	    size = round_page(size);
 	    kr = kmem_alloc(kernel_map, &addr, size);
@@ -1554,7 +1554,7 @@ void mach_device_init(void)
 	device_io_map->wait_for_space = TRUE;
 
 	kmem_cache_init(&io_inband_cache, "io_buf_ptr_inband",
-			sizeof(io_buf_ptr_inband_t), 0, NULL, 0);
+			IO_INBAND_MAX, 0, NULL, 0);
 
 	mach_device_trap_init();
 }

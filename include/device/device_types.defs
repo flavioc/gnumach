@@ -38,6 +38,7 @@
  */
 
 #include <mach/std_types.defs>
+#define __MIG__
 
 #ifdef DEVICE_IMPORTS
 DEVICE_IMPORTS
@@ -46,13 +47,6 @@ DEVICE_IMPORTS
 import <stdint.h>;
 #include <stdint.h>
 
-type recnum_t		= uint32_t;
-type dev_mode_t		= uint32_t;
-type dev_flavor_t	= uint32_t;
-type dev_name_t		= (MACH_MSG_TYPE_STRING_C, 8*128);
-type dev_status_t	= array[*:1024] of int;
-type io_buf_ptr_t	= ^array[] of MACH_MSG_TYPE_INTEGER_8;
-type io_buf_ptr_inband_t= array[*:128] of unsigned char;
 type filter_t		= short;
 type filter_array_t	= array[*:128] of filter_t;
 
@@ -78,7 +72,12 @@ type device_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
+#include <device/device_types.h>
 import <device/device_types.h>;
+
+inline hard dev_status_t/DEV_STATUS_MAX;
+inline hard io_buf_ptr_inband_t/IO_INBAND_MAX;
+
 import <device/net_status.h>;
 
 #endif	/* _DEVICE_DEVICE_TYPES_DEFS_ */

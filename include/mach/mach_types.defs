@@ -110,8 +110,6 @@ type ipc_space_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-type vm_address_t = natural_t;
-
 #include <mach/vm_prot.h>
 import <mach/vm_prot.h>;
 
