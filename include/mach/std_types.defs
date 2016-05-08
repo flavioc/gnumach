@@ -31,6 +31,8 @@
 #define _MACH_STD_TYPES_DEFS_
 
 #define __MIG__
+#define MIG_INLINE(type, num) inline type/num
+#define MIG_INLINE_HARD(type, num) inline hard type/(num)
 
 type boolean_t = MACH_MSG_TYPE_BOOLEAN;
 
@@ -47,9 +49,6 @@ import <mach/std_types.h>;
 
 type pointer_t = ^array[] of MACH_MSG_TYPE_BYTE
 	ctype: vm_offset_t;
-
-inline mach_port_array_t/512;
-inline hard rpc_signature_info_t/1024;
 
 type mach_port_name_t = MACH_MSG_TYPE_PORT_NAME
 	ctype: mach_port_t;

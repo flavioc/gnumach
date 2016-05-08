@@ -376,6 +376,7 @@ include_mach_HEADERS = \
 	include/mach/mach_types.defs \
 	include/mach/memory_object.defs \
 	include/mach/memory_object_default.defs \
+	include/mach/mig_macros.h \
 	include/mach/notify.defs \
 	include/mach/std_types.defs \
 	include/mach/alert.h \

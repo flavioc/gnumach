@@ -35,6 +35,7 @@
 #ifndef	_MACH_MACH_TYPES_H_
 #define _MACH_MACH_TYPES_H_
 
+#include <mach/std_types.h>
 #include <mach/host_info.h>
 #include <mach/machine.h>
 #include <mach/machine/vm_types.h>
@@ -81,11 +82,5 @@ typedef mach_port_t	*processor_set_name_array_t;
 typedef vm_offset_t	*emulation_vector_t;
 #endif	/* MACH_KERNEL */
 #endif  /* !__MIG__ */
-
-/*
- *	Backwards compatibility, for those programs written
- *	before mach/{std,mach}_types.{defs,h} were set up.
- */
-#include <mach/std_types.h>
 
 #endif	/* _MACH_MACH_TYPES_H_ */

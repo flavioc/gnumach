@@ -35,6 +35,7 @@
 #ifndef	_MACH_PORT_H_
 #define _MACH_PORT_H_
 
+#include <mach/mig_macros.h>
 #ifndef __MIG__
 #include <mach/boolean.h>
 #endif
@@ -44,8 +45,8 @@
 #ifndef __MIG__
 typedef vm_offset_t mach_port_t;
 #endif
-typedef mach_port_t *mach_port_array_t;
-typedef int *rpc_signature_info_t;
+typedef mach_port_t *mach_port_array_t; MIG_INLINE(mach_port_array_t, 512);
+typedef int *rpc_signature_info_t; MIG_INLINE_HARD(rpc_signature_info_t, 1024);
 
 /*
  *  MACH_PORT_NULL is a legal value that can be carried in messages.

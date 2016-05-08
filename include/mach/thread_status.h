@@ -49,6 +49,8 @@ typedef natural_t		*thread_state_t;	/* Variable-length array */
 
 #define	THREAD_STATE_MAX	(1024)		/* Maximum array size */
 typedef natural_t	thread_state_data_t[THREAD_STATE_MAX];
+MIG_INLINE_HARD(thread_state_t, THREAD_STATE_MAX);
+
 
 #define	THREAD_STATE_FLAVOR_LIST	0	/* List of valid flavors */
 

@@ -34,6 +34,7 @@
 #ifndef	_MACH_PROCESSOR_INFO_H_
 #define _MACH_PROCESSOR_INFO_H_
 
+#include <mach/mig_macros.h>
 #include <mach/machine.h>
 
 /*
@@ -43,12 +44,13 @@ typedef integer_t	*processor_info_t;	/* varying array of int. */
 
 #define PROCESSOR_INFO_MAX	(1024)		/* max array size */
 typedef integer_t	processor_info_data_t[PROCESSOR_INFO_MAX];
-
+MIG_INLINE_HARD(processor_info_t, PROCESSOR_INFO_MAX);
 
 typedef integer_t	*processor_set_info_t;	/* varying array of int. */
 
 #define PROCESSOR_SET_INFO_MAX	(1024)		/* max array size */
 typedef integer_t	processor_set_info_data_t[PROCESSOR_SET_INFO_MAX];
+MIG_INLINE_HARD(processor_set_info_t, PROCESSOR_SET_INFO_MAX);
 
 /*
  *	Currently defined information.

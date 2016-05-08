@@ -35,6 +35,7 @@
 #ifndef	_MACH_TASK_INFO_H_
 #define	_MACH_TASK_INFO_H_
 
+#include <mach/mig_macros.h>
 #include <mach/machine/vm_types.h>
 #include <mach/time_value.h>
 
@@ -45,6 +46,7 @@ typedef	integer_t	*task_info_t;		/* varying array of int */
 
 #define	TASK_INFO_MAX	(1024)		/* maximum array size */
 typedef	integer_t	task_info_data_t[TASK_INFO_MAX];
+MIG_INLINE_HARD(task_info_t, TASK_INFO_MAX);
 
 /*
  *	Currently defined information structures.

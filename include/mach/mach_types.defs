@@ -90,8 +90,6 @@ type thread_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-inline hard thread_state_t/THREAD_STATE_MAX;
-
 typedef task_t		*task_array_t;
 typedef	thread_t	*thread_array_t;
 
@@ -110,10 +108,6 @@ type ipc_space_t = mach_port_t
 		destructor: space_deallocate(ipc_space_t)
 #endif	/* KERNEL_SERVER */
 		;
-
-inline hard thread_info_t/THREAD_INFO_MAX;
-
-inline hard task_info_t/TASK_INFO_MAX;
 
 type memory_object_t = mach_port_t
 		ctype: mach_port_t
@@ -174,7 +168,6 @@ type processor_t = mach_port_t
 		;
 
 typedef processor_t *processor_array_t;
-inline hard processor_info_t/PROCESSOR_INFO_MAX;
 
 type processor_set_t = mach_port_t
 		ctype: mach_port_t
@@ -197,8 +190,6 @@ type processor_set_name_t = mach_port_t
 		;
 
 typedef processor_set_name_t *processor_set_name_array_t;
-
-inline hard processor_set_info_t/PROCESSOR_SET_INFO_MAX;
 
 typedef vm_offset_t	*emulation_vector_t;
 

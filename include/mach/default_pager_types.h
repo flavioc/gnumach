@@ -45,13 +45,14 @@ typedef struct default_pager_object {
 } default_pager_object_t;
 
 typedef default_pager_object_t *default_pager_object_array_t;
-
+MIG_INLINE(default_pager_object_array_t, 256);
 
 typedef struct default_pager_page {
 	vm_offset_t dpp_offset;		/* offset of the page in its object */
 } default_pager_page_t;
 
 typedef default_pager_page_t *default_pager_page_array_t;
+MIG_INLINE(default_pager_page_array_t, 512);
 
 typedef char default_pager_filename_t[256];
 

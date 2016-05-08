@@ -37,6 +37,7 @@
 #ifndef	_MACH_THREAD_INFO_H_
 #define _MACH_THREAD_INFO_H_
 
+#include <mach/mig_macros.h>
 #include <mach/boolean.h>
 #include <mach/policy.h>
 #include <mach/time_value.h>
@@ -48,6 +49,7 @@ typedef	integer_t	*thread_info_t;		/* varying array of ints */
 
 #define THREAD_INFO_MAX		(1024)	/* maximum array size */
 typedef	integer_t	thread_info_data_t[THREAD_INFO_MAX];
+MIG_INLINE_HARD(thread_info_t, THREAD_INFO_MAX);
 
 /*
  *	Currently defined information.
