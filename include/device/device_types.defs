@@ -38,7 +38,6 @@
  */
 
 #include <mach/std_types.defs>
-#define __MIG__
 
 #ifdef DEVICE_IMPORTS
 DEVICE_IMPORTS
@@ -46,9 +45,6 @@ DEVICE_IMPORTS
 
 import <stdint.h>;
 #include <stdint.h>
-
-type filter_t		= short;
-type filter_array_t	= array[*:128] of filter_t;
 
 type device_t = mach_port_t
 		ctype: mach_port_t
@@ -73,11 +69,8 @@ type device_t = mach_port_t
 		;
 
 #include <device/device_types.h>
+#include <device/net_status.h>
 import <device/device_types.h>;
-
-inline hard dev_status_t/DEV_STATUS_MAX;
-inline hard io_buf_ptr_inband_t/IO_INBAND_MAX;
-
 import <device/net_status.h>;
 
 #endif	/* _DEVICE_DEVICE_TYPES_DEFS_ */

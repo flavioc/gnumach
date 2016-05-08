@@ -47,8 +47,8 @@ type mach_port_t = MACH_MSG_TYPE_COPY_SEND
 import <mach/std_types.h>;
 #include <mach/std_types.h>
 
-type pointer_t = ^array[] of MACH_MSG_TYPE_BYTE
-	ctype: vm_offset_t;
+typedef unsigned char* pointer_t;
+modtype pointer_t ctype: vm_offset_t;
 
 type mach_port_name_t = MACH_MSG_TYPE_PORT_NAME
 	ctype: mach_port_t;

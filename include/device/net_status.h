@@ -34,7 +34,9 @@
 #define	_DEVICE_NET_STATUS_H_
 
 #include <device/device_types.h>
+#ifndef __MIG__
 #include <mach/message.h>
+#endif
 
 /*
  * General interface status
@@ -108,6 +110,7 @@ struct net_status {
 
 typedef	unsigned short	filter_t;
 typedef filter_t	*filter_array_t;
+MIG_INLINE_HARD(filter_array_t, NET_MAX_FILTER);
 
 #define CSPF_BYTES(n) ((n) * sizeof (filter_t))
 
@@ -161,6 +164,7 @@ typedef filter_t	*filter_array_t;
 #define	NET_HI_PRI	100
 #define	NET_PRI_MAX	255
 
+#ifndef __MIG__
 /*
  * BPF support.
  */
@@ -195,7 +199,7 @@ struct net_rcv_msg {
 };
 typedef struct net_rcv_msg 	*net_rcv_msg_t;
 #define	net_rcv_msg_packet_count packet_type.msgt_number
-
+#endif  /* !__MIG__ */
 
 
 #endif	/* _DEVICE_NET_STATUS_H_ */

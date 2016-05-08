@@ -76,6 +76,7 @@ typedef unsigned char *	io_buf_ptr_t;
  */
 #define IO_INBAND_MAX (128)		/* must match device_types.defs */
 typedef unsigned char 	*io_buf_ptr_inband_t;
+MIG_INLINE_HARD(io_buf_ptr_inband_t, IO_INBAND_MAX);
 
 /*
  * IO buffer vector - for scatter/gather IO.
@@ -100,6 +101,7 @@ typedef unsigned int	dev_flavor_t;
  */
 typedef int		*dev_status_t;	/* Variable-length array of integers */
 #define	DEV_STATUS_MAX	(1024)		/* Maximum array size */
+MIG_INLINE_HARD(dev_status_t, DEV_STATUS_MAX);
 
 typedef int		dev_status_data_t[DEV_STATUS_MAX];
 
