@@ -22,3 +22,127 @@
 
 TESTS += \
 	tests/test-multiboot
+
+# FIXME: how can we reliably detect a change on any header and reinstall them?
+$(MACH_TESTINSTALL):
+	mkdir -p $@
+	$(MAKE) install-data DESTDIR=$@
+
+prepare-test: $(MACH_TESTINSTALL)
+
+$(MIG_OUTDIR):
+	mkdir -p $@
+
+MACH_TESTINSTALL=$(builddir)/tests/include-mach
+MACH_TESTINCLUDE=$(MACH_TESTINSTALL)/$(prefix)/include
+
+MIGCOMUSER=$(MIGUSER)  -n -cc cat - /dev/null
+MIG_OUTDIR=$(builddir)/tests/mig-out
+MIG_CPPFLAGS=-nostdinc -I$(MACH_TESTINCLUDE) -ggdb
+if enable_user32
+CPPUSER = /cross-tools-i686/bin/i686-gnu-cpp
+else
+CPPUSER = $(CPP)
+endif
+
+define generate_mig
+$(MIG_OUTDIR)/$(2).user.c: prepare-test $(MIG_OUTDIR) $(srcdir)/include/$(1)/$(2).defs
+	$(CPPUSER) $(AM_CPPFLAGS) $(MIG_CPPFLAGS) -o $(MIG_OUTDIR)/$(2).user.defs $(srcdir)/include/$(1)/$(2).defs
+	$(MIGCOMUSER) $(MIGCOMFLAGS) $(MIGCOMUFLAGS)	\
+	  -user $(MIG_OUTDIR)/$(2).user.c -header $(MIG_OUTDIR)/$(2).user.h		\
+	  -list $(MIG_OUTDIR)/$(2).user.msgids				\
+	  < $(MIG_OUTDIR)/$(2).user.defs
+endef
+
+MIG_GEN_CC= \
+	$(MIG_OUTDIR)/mach_host.user.c \
+	$(MIG_OUTDIR)/mach_port.user.c \
+	$(MIG_OUTDIR)/gnumach.user.c \
+	$(MIG_OUTDIR)/device_reply.user.c \
+	$(MIG_OUTDIR)/device.user.c \
+	$(MIG_OUTDIR)/exc.user.c \
+	$(MIG_OUTDIR)/mach.user.c
+
+# eval->info for debug
+$(eval $(call generate_mig,mach,mach))
+$(eval $(call generate_mig,mach,mach_host))
+$(eval $(call generate_mig,mach,mach_port))
+$(eval $(call generate_mig,mach,gnumach))
+$(eval $(call generate_mig,device,device_reply))
+$(eval $(call generate_mig,device,device))
+$(eval $(call generate_mig,mach,exc))
+
+
+TESTCFLAGS=-static -nostartfiles -nolibc \
+	-ffreestanding \
+	-I$(srcdir)/tests/include \
+	-I$(MACH_TESTINCLUDE) \
+	-I$(MIG_OUTDIR) \
+	-I$(top_srcdir) \
+	-I$(top_srcdir)/include \
+	-ggdb3
+
+if HOST_ix86
+QEMU=qemu-system-i386
+QEMU_GDB_PORT ?= 11234
+endif
+if HOST_x86_64
+QEMU=qemu-system-x86_64
+QEMU_GDB_PORT ?= 1234
+endif
+
+if enable_user32
+TESTCFLAGS += -m32
+MIG_CPPFLAGS += -m32
+endif
+
+if enable_user32
+CCUSER = /cross-tools-i686/bin/i686-gnu-gcc
+else
+CCUSER = $(CC)
+endif
+QEMU_OPTS = -m 512 -nographic -no-reboot
+SRC_TESTLIB= \
+	$(srcdir)/i386/i386/strings.c \
+	$(srcdir)/kern/printf.c \
+	$(srcdir)/kern/strings.c \
+	$(srcdir)/tests/syscalls.S \
+	$(srcdir)/tests/testlib.c \
+	$(MIG_GEN_CC)
+
+module-%: $(srcdir)/tests/test-%.c $(SRC_TESTLIB) $(MACH_TESTINSTALL)
+	$(CCUSER) $(TESTCFLAGS) $< $(SRC_TESTLIB) -o $@
+
+test-%.iso: module-% gnumach $(srcdir)/tests/grub.cfg.single.template
+	rm -rf $(builddir)/tests/isofiles
+	mkdir -p $(builddir)/tests/isofiles/boot/grub/
+	cat $(srcdir)/tests/grub.cfg.single.template | \
+		sed -e s/BOOTMODULE/$</g | \
+		cat >$(builddir)/tests/isofiles/boot/grub/grub.cfg
+	cp gnumach $< $(builddir)/tests/isofiles/boot/
+	grub-mkrescue -o $@ $(builddir)/tests/isofiles
+
+tests/test-%: module-% test-%.iso $(srcdir)/tests/run-qemu.sh.template
+	cat $(srcdir)/tests/run-qemu.sh.template | \
+		sed -e "s/TESTNAME/$(subst module-,,$<)/g" | \
+		sed -e "s/QEMU_OPTS/$(QEMU_OPTS)/g" | \
+		sed -e "s/QEMU/$(QEMU)/g" | \
+		cat >$@
+	chmod +x $@
+
+run-%: test-%.iso
+	$(QEMU) $(QEMU_OPTS) -cdrom $< | tail -n +18  # skip terminal reconfiguration
+
+debug-%: test-%.iso
+	$(QEMU) $(QEMU_OPTS) -cdrom $< -gdb tcp::$(QEMU_GDB_PORT) -S | tail -n +18
+
+
+TESTS += tests/test-mach_host \
+	tests/test-task \
+	tests/test-mach_port \
+	tests/test-machmsg \
+	tests/test-vm \
+	tests/test-gsync \
+	tests/test-hello
+
+include tests/hurd-integration.mk

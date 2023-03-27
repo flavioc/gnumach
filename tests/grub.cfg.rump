@@ -1,0 +1,25 @@
+set timeout=0
+set default=0
+
+menuentry "gnumach test" {
+    multiboot /boot/gnumach console=com0 root=part:2:device:wd0 noide
+    
+    module /boot/pci-arbiter.static pci-arbiter \
+            --host-priv-port='${host-port}' \
+            --device-master-port='${device-port}' \
+            --next-task='${disk-task}' \
+            '$(task-create)' '$(task-resume)'
+
+    module /boot/rumpdisk.static rumpdisk \
+            --next-task='${fs-task}' \
+            '$(disk-task=task-create)'
+
+    module /boot/ext2fs.static ext2fs \
+            --multiboot-command-line='${kernel-command-line}' \
+            --exec-server-task='${exec-task}' -T typed '${root}' \
+            '$(fs-task=task-create)'
+
+    module /boot/exec.static exec '$(exec-task=task-create)'
+
+    boot
+}

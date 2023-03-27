@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+cmd="QEMU QEMU_OPTS -cdrom test-TESTNAME.iso"
+out=out-TESTNAME
+if which QEMU >/dev/null ; then
+    if ! timeout -v --foreground --kill-after=3 10s $cmd > $out; then
+        tail -n +18 $out  # skip terminal reconfiguration
+        exit 10
+    fi
+    if grep -qi error $out; then  # TODO: check test failure or success
+        tail -n +18 $out  # skip terminal reconfiguration
+        exit 11
+    fi
+    if ! grep -q reboot $out; then  # check that we reached the end
+        tail -n +18 $out  # skip terminal reconfiguration
+        exit 12
+    fi
+else
+    exit 77  # skip, qemu nut available
+fi

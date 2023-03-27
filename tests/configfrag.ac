@@ -22,6 +22,16 @@ dnl 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 AC_CONFIG_FILES([tests/test-multiboot], [chmod +x tests/test-multiboot])
 
+
+AC_CHECK_TOOL([MIGUSER], [miguser], [no])
+AC_ARG_VAR([MIGUSER], [Path to the mig tool for user-space tests])
+
+if test x$MIGUSER = xno
+then
+    AC_MSG_WARN([mig user was not found, we will not be able to run the user-space tests. You can also specify the path with MIGUSER=])
+    MIGUSER=mig-user-not-found
+fi
+
 dnl Local Variables:
 dnl mode: autoconf
 dnl End:

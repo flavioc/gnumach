@@ -1,0 +1,28 @@
+set timeout=0
+set default=0
+
+menuentry "gnumach test" {
+    multiboot /boot/gnumach console=com0 TERM=mach-gnu-color init=/bin/sh
+    module --nounzip /boot/initrd.gz initrd '$(ramdisk-create)'
+    module /hurd/ext2fs.static ext2fs \
+			--multiboot-command-line='${kernel-command-line}' \
+			--host-priv-port='${host-port}' \
+			--device-master-port='${device-port}' \
+			--exec-server-task='${exec-task}' -T typed gunzip:device:rd0 \
+			'$(task-create)' '$(task-resume)'
+    module /hurd/exec.static exec \
+                             --device-master-port='${device-port}' \
+                             '$(exec-task=task-create)'
+
+#     multiboot /boot/gnumach console=com0 root=device:rd0
+#     module /boot/ext2fs.static ext2fs \
+#         --multiboot-command-line='${kernel-command-line}' \
+#         --host-priv-port='${host-port}' \
+#         --device-master-port='${device-port}' \
+#         --exec-server-task='${exec-task}' -T typed '${root}' \
+#         '$(task-create)' '$(task-resume)'
+# 
+#     module /boot/exec.static exec '$(exec-task=task-create)'
+#     module /boot/ramdisk.img ramdisk '$(ramdisk-create)'
+    boot
+}
