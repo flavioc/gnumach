@@ -265,8 +265,15 @@ static inline int copyout_unpack_msg_type(vm_offset_t kaddr,
       mach_msg_type_size_t orig_size = kmtl->msgtl_size;
       int ret;
 
-      if (MACH_MSG_TYPE_PORT_ANY(kmtl->msgtl_name))
+      if (MACH_MSG_TYPE_PORT_ANY(kmtl->msgtl_name)) {
+#ifdef USER32
         kmtl->msgtl_size = bytes_to_descsize(sizeof(mach_port_name_t));
+#else
+        /* 64 bit ABI uses mach_port_name_inlined_t for inlined ports. */
+        if (!kmt->msgt_inline)
+          kmtl->msgtl_size = bytes_to_descsize(sizeof(mach_port_name_t));
+#endif
+      }
       ret = copyout_mach_msg_type_long(kmtl, (void*)uaddr);
       kmtl->msgtl_size = orig_size;
       if (ret)
@@ -283,8 +290,15 @@ static inline int copyout_unpack_msg_type(vm_offset_t kaddr,
       mach_msg_type_size_t orig_size = kmt->msgt_size;
       int ret;
 
-      if (MACH_MSG_TYPE_PORT_ANY(kmt->msgt_name))
+      if (MACH_MSG_TYPE_PORT_ANY(kmt->msgt_name)) {
+#ifdef USER32
         kmt->msgt_size = bytes_to_descsize(sizeof(mach_port_name_t));
+#else
+        /* 64 bit ABI uses mach_port_name_inlined_t for inlined ports. */
+        if (!kmt->msgt_inline)
+          kmt->msgt_size = bytes_to_descsize(sizeof(mach_port_name_t));
+#endif
+      }
       ret = copyout_mach_msg_type(kmt, (void *)uaddr);
       kmt->msgt_size = orig_size;
       if (ret)
@@ -299,8 +313,10 @@ static inline int copyout_unpack_msg_type(vm_offset_t kaddr,
   return 0;
 }
 
+#ifdef USER32
 /*
- * Compute the user-space size of a message still in the kernel.
+ * Compute the user-space size of a message still in the kernel when processing
+ * messages from 32bit userland.
  * The message may be originating from userspace (in which case we could
  * optimize this by keeping the usize around) or from kernel space (we could
  * optimize if the message structure is fixed and known in advance).
@@ -333,7 +349,8 @@ size_t msg_usize(const mach_msg_header_t *kmsg)
             {
               if (MACH_MSG_TYPE_PORT_ANY(name))
                 {
-                  saddr += sizeof(mach_port_t) * number;
+                  const vm_size_t length = sizeof(mach_port_t) * number;
+                  saddr += length;
                   usize += sizeof(mach_port_name_t) * number;
                 }
               else
@@ -355,6 +372,7 @@ size_t msg_usize(const mach_msg_header_t *kmsg)
     }
   return usize;
 }
+#endif /* USER32 */
 
 /*
  * Expand the msg header and, if required, the msg body (ports, pointers)
@@ -423,6 +441,8 @@ int copyinmsg (const void *userbuf, void *kernelbuf, const size_t usize, const s
             {
               if (MACH_MSG_TYPE_PORT_ANY(name))
                 {
+#ifdef USER32
+                  assert(size == bytes_to_descsize(sizeof(mach_port_name_t)));
                   if ((usaddr + sizeof(mach_port_name_t)*number) > ueaddr)
                     return 1;
                   adjust_msg_type_size(ktaddr, sizeof(mach_port_t) - sizeof(mach_port_name_t));
@@ -433,6 +453,16 @@ int copyinmsg (const void *userbuf, void *kernelbuf, const size_t usize, const s
                       ksaddr += sizeof(mach_port_t);
                       usaddr += sizeof(mach_port_name_t);
                     }
+#else
+                  assert(size == bytes_to_descsize(sizeof(mach_port_name_inlined_t)));
+                  const vm_size_t length = number * sizeof(mach_port_name_inlined_t);
+                  if ((usaddr + length) > ueaddr)
+                    return 1;
+                  if (copyin((void*)usaddr, (void*)ksaddr, length))
+                    return 1;
+                  usaddr += length;
+                  ksaddr += length;
+#endif
                 }
               else
                 {
@@ -451,9 +481,12 @@ int copyinmsg (const void *userbuf, void *kernelbuf, const size_t usize, const s
               if ((usaddr + sizeof(rpc_vm_offset_t)) > ueaddr)
                 return 1;
 
-              // out-of-line port arrays are expanded in ipc_kmsg_copyin_body()
-              if (MACH_MSG_TYPE_PORT_ANY(name))
+              /* out-of-line port arrays are always arrays of mach_port_name_t (4 bytes)
+               * and are expanded in ipc_kmsg_copyin_body() */
+              if (MACH_MSG_TYPE_PORT_ANY(name)) {
+                assert(size == bytes_to_descsize(sizeof(mach_port_name_t)));
                 adjust_msg_type_size(ktaddr, sizeof(mach_port_t) - sizeof(mach_port_name_t));
+              }
 
               if (copyin_address((rpc_vm_offset_t*)usaddr, (vm_offset_t*)ksaddr))
                 return 1;
@@ -519,6 +552,7 @@ int copyoutmsg (const void *kernelbuf, void *userbuf, const size_t ksize)
             {
               if (MACH_MSG_TYPE_PORT_ANY(name))
                 {
+#ifdef USER32
                   for (int i=0; i<number; i++)
                     {
                       if (copyout_port((mach_port_t*)ksaddr, (mach_port_name_t*)usaddr))
@@ -526,10 +560,16 @@ int copyoutmsg (const void *kernelbuf, void *userbuf, const size_t ksize)
                       ksaddr += sizeof(mach_port_t);
                       usaddr += sizeof(mach_port_name_t);
                     }
+#else
+                  const vm_size_t length = number * sizeof(mach_port_name_inlined_t);
+                  if (copyout((void*)ksaddr, (void*)usaddr, length))
+                    return 1;
+                  ksaddr += length;
+                  usaddr += length;
+#endif
                 }
               else
                 {
-                  // type that doesn't need change
                   size_t n = descsize_to_bytes(size);
                   if (copyout((void*)ksaddr, (void*)usaddr, n*number))
                     return 1;

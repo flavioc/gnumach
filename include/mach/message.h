@@ -221,6 +221,22 @@ typedef unsigned int mach_msg_type_name_t;
 typedef unsigned int mach_msg_type_size_t;
 typedef natural_t  mach_msg_type_number_t;
 
+/**
+ * Structured used to send ports inlined in the message.
+ * We use this to avoid having to resize messages in the 64 bit mode
+ * since the kernel ports are pointers while user land deals with (shorter) port names.
+ */
+typedef struct {
+    union {
+        mach_port_name_t name;
+#ifdef KERNEL
+        mach_port_t kernel_port;
+#else
+        uintptr_t kernel_port_do_not_use;
+#endif  /* KERNEL */
+    };
+} mach_port_name_inlined_t;
+
 typedef struct  {
 #ifdef __x86_64__
     /*
