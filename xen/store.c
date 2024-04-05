@@ -21,6 +21,7 @@
 #include <machine/pmap.h>
 #include <machine/ipl.h>
 #include <kern/kalloc.h>
+#include <kern/sched_prim.h>
 #include <stdarg.h>
 #include <string.h>
 #include <alloca.h>
