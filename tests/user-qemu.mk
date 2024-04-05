@@ -162,7 +162,7 @@ tests/module-%: $(srcdir)/tests/test-%.c $(SRC_TESTLIB) $(MACH_TESTINSTALL)
 #
 
 GNUMACH_ARGS = console=com0
-QEMU_OPTS = -m 2048 -nographic -no-reboot -boot d
+QEMU_OPTS = -m 2047 -nographic -no-reboot -boot d
 QEMU_GDB_PORT ?= 1234
 
 if HOST_ix86
