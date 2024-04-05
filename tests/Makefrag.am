@@ -22,6 +22,8 @@
 
 if !PLATFORM_xen
 
+.NOTPARALLEL: check
+
 include tests/user-qemu.mk
 
 TESTS += \
