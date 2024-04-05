@@ -28,6 +28,20 @@ TESTS += \
 	tests/test-multiboot \
 	$(USER_TESTS)
 
+EXTRA_DIST += \
+	tests/README \
+	tests/grub.cfg.single.template \
+	tests/run-qemu.sh.template \
+	tests/include/syscalls.h \
+	tests/include/testlib.h \
+	tests/include/device/cons.h \
+	tests/include/kern/printf.h \
+	tests/include/mach/mig_support.h \
+	tests/include/sys/reboot.h \
+	tests/include/util/atoi.h \
+	$(USER_TESTS:%=%.c) \
+	$(TESTSRC_TESTLIB)
+
 clean-local: $(USER_TESTS_CLEAN)
 	rm -fr tests/include-mach
 

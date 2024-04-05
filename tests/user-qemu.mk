@@ -117,15 +117,19 @@ TESTCFLAGS = -static -nostartfiles -nolibc \
 	-ggdb3 \
 	-DMIG_EOPNOTSUPP
 
+
+TESTSRC_TESTLIB= \
+	$(srcdir)/tests/syscalls.S \
+	$(srcdir)/tests/start.S \
+	$(srcdir)/tests/testlib.c \
+	$(srcdir)/tests/testlib_thread_start.c
+
 SRC_TESTLIB= \
 	$(srcdir)/i386/i386/strings.c \
 	$(srcdir)/kern/printf.c \
 	$(srcdir)/kern/strings.c \
 	$(srcdir)/util/atoi.c \
-	$(srcdir)/tests/syscalls.S \
-	$(srcdir)/tests/start.S \
-	$(srcdir)/tests/testlib.c \
-	$(srcdir)/tests/testlib_thread_start.c \
+	$(TESTSRC_TESTLIB) \
 	$(builddir)/tests/errlist.c \
 	$(MIG_GEN_CC)
 
