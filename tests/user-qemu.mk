@@ -19,7 +19,7 @@
 #
 
 MACH_TESTINSTALL = $(builddir)/tests/include-mach
-MACH_TESTINCLUDE = $(MACH_TESTINSTALL)/$(prefix)/include
+MACH_TESTINCLUDE = $(MACH_TESTINSTALL)/$(includedir)
 
 MIGCOMUSER = $(USER_MIG) -n -cc cat - /dev/null
 MIG_OUTDIR = $(builddir)/tests/mig-out
