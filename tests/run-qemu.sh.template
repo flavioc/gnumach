@@ -22,7 +22,7 @@ log="tests/test-TESTNAME.raw"
 
 echo "temp log $log"
 if which QEMU_BIN >/dev/null ; then
-    if ! timeout -v --foreground --kill-after=3 15s $cmd \
+    if ! timeout -v --foreground --kill-after=3 60s $cmd \
             | tee $log | sed -n "/TEST_START_MARKER/"',$p' ; then
         exit 10  # timeout
     fi
