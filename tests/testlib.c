@@ -62,7 +62,7 @@ mach_port_t device_priv(void)
 
 void halt()
 {
-  int ret = host_reboot(host_priv_port, RB_HALT);
+  int ret = host_reboot(host_priv_port, 0);
   ASSERT_RET(ret, "host_reboot() failed!");
   while (1)
     ;
