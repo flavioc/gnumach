@@ -611,3 +611,6 @@ include i386/Makefrag.am
 
 # x86_64.
 include x86_64/Makefrag.am
+
+# aarch64.
+include aarch64/Makefrag.am

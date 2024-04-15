@@ -1,0 +1,35 @@
+# Makefile fragment for aarch64.
+
+# Copyright (C) 2023-2024 Free Software Foundation, Inc.
+
+# Permission to use, copy, modify and distribute this software and its
+# documentation is hereby granted, provided that both the copyright
+# notice and this permission notice appear in all copies of the
+# software, derivative works or modified versions, and any portions
+# thereof, and that both notices appear in supporting documentation.
+#
+# THE FREE SOFTWARE FOUNDATION ALLOWS FREE USE OF THIS SOFTWARE IN ITS
+# "AS IS" CONDITION.  THE FREE SOFTWARE FOUNDATION DISCLAIMS ANY
+# LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
+# USE OF THIS SOFTWARE.
+
+#
+# Building a distribution.
+#
+EXTRA_DIST += \
+	aarch64/include/mach/aarch64
+
+if HOST_aarch64
+
+#
+# Installation.
+#
+
+include_mach_aarch64dir = $(includedir)/mach/aarch64
+include_mach_aarch64_HEADERS = \
+	aarch64/include/mach/aarch64/boolean.h \
+	aarch64/include/mach/aarch64/kern_return.h \
+	aarch64/include/mach/aarch64/machine_types.defs \
+	aarch64/include/mach/aarch64/vm_types.h
+
+endif # HOST_aarch64

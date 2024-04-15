@@ -1,0 +1,102 @@
+/*
+ * Copyright (c) 2023-2024 Free Software Foundation.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+/*
+ * Mach Operating System
+ * Copyright (c) 1992 Carnegie Mellon University
+ * All Rights Reserved.
+ *
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
+ * the rights to redistribute these changes.
+ */
+
+#ifndef	_MACHINE_MACHINE_TYPES_DEFS_
+#define	_MACHINE_MACHINE_TYPES_DEFS_	1
+
+/*
+ * A natural_t is the type for the native
+ * unsigned integer type, usually 32 bits. It is suitable for
+ * most counters with a small chance of overflow.
+ * While historically natural_t was meant to be the same
+ * as a pointer, that is not the case here.
+ */
+type natural_t = uint32_t;
+
+/*
+ * An integer_t is the signed counterpart
+ * of the natural_t type. Both types are
+ * only supposed to be used to define
+ * other types in a machine-independent
+ * way.
+ */
+type integer_t = int32_t;
+
+type rpc_long_natural_t = uint64_t;
+type rpc_long_integer_t = int64_t;
+
+/*
+ * A long_natural_t is a possibly larger unsigned integer type than natural_t.
+ * Should be used instead of natural_t when we want the data to be less subject
+ * to overflows.
+ */
+type long_natural_t = rpc_long_natural_t
+#if defined(KERNEL_SERVER)
+    intran: long_natural_t convert_long_natural_from_user(rpc_long_natural_t)
+    outtran: rpc_long_natural_t convert_long_natural_to_user(long_natural_t)
+#elif defined(KERNEL_USER)
+    ctype: rpc_long_natural_t
+#endif
+    ;
+
+/*
+ * Larger version of integer_t. Only used when we want to hold possibly larger
+ * values than what is possible with integer_t.
+ */
+type long_integer_t = rpc_long_integer_t
+#if defined(KERNEL_SERVER)
+    intran: long_integer_t convert_long_integer_from_user(rpc_long_integer_t)
+    outtran: rpc_long_integer_t convert_long_integer_to_user(long_integer_t)
+#elif defined(KERNEL_USER)
+    ctype: rpc_long_integer_t
+#endif
+    ;
+
+/*
+ * Physical address size
+ */
+type rpc_phys_addr_t = uint64_t;
+type rpc_phys_addr_array_t = array[] of rpc_phys_addr_t;
+
+#endif	/* _MACHINE_MACHINE_TYPES_DEFS_ */
