@@ -124,6 +124,11 @@ extern kern_return_t syscall_mach_port_allocate_name(
 
 extern kern_return_t syscall_thread_depress_abort(mach_port_name_t thread);
 
+extern kern_return_t thread_set_self_state(
+	int		flavor,
+	thread_state_t	new_state,
+	natural_t	new_state_count);
+
 extern io_return_t syscall_device_write_request(
 			mach_port_name_t	device_name,
 			mach_port_name_t	reply_name,

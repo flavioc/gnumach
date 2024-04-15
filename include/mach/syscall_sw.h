@@ -95,6 +95,8 @@ kernel_trap(syscall_mach_port_insert_right,-74,4)
 kernel_trap(syscall_mach_port_allocate_name,-75,3)
 kernel_trap(syscall_thread_depress_abort,-76,1)
 
+kernel_trap(thread_set_self_state,-77,3)
+
 /* These are screwing up glibc somehow.  */
 /*kernel_trap(syscall_device_writev_request,-39,6)*/
 /*kernel_trap(syscall_device_write_request,-40,6)*/

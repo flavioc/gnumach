@@ -55,6 +55,7 @@
 #include <device/dev_hdr.h>
 #include <device/device_types.h>
 #include <device/ds_routines.h>
+#include <machine/pcb.h>
 
 /*
  *	Routine:	mach_msg_send_from_kernel
@@ -876,6 +877,46 @@ kern_return_t syscall_thread_depress_abort(mach_port_name_t thread)
 	thread_deallocate(t);
 
 	return result;
+}
+
+/*
+ *	Routine:	thread_set_self_state [mach trap]
+ *	Purpose:
+ *		Set current thread's state, as if with
+ *		thread_set_state() RPC.
+ *
+ *		When setting the generic state (one that contains
+ *		the register used for syscall return value) succeeds,
+ *		the successful return does not overwire the just-set
+ *		register value.
+ *	Conditions:
+ *		Nothing locked.
+ *	Returns:
+ *		Nothing at all		Successfully set generic state.
+ *		KERN_SUCCESS		Successfully set other state.
+ *		KERN_INVALID_ARGUMENT	Invalid flavor or state.
+ */
+kern_return_t thread_set_self_state(
+	int		flavor,
+	thread_state_t	new_state,
+	natural_t	new_state_count)
+{
+	thread_t	t = current_thread();
+	kern_return_t	kr;
+	natural_t	new_state_copy[150];
+
+	if (new_state_count <= 0 || new_state_count > 150)
+		return KERN_INVALID_ARGUMENT;
+
+	if (copyin(new_state, new_state_copy, new_state_count * sizeof(natural_t)))
+		return KERN_INVALID_ARGUMENT;
+
+	thread_set_syscall_return(t, KERN_SUCCESS);
+	kr = thread_setstatus(t, flavor, new_state_copy, new_state_count);
+	if (kr == KERN_SUCCESS)
+		thread_exception_return();
+
+	return kr;
 }
 
 /*

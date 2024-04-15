@@ -70,6 +70,7 @@ MACH_SYSCALL4(65, kern_return_t, syscall_vm_allocate, mach_port_t, vm_offset_t*,
 MACH_SYSCALL3(66, kern_return_t, syscall_vm_deallocate, mach_port_t, vm_offset_t, vm_size_t)
 MACH_SYSCALL3(72, kern_return_t, syscall_mach_port_allocate, mach_port_t, mach_port_right_t, mach_port_t*)
 MACH_SYSCALL2(73, kern_return_t, syscall_mach_port_deallocate, mach_port_t, mach_port_t)
+MACH_SYSCALL3(77, kern_return_t, thread_set_self_state, int, natural_t *, natural_t)
 
 /*
   todo: swtch_pri swtch ...

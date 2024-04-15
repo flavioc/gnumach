@@ -160,7 +160,7 @@ mach_trap_t	mach_trap_table[] = {
 	MACH_TRAP(syscall_mach_port_insert_right, 4),	/* 74 */
 	MACH_TRAP(syscall_mach_port_allocate_name, 3),	/* 75 */
 	MACH_TRAP(syscall_thread_depress_abort, 1),	/* 76 */
-	MACH_TRAP(kern_invalid, 0),		/* 77 */
+	MACH_TRAP(thread_set_self_state, 3),		/* 77 */
 	MACH_TRAP(kern_invalid, 0),		/* 78 */
 	MACH_TRAP(kern_invalid, 0),		/* 79 */
 
