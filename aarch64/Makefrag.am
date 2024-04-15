@@ -17,6 +17,7 @@
 # Building a distribution.
 #
 EXTRA_DIST += \
+	aarch64/aarch64/mach_aarch64.srv \
 	aarch64/include/mach/aarch64
 
 if HOST_aarch64
@@ -30,6 +31,8 @@ include_mach_aarch64_HEADERS = \
 	aarch64/include/mach/aarch64/asm.h \
 	aarch64/include/mach/aarch64/boolean.h \
 	aarch64/include/mach/aarch64/kern_return.h \
+	aarch64/include/mach/aarch64/mach_aarch64.defs \
+	aarch64/include/mach/aarch64/mach_aarch64_types.h \
 	aarch64/include/mach/aarch64/machine_types.defs \
 	aarch64/include/mach/aarch64/syscall_sw.h \
 	aarch64/include/mach/aarch64/vm_param.h \
