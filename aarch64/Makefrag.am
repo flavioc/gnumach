@@ -36,6 +36,7 @@ include_mach_aarch64_HEADERS = \
 	aarch64/include/mach/aarch64/mach_aarch64_types.h \
 	aarch64/include/mach/aarch64/machine_types.defs \
 	aarch64/include/mach/aarch64/syscall_sw.h \
+	aarch64/include/mach/aarch64/thread_status.h \
 	aarch64/include/mach/aarch64/vm_param.h \
 	aarch64/include/mach/aarch64/vm_types.h
 
