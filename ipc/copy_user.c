@@ -442,16 +442,18 @@ int copyinmsg (const void *userbuf, void *kernelbuf, const size_t usize, const s
     }
 
   kmsg->msgh_size = sizeof(mach_msg_header_t) + ksaddr - (vm_offset_t)(kmsg + 1);
-  assert(kmsg->msgh_size <= ksize);
 #else
   /* The 64 bit interface ensures the header is the same size, so it does not need any resizing. */
   _Static_assert(sizeof(mach_msg_header_t) == sizeof(mach_msg_user_header_t),
 		 "mach_msg_header_t and mach_msg_user_header_t expected to be of the same size");
   if (copyin(umsg, kmsg, usize))
     return 1;
+
+  kmsg->msgh_size = usize;
   kmsg->msgh_remote_port &= 0xFFFFFFFF; // FIXME: still have port names here
   kmsg->msgh_local_port &= 0xFFFFFFFF;  // also, this assumes little-endian
 #endif
+  assert(kmsg->msgh_size <= ksize);
   return 0;
 }
 
