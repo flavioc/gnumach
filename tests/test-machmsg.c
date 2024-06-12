@@ -40,6 +40,7 @@ static uint32_t align(uint32_t val, size_t aln)
 
 struct echo_params
 {
+  mach_port_t tx_port;
   mach_port_t rx_port;
   mach_msg_size_t rx_size;
   mach_msg_size_t rx_number;
@@ -110,6 +111,7 @@ test_iterations (void)
 
   struct echo_params params;
   params.rx_port = port;
+  params.tx_port = port;
   params.rx_size = sizeof(message.header) + sizeof(message.type) + 5;
   ALIGN_INLINE(params.rx_size, MACH_MSG_USER_ALIGNMENT);
   params.rx_number = TEST_ITERATIONS;
@@ -183,6 +185,7 @@ run_test_simple(void *msg, mach_msg_size_t msglen, mach_msg_id_t msgid)
   ASSERT_RET(err, "syscall_mach_port_allocate 2");
 
   struct echo_params params;
+  params.tx_port = MACH_PORT_NULL;
   params.rx_port = port;
   params.rx_size = msglen;
   params.rx_number = 1;
@@ -208,6 +211,63 @@ run_test_simple(void *msg, mach_msg_size_t msglen, mach_msg_id_t msgid)
   ASSERT(head->msgh_size == msglen, "wrong size in final rx");
 }
 
+/* same as run_test_simple(), but use two different sysccalls for tx and rx */
+void
+run_test_simple_split(void *msg, mach_msg_size_t msglen, mach_msg_id_t msgid)
+{
+  mach_msg_header_t *head = msg;
+  mach_port_t port, receive;
+  int err;
+
+  err = syscall_mach_port_allocate (mach_task_self (),
+                                    MACH_PORT_RIGHT_RECEIVE, &port);
+  ASSERT_RET(err, "syscall_mach_port_allocate");
+
+  err = syscall_mach_port_allocate (mach_task_self (),
+                                    MACH_PORT_RIGHT_RECEIVE, &receive);
+  ASSERT_RET(err, "syscall_mach_port_allocate 2");
+
+  struct echo_params params;
+  params.tx_port = receive;
+  params.rx_port = port;
+  params.rx_size = msglen;
+  params.rx_number = 1;
+  test_thread_start (mach_task_self (), echo_thread, &params);
+
+  head->msgh_bits = MACH_MSGH_BITS(MACH_MSG_TYPE_MAKE_SEND,
+                                   MACH_MSG_TYPE_MAKE_SEND_ONCE);
+  head->msgh_remote_port = port;
+  head->msgh_local_port = receive;
+  head->msgh_id = msgid;
+  head->msgh_size = 0;  // check that the echo thread receives the correct size
+
+  err = mach_msg (msg,
+                  MACH_SEND_MSG,
+                  msglen,
+                  0,
+                  MACH_PORT_NULL,
+                  MACH_MSG_TIMEOUT_NONE,
+                  MACH_PORT_NULL);
+  ASSERT_RET(err, "mach_msg tx");
+
+  memset(msg, 0, msglen);
+
+  err = mach_msg (msg,
+                  MACH_RCV_MSG,
+                  0,
+                  msglen,
+                  receive,
+                  MACH_MSG_TIMEOUT_NONE,
+                  MACH_PORT_NULL);
+  ASSERT_RET(err, "mach_msg rx");
+
+  printf("size in final rx: %d expected %d\n", head->msgh_size, msglen);
+  ASSERT(head->msgh_size == msglen, "wrong size in final rx");
+}
+
+/* Text tx and rx of a message, without using a different thread. We
+ * also use the same port to send and receive the message.
+ */
 void
 run_test_simple_self(void *msg, mach_msg_size_t msglen, mach_msg_id_t msgid)
 {
@@ -222,9 +282,6 @@ run_test_simple_self(void *msg, mach_msg_size_t msglen, mach_msg_id_t msgid)
   head->msgh_bits
     = MACH_MSGH_BITS (MACH_MSG_TYPE_MAKE_SEND,
                       MACH_MSG_TYPE_MAKE_SEND_ONCE);
-  /* head->msgh_bits */
-  /*   = MACH_MSGH_BITS (MACH_MSG_TYPE_MAKE_SEND_ONCE, */
-  /*                     MACH_MSG_TYPE_COPY_SEND); */
 
   head->msgh_bits |= MACH_MSGH_BITS_COMPLEX;
   head->msgh_remote_port = port;
@@ -240,6 +297,52 @@ run_test_simple_self(void *msg, mach_msg_size_t msglen, mach_msg_id_t msgid)
                   MACH_MSG_TIMEOUT_NONE,
                   MACH_PORT_NULL);
   ASSERT_RET(err, "mach_msg txrx");
+
+  printf("size in final rx: %d expected %d\n", head->msgh_size, msglen);
+  ASSERT(head->msgh_size == msglen, "wrong size in final rx\n");
+}
+
+/* same as run_test_simple_self(), but use two different sysccalls for tx and rx */
+void
+run_test_simple_self_split(void *msg, mach_msg_size_t msglen, mach_msg_id_t msgid)
+{
+  mach_msg_header_t *head = msg;
+  mach_port_t port, receive;
+  int err;
+
+  err = syscall_mach_port_allocate (mach_task_self (),
+                                    MACH_PORT_RIGHT_RECEIVE, &port);
+  ASSERT_RET(err, "syscall_mach_port_allocate");
+
+  head->msgh_bits
+    = MACH_MSGH_BITS (MACH_MSG_TYPE_MAKE_SEND,
+                      MACH_MSG_TYPE_MAKE_SEND_ONCE);
+
+  head->msgh_bits |= MACH_MSGH_BITS_COMPLEX;
+  head->msgh_remote_port = port;
+  head->msgh_local_port = port;
+  head->msgh_id = msgid;
+  head->msgh_size = msglen;
+
+  err = mach_msg (msg,
+                  MACH_SEND_MSG,
+                  msglen,
+                  0,
+                  port,
+                  MACH_MSG_TIMEOUT_NONE,
+                  MACH_PORT_NULL);
+  ASSERT_RET(err, "mach_msg tx");
+
+  memset(msg, 0, msglen);
+
+  err = mach_msg (msg,
+                  MACH_RCV_MSG,
+                  0,
+                  msglen,
+                  port,
+                  MACH_MSG_TIMEOUT_NONE,
+                  MACH_PORT_NULL);
+  ASSERT_RET(err, "mach_msg rx");
 
   printf("size in final rx: %d expected %d\n", head->msgh_size, msglen);
   ASSERT(head->msgh_size == msglen, "wrong size in final rx\n");
@@ -272,7 +375,9 @@ void test_msg_string(void)
   msg.type.msgt_unused = 0;
 
   run_test_simple_self(&msg, msglen, msgid);
+  run_test_simple_self_split(&msg, msglen, msgid);
   run_test_simple(&msg, msglen, msgid);
+  run_test_simple_split(&msg, msglen, msgid);
 }
 
 void test_msg_string2(void)
@@ -312,7 +417,9 @@ void test_msg_string2(void)
   memset (msg.data2, 'x', len2);
 
   run_test_simple_self(&msg, msglen, msgid);
+  run_test_simple_self_split(&msg, msglen, msgid);
   run_test_simple(&msg, msglen, msgid);
+  run_test_simple_split(&msg, msglen, msgid);
 }
 
 
@@ -343,7 +450,9 @@ void test_msg_ports(void)
   msgports[2] = mach_thread_self();
 
   run_test_simple_self(&msg, msglen, msgid);
+  run_test_simple_self_split(&msg, msglen, msgid);
   run_test_simple(&msg, msglen, msgid);
+  run_test_simple_split(&msg, msglen, msgid);
 }
 
 void test_msg_emptydesc(void)
@@ -384,7 +493,9 @@ void test_msg_emptydesc(void)
   msg.type.msgt_unused = 0;
 
   run_test_simple_self(&msg, msglen, msgid);
+  run_test_simple_self_split(&msg, msglen, msgid);
   run_test_simple(&msg, msglen, msgid);
+  run_test_simple_split(&msg, msglen, msgid);
 }
 
 
