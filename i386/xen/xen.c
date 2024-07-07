@@ -24,6 +24,8 @@
 #include <machine/thread.h>
 #include <machine/ipl.h>
 #include <machine/model_dep.h>
+#include <vm/vm_page.h>
+#include <vm/pmap.h>
 
 #include <xen/xen.h>
 

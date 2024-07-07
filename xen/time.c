@@ -23,6 +23,7 @@
 #include <machine/xen.h>
 #include <machine/spl.h>
 #include <machine/ipl.h>
+#include <i386at/rtc.h>
 #include <mach/machine/eflags.h>
 #include <xen/evt.h>
 #include "xen.h"
