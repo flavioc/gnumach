@@ -754,7 +754,7 @@ restart:
 	assert(end <= (entry->vme_end + entry->gap_size));
 	if (end > max) {
 		/* Does not respect the allowed maximum */
-		printf("%zx does not respect %zx\n", end, max);
+		printf("%lx does not respect %lx\n", (unsigned long) end, (unsigned long) max);
 		return NULL;
 	}
 	*startp = start;
