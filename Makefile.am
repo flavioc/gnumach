@@ -72,6 +72,11 @@ AM_CFLAGS += \
 AM_CFLAGS += \
 	-fno-strict-aliasing
 
+# We use a freestanding environment.
+AM_CFLAGS += \
+	-ffreestanding \
+	-nostdlib
+
 # The smashing stack protector might be enabled by default, but might emit
 # unsuitable code.
 if disable_smashing_stack_protector

@@ -25,7 +25,9 @@ if test -z "${CFLAGS+set}"; then
   # Use these CFLAGS by default if nothing is set.
   CFLAGS="-g -O2"
 fi
-# We don't need glibc to compile gnumach.
+saved_CFLAGS="$CFLAGS"
+# We don't need glibc to compile gnumach so ensure we don't try to use it
+# during configure.
 CFLAGS="$CFLAGS -ffreestanding -nostdlib"
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -268,6 +270,8 @@ AC_CONFIG_COMMANDS_POST([
   [fi
 ])
 
+
+CFLAGS="$saved_CFLAGS"
 #
 # Fire.
 #
