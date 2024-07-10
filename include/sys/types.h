@@ -28,16 +28,7 @@
 
 #include <mach/machine/vm_types.h>
 #include <stdint.h>
-
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef unsigned long size_t;
-#endif
-
-#ifndef _SSIZE_T
-#define _SSIZE_T
-typedef integer_t ssize_t;
-#endif
+#include <stddef.h> /* for size_t and NULL */
 
 typedef	unsigned short	dev_t;		/* device id */
 typedef	unsigned long	gid_t;		/* group id */
@@ -50,14 +41,10 @@ typedef	unsigned long	uid_t;		/* user id */
 
 /* Symbols allowed but not required by POSIX */
 
-typedef	char *		caddr_t;	/* address of a (signed) char */
-
 #ifndef _TIME_T
 #define	_TIME_T
 typedef	unsigned long long	time_t;
 #endif
-
-#define RAND_MAX	0x7fffffff
 
 /* Symbols not allowed by POSIX */
 #ifndef _POSIX_SOURCE
@@ -71,17 +58,9 @@ typedef	unsigned short	u_short;	/* unsigned short */
 typedef	unsigned int	u_int;		/* unsigned int */
 typedef unsigned long	u_long;		/* unsigned long */
 
-typedef unsigned int	daddr_t;	/* disk address */
-
 #define	major(i)	(((i) >> 8) & 0xFF)
 #define	minor(i)	((i) & 0xFF)
 #define	makedev(i,j)	((((i) & 0xFF) << 8) | ((j) & 0xFF))
-
-#define	NBBY		8
-
-#ifndef	NULL
-#define	NULL		((void *) 0) 	/* the null pointer */
-#endif
 
 #endif /* _POSIX_SOURCE */
 
