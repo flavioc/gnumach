@@ -215,3 +215,11 @@ routine vm_pages_phys(
 simpleroutine thread_set_name(
 		thread	: thread_t;
 		name	: kernel_debug_name_t);
+
+/*
+ *  Get the name of thread THREAD as set by thread_set_name. Will return
+ *  the name of the task if no THREAD name is set.
+ */
+routine thread_get_name(
+        thread : thread_t;
+        out name : kernel_debug_name_t);

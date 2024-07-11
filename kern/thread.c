@@ -2647,3 +2647,24 @@ thread_set_name(
 	thread->name[sizeof thread->name - 1] = '\0';
 	return KERN_SUCCESS;
 }
+
+/*
+ *  thread_get_name
+ *
+ *  Return the name of the thread THREAD.
+ *  Will use the name of the thread as set by thread_set_name.
+ *  If thread_set_name was not used, this will return the name of the task
+ *  copied when the thread was created.
+ */
+kern_return_t
+thread_get_name(
+		thread_t	thread,
+		kernel_debug_name_t	name)
+{
+	if (thread == THREAD_NULL)
+		return KERN_INVALID_ARGUMENT;
+
+	strncpy(name, thread->name, sizeof thread->name);
+
+	return KERN_SUCCESS;
+}
