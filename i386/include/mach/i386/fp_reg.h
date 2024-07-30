@@ -56,7 +56,7 @@ struct i386_xfp_xstate_header {
 	unsigned long long	xfp_features;
 	unsigned long long	xcomp_bv;
 	unsigned long long	reserved[6];
-} __attribute__((packed, aligned(64)));
+} __attribute__((packed));
 
 struct i386_xfp_save {
 	unsigned short	fp_control;	/* control */
