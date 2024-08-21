@@ -209,6 +209,21 @@ mach_msg_return_t mach_msg_server_once(
 	return mr;
 }
 
+void wait_thread_terminated(thread_t th)
+{
+  int err;
+  struct thread_basic_info info;
+  mach_msg_type_number_t count;
+  do {
+    count = THREAD_BASIC_INFO_COUNT;
+    err = thread_info(th, THREAD_BASIC_INFO, (thread_info_t)&info, &count);
+    if (err == MACH_SEND_INVALID_DEST)
+        break;
+    ASSERT_RET(err, "error in thread_info");
+    msleep(100); // don't poll continuously
+  } while (1);
+}
+
 /*
  * Minimal _start() for test modules, we just take the arguments from the
  * kernel, call main() and reboot. As in glibc, we expect the argument pointer

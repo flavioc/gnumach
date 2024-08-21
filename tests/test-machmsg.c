@@ -499,6 +499,83 @@ void test_msg_emptydesc(void)
 }
 
 
+void recv_to_be_interrupted(void *arg)
+{
+  mach_msg_header_t msg;
+  kern_return_t ret;
+  mach_port_t rcv_name;
+  long err = (long)arg;
+
+  ret = mach_port_allocate(mach_task_self (), MACH_PORT_RIGHT_RECEIVE, &rcv_name);
+  ASSERT_RET(ret, "creating rx port");
+
+  ret = mach_msg(&msg, MACH_RCV_MSG,
+                 0, sizeof(msg), rcv_name,
+                 MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
+
+  printf("mach_msg returned %x\n", ret);
+  ASSERT(ret == err, "recv not interrupted correctly");
+
+  thread_terminate(mach_thread_self());
+  FAILURE("thread_terminate");
+}
+
+void test_recv_interrupted(void)
+{
+  kern_return_t ret;
+  thread_t th;
+  th = test_thread_start(mach_task_self(), recv_to_be_interrupted, (void*)MACH_RCV_INTERRUPTED);
+  msleep(100);
+
+  ret = thread_suspend(th);
+  ASSERT_RET(ret, "thread_suspend");
+
+  ret = thread_abort(th);
+  ASSERT_RET(ret, "thread_abort");
+
+  ret = thread_resume(th);
+  ASSERT_RET(ret, "thread_resume");
+
+  wait_thread_terminated(th);
+}
+
+void test_recv_interrupted_setreturn(void)
+{
+  kern_return_t ret;
+  thread_t th;
+  th = test_thread_start(mach_task_self(), recv_to_be_interrupted, (void*)123L);
+  msleep(100);
+
+  ret = thread_suspend(th);
+  ASSERT_RET(ret, "thread_suspend");
+
+  ret = thread_abort(th);
+  ASSERT_RET(ret, "thread_abort");
+
+
+  struct i386_thread_state state;
+  unsigned int count;
+  count = i386_THREAD_STATE_COUNT;
+  ret = thread_get_state(th, i386_REGS_SEGS_STATE,
+                         (thread_state_t) &state, &count);
+  ASSERT_RET(ret, "thread_get_state()");
+
+#ifdef __i386__
+  state.eax = 123;
+#elif defined(__x86_64__)
+  state.rax = 123;
+#endif
+  ret = thread_set_state(th, i386_REGS_SEGS_STATE,
+                         (thread_state_t) &state, i386_THREAD_STATE_COUNT);
+  ASSERT_RET(ret, "thread_set_state");
+
+  ret = thread_resume(th);
+  ASSERT_RET(ret, "thread_resume");
+
+  wait_thread_terminated(th);
+}
+
+
 int
 main (int argc, char *argv[], int envc, char *envp[])
 {
@@ -512,5 +589,8 @@ main (int argc, char *argv[], int envc, char *envp[])
   test_msg_emptydesc();
   printf("test_iters()\n");
   test_iterations();
+  printf("test_recv_interrupted()\n");
+  test_recv_interrupted();
+  test_recv_interrupted_setreturn();
   return 0;
 }
