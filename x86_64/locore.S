@@ -435,10 +435,10 @@ ENTRY(start_timer)
 ENTRY(t_dbl_fault)
 	INT_FIX
 	cli	/* disable interrupts that might corrupt the state*/
+	pushq	$(T_DOUBLE_FAULT)	/* indicate fault type  */
 	pusha
 	movq	%cr2,%rax
 	movq	%rax,R_CR2-R_R15(%rsp)	/* CR2 might contain the faulting address */
-	subq	$48,%rsp	// FIXME remove when segments are cleaned up
 	movq	%rsp,%rdi		/* pass the saved state */
 	call	handle_double_fault
 	jmp	cpu_shutdown	/* reset */
