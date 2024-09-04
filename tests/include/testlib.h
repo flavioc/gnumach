@@ -70,6 +70,7 @@ thread_t test_thread_start(task_t task, void(*routine)(void*), void* arg);
 mach_port_t host_priv(void);
 mach_port_t device_priv(void);
 void wait_thread_terminated(thread_t th);
+void wait_thread_suspended(thread_t th);
 
 extern vm_size_t vm_page_size;
 

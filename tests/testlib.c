@@ -224,6 +224,22 @@ void wait_thread_terminated(thread_t th)
   } while (1);
 }
 
+void wait_thread_suspended(thread_t th)
+{
+  int err;
+  struct thread_basic_info info;
+  mach_msg_type_number_t count;
+  do {
+    count = THREAD_BASIC_INFO_COUNT;
+    err = thread_info(th, THREAD_BASIC_INFO, (thread_info_t)&info, &count);
+    ASSERT_RET(err, "error in thread_info");
+    if (info.suspend_count <= 0)
+      msleep(100); // don't poll continuously
+    else
+      break;
+  } while (1);
+}
+
 /*
  * Minimal _start() for test modules, we just take the arguments from the
  * kernel, call main() and reboot. As in glibc, we expect the argument pointer
