@@ -111,3 +111,10 @@ routine	i386_get_gdt(
 		target_thread	: thread_t;
 		selector	: int;
 	out	desc		: descriptor_t);
+
+/* Returns the size in bytes of the FPU extended state, to be used
+   with i386_XFLOAT_STATE instead of i386_XFLOAT_STATE_COUNT.
+ */
+routine	i386_get_xstate_size(
+		host		: host_t;
+	out	size		: vm_size_t);

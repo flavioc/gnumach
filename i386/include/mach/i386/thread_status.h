@@ -58,6 +58,7 @@
 #define	i386_REGS_SEGS_STATE	5
 #define	i386_DEBUG_STATE	6
 #define	i386_FSGS_BASE_STATE	7
+#define	i386_XFLOAT_STATE	8
 
 /*
  * This structure is used for both
@@ -148,6 +149,17 @@ struct i386_float_state {
 };
 #define i386_FLOAT_STATE_COUNT (sizeof(struct i386_float_state)/sizeof(unsigned int))
 
+struct i386_xfloat_state {
+	int		fpkind;			/* FP_NO..FP_387X (readonly) */
+	int		initialized;
+	int		exc_status;		/* exception status (readonly) */
+	int		fp_save_kind;		/* format of hardware state */
+	unsigned char	hw_state[];		/* actual "hardware" state */
+	/* don't add anything here, as hw_state is dynamically sized */
+};
+/* NOTE: i386_XFLOAT_STATE_COUNT is not defined as i386_xfloat_state is
+ * dynamically sized. Use i386_get_xstate_size(host) to get the current
+ * size. */
 
 #define PORT_MAP_BITS 0x400
 struct i386_isa_port_map_state {

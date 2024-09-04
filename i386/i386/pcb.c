@@ -613,8 +613,22 @@ kern_return_t thread_setstatus(
 		if (count < i386_FLOAT_STATE_COUNT)
 			return(KERN_INVALID_ARGUMENT);
 
-		return fpu_set_state(thread,
-				(struct i386_float_state *) tstate);
+		return fpu_set_state(thread, tstate, flavor);
+	    }
+
+	    case i386_XFLOAT_STATE: {
+
+	        vm_size_t xfp_size;
+		kern_return_t kr;
+		kr = i386_get_xstate_size(&realhost, &xfp_size);
+		if (kr != KERN_SUCCESS)
+			return kr;
+
+		xfp_size /= sizeof(integer_t);
+		if (count < xfp_size)
+			return(KERN_INVALID_ARGUMENT);
+
+		return fpu_set_state(thread, tstate, flavor);
 	    }
 
 	    /*
@@ -831,8 +845,23 @@ kern_return_t thread_getstatus(
 			return(KERN_INVALID_ARGUMENT);
 
 		*count = i386_FLOAT_STATE_COUNT;
-		return fpu_get_state(thread,
-				(struct i386_float_state *)tstate);
+		return fpu_get_state(thread, tstate, flavor);
+	    }
+
+	    case i386_XFLOAT_STATE: {
+
+		vm_size_t xfp_size;
+		kern_return_t kr;
+		kr = i386_get_xstate_size(&realhost, &xfp_size);
+		if (kr != KERN_SUCCESS)
+			return kr;
+
+		xfp_size /= sizeof(integer_t);
+		if (*count < xfp_size)
+			return(KERN_INVALID_ARGUMENT);
+
+		*count = xfp_size;
+		return fpu_get_state(thread, tstate, flavor);
 	    }
 
 	    /*

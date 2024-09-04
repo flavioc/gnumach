@@ -250,6 +250,17 @@ init_fpu(void)
 	}
 }
 
+kern_return_t
+i386_get_xstate_size(host_t host, vm_size_t *size)
+{
+	if (host == HOST_NULL)
+		return KERN_INVALID_ARGUMENT;
+
+	*size = sizeof(struct i386_xfloat_state) + fp_xsave_size;
+
+	return KERN_SUCCESS;
+}
+
 /*
  * Initialize FP handling.
  */
@@ -385,10 +396,11 @@ twd_fxsr_to_i387 (struct i386_xfp_save *fxsave)
  * concurrent fpu_set_state or fpu_get_state.
  */
 kern_return_t
-fpu_set_state(const thread_t thread,
-	      struct i386_float_state *state)
+fpu_set_state(const thread_t thread, void *state, int flavor)
 {
 	pcb_t pcb = thread->pcb;
+	struct i386_float_state *fstate = (struct i386_float_state*)state;
+	struct i386_xfloat_state *xfstate = (struct i386_xfloat_state*)state;
 	struct i386_fpsave_state *ifps;
 	struct i386_fpsave_state *new_ifps;
 
@@ -410,7 +422,8 @@ ASSERT_IPL(SPL0);
 	}
 #endif
 
-	if (state->initialized == 0) {
+	if ((flavor == i386_FLOAT_STATE && fstate->initialized == 0) ||
+	    (flavor == i386_XFLOAT_STATE && xfstate->initialized == 0)) {
 	    /*
 	     * new FPU state is 'invalid'.
 	     * Deallocate the fp state if it exists.
@@ -428,13 +441,6 @@ ASSERT_IPL(SPL0);
 	    /*
 	     * Valid state.  Allocate the fp state if there is none.
 	     */
-	    struct i386_fp_save *user_fp_state;
-	    struct i386_fp_regs *user_fp_regs;
-
-	    user_fp_state = (struct i386_fp_save *) &state->hw_state[0];
-	    user_fp_regs  = (struct i386_fp_regs *)
-			&state->hw_state[sizeof(struct i386_fp_save)];
-
 	    new_ifps = 0;
 	Retry:
 	    simple_lock(&pcb->lock);
@@ -454,10 +460,43 @@ ASSERT_IPL(SPL0);
 	     * Ensure that reserved parts of the environment are 0.
 	     */
 	    memset(ifps, 0, fp_xsave_size);
+	    ifps->fp_valid = TRUE;
 
-	    if (fp_save_kind != FP_FNSAVE) {
+	    if (flavor == i386_FLOAT_STATE) {
+		struct i386_fp_save *user_fp_state;
+		struct i386_fp_regs *user_fp_regs;
+
+		user_fp_state = (struct i386_fp_save *) &fstate->hw_state[0];
+		user_fp_regs  = (struct i386_fp_regs *)
+		    &fstate->hw_state[sizeof(struct i386_fp_save)];
+
+		if (fp_save_kind != FP_FNSAVE) {
+		    int i;
+
+		    ifps->xfp_save_state.fp_control = user_fp_state->fp_control;
+		    ifps->xfp_save_state.fp_status  = user_fp_state->fp_status;
+		    ifps->xfp_save_state.fp_tag	    = twd_i387_to_fxsr(user_fp_state->fp_tag);
+		    ifps->xfp_save_state.fp_eip	    = user_fp_state->fp_eip;
+		    ifps->xfp_save_state.fp_cs	    = user_fp_state->fp_cs;
+		    ifps->xfp_save_state.fp_opcode  = user_fp_state->fp_opcode;
+		    ifps->xfp_save_state.fp_dp	    = user_fp_state->fp_dp;
+		    ifps->xfp_save_state.fp_ds	    = user_fp_state->fp_ds;
+		    for (i=0; i<8; i++)
+			memcpy(&ifps->xfp_save_state.fp_reg_word[i], &user_fp_regs->fp_reg_word[i], sizeof(user_fp_regs->fp_reg_word[i]));
+		} else {
+		    ifps->fp_save_state.fp_control = user_fp_state->fp_control;
+		    ifps->fp_save_state.fp_status  = user_fp_state->fp_status;
+		    ifps->fp_save_state.fp_tag	   = user_fp_state->fp_tag;
+		    ifps->fp_save_state.fp_eip	   = user_fp_state->fp_eip;
+		    ifps->fp_save_state.fp_cs	   = user_fp_state->fp_cs;
+		    ifps->fp_save_state.fp_opcode  = user_fp_state->fp_opcode;
+		    ifps->fp_save_state.fp_dp	   = user_fp_state->fp_dp;
+		    ifps->fp_save_state.fp_ds	   = user_fp_state->fp_ds;
+		    ifps->fp_regs = *user_fp_regs;
+		}
+	    } else if ((flavor == i386_XFLOAT_STATE) && (xfstate->fp_save_kind == fp_save_kind)) {
 		int i;
-
+		struct i386_xfp_save *user_fp_state = (struct i386_xfp_save *) &xfstate->hw_state[0];
 		ifps->xfp_save_state.fp_control = user_fp_state->fp_control;
 		ifps->xfp_save_state.fp_status  = user_fp_state->fp_status;
 		ifps->xfp_save_state.fp_tag     = twd_i387_to_fxsr(user_fp_state->fp_tag);
@@ -467,17 +506,17 @@ ASSERT_IPL(SPL0);
 		ifps->xfp_save_state.fp_dp      = user_fp_state->fp_dp;
 		ifps->xfp_save_state.fp_ds      = user_fp_state->fp_ds;
 		for (i=0; i<8; i++)
-		    memcpy(&ifps->xfp_save_state.fp_reg_word[i], &user_fp_regs->fp_reg_word[i], sizeof(user_fp_regs->fp_reg_word[i]));
-	    } else {
-		ifps->fp_save_state.fp_control = user_fp_state->fp_control;
-		ifps->fp_save_state.fp_status  = user_fp_state->fp_status;
-		ifps->fp_save_state.fp_tag     = user_fp_state->fp_tag;
-		ifps->fp_save_state.fp_eip     = user_fp_state->fp_eip;
-		ifps->fp_save_state.fp_cs      = user_fp_state->fp_cs;
-		ifps->fp_save_state.fp_opcode  = user_fp_state->fp_opcode;
-		ifps->fp_save_state.fp_dp      = user_fp_state->fp_dp;
-		ifps->fp_save_state.fp_ds      = user_fp_state->fp_ds;
-		ifps->fp_regs = *user_fp_regs;
+                    memcpy(&ifps->xfp_save_state.fp_reg_word[i], &user_fp_state->fp_reg_word[i], sizeof(user_fp_state->fp_reg_word[i]));
+		for (i=0; i<16; i++)
+                    memcpy(&ifps->xfp_save_state.fp_xreg_word[i], &user_fp_state->fp_xreg_word[i], sizeof(user_fp_state->fp_xreg_word[i]));
+
+		memcpy(&ifps->xfp_save_state.header, &user_fp_state->header,
+		       sizeof(ifps->xfp_save_state.header));
+		if (fp_xsave_size > sizeof(struct i386_xfp_save)) {
+			memcpy(&ifps->xfp_save_state.extended, &user_fp_state->extended,
+			       fp_xsave_size - sizeof(struct i386_xfp_save));
+		}
+
 	    }
 
 	    simple_unlock(&pcb->lock);
@@ -495,10 +534,11 @@ ASSERT_IPL(SPL0);
  * concurrent fpu_set_state or fpu_get_state.
  */
 kern_return_t
-fpu_get_state(const thread_t thread,
-	      struct i386_float_state *state)
+fpu_get_state(const thread_t thread, void *state, int flavor)
 {
 	pcb_t pcb = thread->pcb;
+	struct i386_float_state *fstate = (struct i386_float_state*)state;
+	struct i386_xfloat_state *xfstate = (struct i386_xfloat_state*)state;
 	struct i386_fpsave_state *ifps;
 
 ASSERT_IPL(SPL0);
@@ -512,7 +552,10 @@ ASSERT_IPL(SPL0);
 	     * No valid floating-point state.
 	     */
 	    simple_unlock(&pcb->lock);
-	    memset(state, 0, sizeof(struct i386_float_state));
+            if (flavor == i386_FLOAT_STATE)
+                memset(state, 0, sizeof(struct i386_float_state));
+            else if (flavor == i386_XFLOAT_STATE)
+                memset(state, 0, fp_xsave_size);
 	    return KERN_SUCCESS;
 	}
 
@@ -529,18 +572,17 @@ ASSERT_IPL(SPL0);
 	    clear_fpu();
 	}
 
-	state->fpkind = fp_kind;
-	state->exc_status = 0;
-
-	{
+	if (flavor == i386_FLOAT_STATE) {
 	    struct i386_fp_save *user_fp_state;
 	    struct i386_fp_regs *user_fp_regs;
 
-	    state->initialized = ifps->fp_valid;
+	    fstate->fpkind = fp_kind;
+	    fstate->exc_status = 0;
+	    fstate->initialized = ifps->fp_valid;
 
-	    user_fp_state = (struct i386_fp_save *) &state->hw_state[0];
+	    user_fp_state = (struct i386_fp_save *) &fstate->hw_state[0];
 	    user_fp_regs  = (struct i386_fp_regs *)
-			&state->hw_state[sizeof(struct i386_fp_save)];
+			&fstate->hw_state[sizeof(struct i386_fp_save)];
 
 	    /*
 	     * Ensure that reserved parts of the environment are 0.
@@ -571,6 +613,37 @@ ASSERT_IPL(SPL0);
 		user_fp_state->fp_ds      = ifps->fp_save_state.fp_ds;
 		*user_fp_regs = ifps->fp_regs;
 	    }
+	} else if (flavor == i386_XFLOAT_STATE) {
+	    int i;
+	    struct i386_xfp_save *user_fp_state;
+
+	    xfstate->fpkind = fp_kind;
+	    xfstate->exc_status = 0;
+	    xfstate->initialized = ifps->fp_valid;
+	    xfstate->fp_save_kind = fp_save_kind;
+
+            user_fp_state = (struct i386_xfp_save *) &xfstate->hw_state[0];
+	    memset(user_fp_state, 0, sizeof(struct i386_xfp_save));
+
+	    user_fp_state->fp_control = ifps->xfp_save_state.fp_control;
+	    user_fp_state->fp_status  = ifps->xfp_save_state.fp_status;
+	    user_fp_state->fp_tag     = twd_fxsr_to_i387(&ifps->xfp_save_state);
+	    user_fp_state->fp_eip     = ifps->xfp_save_state.fp_eip;
+	    user_fp_state->fp_cs      = ifps->xfp_save_state.fp_cs;
+	    user_fp_state->fp_opcode  = ifps->xfp_save_state.fp_opcode;
+	    user_fp_state->fp_dp      = ifps->xfp_save_state.fp_dp;
+	    user_fp_state->fp_ds      = ifps->xfp_save_state.fp_ds;
+	    for (i=0; i<8; i++)
+		memcpy(&user_fp_state->fp_reg_word[i], &ifps->xfp_save_state.fp_reg_word[i], sizeof(user_fp_state->fp_reg_word[i]));
+	    for (i=0; i<16; i++)
+		memcpy(&user_fp_state->fp_xreg_word[i], &ifps->xfp_save_state.fp_xreg_word[i], sizeof(user_fp_state->fp_xreg_word[i]));
+
+            memcpy(&user_fp_state->header, &ifps->xfp_save_state.header,
+                   sizeof(ifps->xfp_save_state.header));
+            if (fp_xsave_size > sizeof(struct i386_xfp_save)) {
+                memcpy(&user_fp_state->extended, &ifps->xfp_save_state.extended,
+                       fp_xsave_size - sizeof(struct i386_xfp_save));
+            }
 	}
 	simple_unlock(&pcb->lock);
 
