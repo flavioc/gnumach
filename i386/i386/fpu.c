@@ -407,6 +407,8 @@ fpu_set_state(const thread_t thread, void *state, int flavor)
 ASSERT_IPL(SPL0);
 	if (fp_kind == FP_NO)
 	    return KERN_FAILURE;
+	if ((flavor == i386_XFLOAT_STATE) && (xfstate->fp_save_kind != fp_save_kind))
+	    return KERN_INVALID_ARGUMENT;
 
 #if	NCPUS == 1
 
@@ -494,7 +496,7 @@ ASSERT_IPL(SPL0);
 		    ifps->fp_save_state.fp_ds	   = user_fp_state->fp_ds;
 		    ifps->fp_regs = *user_fp_regs;
 		}
-	    } else if ((flavor == i386_XFLOAT_STATE) && (xfstate->fp_save_kind == fp_save_kind)) {
+	    } else if (flavor == i386_XFLOAT_STATE) {
 		int i;
 		struct i386_xfp_save *user_fp_state = (struct i386_xfp_save *) &xfstate->hw_state[0];
 		ifps->xfp_save_state.fp_control = user_fp_state->fp_control;
