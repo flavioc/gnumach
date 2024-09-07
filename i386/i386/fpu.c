@@ -407,7 +407,7 @@ fpu_set_state(const thread_t thread, void *state, int flavor)
 ASSERT_IPL(SPL0);
 	if (fp_kind == FP_NO)
 	    return KERN_FAILURE;
-	if ((flavor == i386_XFLOAT_STATE) && (xfstate->fp_save_kind != fp_save_kind))
+	if (flavor == i386_XFLOAT_STATE && xfstate->initialized && xfstate->fp_save_kind != fp_save_kind)
 	    return KERN_INVALID_ARGUMENT;
 
 #if	NCPUS == 1
