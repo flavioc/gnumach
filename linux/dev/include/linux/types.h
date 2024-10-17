@@ -76,9 +76,7 @@ typedef __kernel_clock_t	clock_t;
 
 #ifndef _CADDR_T
 #define _CADDR_T
-#ifndef MACH_INCLUDE
 typedef __kernel_caddr_t	caddr_t;
-#endif
 #endif
 
 #ifndef MACH_INCLUDE
