@@ -1167,6 +1167,7 @@ valid_page(phys_addr_t addr)
  *	Must be called with the pmap system and the pmap unlocked,
  *	since these must be unlocked to use vm_page_grab.
  */
+#ifdef	MACH_XEN
 static vm_offset_t
 pmap_page_table_page_alloc(void)
 {
@@ -1210,6 +1211,7 @@ pmap_page_table_page_alloc(void)
 
 	return pa;
 }
+#endif
 
 #ifdef	MACH_XEN
 void pmap_map_mfn(void *_addr, unsigned long mfn) {
@@ -1261,6 +1263,7 @@ void pmap_map_mfn(void *_addr, unsigned long mfn) {
  *	The page-table page must have all mappings removed,
  *	and be removed from its page directory.
  */
+#ifdef	MACH_XEN
 static void
 pmap_page_table_page_dealloc(vm_offset_t pa)
 {
@@ -1279,6 +1282,7 @@ pmap_page_table_page_dealloc(vm_offset_t pa)
 	vm_page_unlock_queues();
 	vm_object_unlock(pmap_object);
 }
+#endif
 
 /*
  *	Create and return a physical map.
