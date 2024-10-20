@@ -1422,8 +1422,9 @@ vm_page_setup(void)
         nr_pages += vm_page_atop(vm_page_boot_seg_size(&vm_page_boot_segs[i]));
 
     table_size = vm_page_round(nr_pages * sizeof(struct vm_page));
-    printf("vm_page: page table size: %lu entries (%luk)\n", nr_pages,
-           table_size >> 10);
+    printf("vm_page: page table size: %lu entries (%luk)\n",
+	   (unsigned long) nr_pages,
+	   (unsigned long) (table_size >> 10));
     table = (struct vm_page *)pmap_steal_memory(table_size);
     va = (unsigned long)table;
 
