@@ -402,6 +402,9 @@ ioapic_configure(void)
         entry.both.vector = IOAPIC_INT_BASE + gsi;
         ioapic_write_entry(apic, pin, entry.both);
 
+        /* Set initial state to masked */
+        mask_irq(pin);
+
         /* Timer workaround for x86 */
         if (pin == 0) {
             /* Save timer info */
@@ -431,6 +434,9 @@ ioapic_configure(void)
         }
         entry.both.vector = IOAPIC_INT_BASE + gsi;
         ioapic_write_entry(apic, pin, entry.both);
+
+        /* Set initial state to masked */
+        mask_irq(pin);
     }
 
     printf("IOAPIC 0 configured with GSI 0-%d\n", ngsis - 1);
@@ -452,6 +458,9 @@ ioapic_configure(void)
             }
             entry.both.vector = IOAPIC_INT_BASE + gsi;
             ioapic_write_entry(apic, pin, entry.both);
+
+            /* Set initial state to masked */
+            mask_irq(pin + ngsis);
         }
 
         printf("IOAPIC 1 configured with GSI %d-%d\n", ngsis, ngsis + ngsis2 - 1);
