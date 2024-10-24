@@ -1,8 +1,16 @@
 
 #include <mach/machine/asm.h>
+#include <mach/machine/multiboot.h>
 #include <i386/apic.h>
 #include <i386/seg.h>
 #include <i386/i386asm.h>
+
+#ifdef __ELF__
+#define AOUT_KLUDGE	0
+#else
+#define AOUT_KLUDGE	MULTIBOOT_AOUT_KLUDGE
+#endif /* __ELF__ */
+#define MULTIBOOT_FLAGS	MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_VIDEO_MODE | AOUT_KLUDGE
 
 	/*
 	 * This section will be put first into .text.  See also	i386/ldscript.
@@ -16,12 +24,6 @@ _start:
 	jmp	boot_entry
 
 	/* MultiBoot header - see multiboot.h.  */
-#define	MULTIBOOT_MAGIC		0x1BADB002
-#ifdef __ELF__
-#define MULTIBOOT_FLAGS		0x00000003
-#else  /* __ELF__ */
-#define MULTIBOOT_FLAGS		0x00010003
-#endif /* __ELF__ */
 	P2ALIGN(2)
 boot_hdr:
 	.long	MULTIBOOT_MAGIC
@@ -37,7 +39,17 @@ boot_hdr:
 	.long	_edata		/* load_end_addr */
 	.long	_end		/* bss_end_addr */
 	.long	boot_entry	/* entry */
+#else
+        .long	0
+        .long	0
+        .long	0
+        .long	0
+        .long	0
 #endif /* __ELF__ */
+        .long	MULTIBOOT_VIDEO_MODE_TYPE_EGA_TEXT
+        .long	80
+        .long	25
+        .long	MULTIBOOT_VIDEO_PARAM_NO_PREFERENCE
 
 boot_entry:
 	movl	$percpu_array - KERNELBASE, %eax

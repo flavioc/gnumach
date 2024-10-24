@@ -23,8 +23,6 @@
 #ifndef _MACH_I386_MULTIBOOT_H_
 #define _MACH_I386_MULTIBOOT_H_
 
-#include <mach/machine/vm_types.h>
-
 /* The entire multiboot_header must be contained
    within the first MULTIBOOT_SEARCH bytes of the kernel image.  */
 #define MULTIBOOT_SEARCH	8192
@@ -73,6 +71,10 @@
 #define MULTIBOOT_VIDEO_MODE_TYPE_EGA_TEXT	1
 
 #define MULTIBOOT_VIDEO_PARAM_NO_PREFERENCE	0
+
+#ifndef __ASSEMBLER__
+
+#include <mach/machine/vm_types.h>
 
 /* The mods_addr field above contains the physical address of the first
    of 'mods_count' multiboot_module structures.  */
@@ -276,5 +278,7 @@ struct multiboot_os_info {
     struct multiboot_module *mods_addr;
     uint32_t mods_count;
 };
+
+#endif /* __ASSEMBLER__ */
 
 #endif /* _MACH_I386_MULTIBOOT_H_ */
