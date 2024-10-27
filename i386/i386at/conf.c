@@ -71,6 +71,9 @@
 #include <device/intr.h>
 #define irqname			"irq"
 
+#include <i386at/mbinfo.h>
+#define mbinfoname		"mbinfo"
+
 /*
  * List of devices - console must be at slot 0
  */
@@ -155,6 +158,11 @@ struct dev_ops	dev_name_list[] =
         { irqname,      nulldev_open,   nulldev_close,    nulldev_read,
           nulldev_write,nulldev_getstat,nulldev_setstat,  nomap,
           nodev_async_in,        nulldev_reset,        nulldev_portdeath,0,
+          nodev_info },
+
+        { mbinfoname,	nulldev_open,	nulldev_close,	mbinforead,
+          nulldev_write,nulldev_getstat,nulldev_setstat,nomap,
+          nodev_async_in,	nulldev_reset,	nulldev_portdeath,0,
           nodev_info },
 
 };

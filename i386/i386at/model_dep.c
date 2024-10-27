@@ -75,6 +75,7 @@
 #include <i386at/int_init.h>
 #include <i386at/kd.h>
 #include <i386at/rtc.h>
+#include <i386at/mbinfo.h>
 #include <i386at/model_dep.h>
 #include <machine/irq.h>
 
@@ -354,6 +355,8 @@ register_boot_data(const struct multiboot_raw_info *mbi)
 				biosmem_register_boot_data(shdr->addr, shdr->addr + shdr->size, FALSE);
 		}
 	}
+
+	mbinfo_register_boot_data(mbi);
 }
 
 #endif /* MACH_HYP */
