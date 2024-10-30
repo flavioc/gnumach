@@ -65,6 +65,8 @@ libkernel_a_SOURCES += \
 	i386/i386at/kd_mouse.h \
 	x86_64/kdasm.S \
 	i386/i386at/kdsoft.h \
+	i386/i386at/mbinfo.c \
+	i386/i386at/mbinfo.h \
 	i386/i386at/mem.c \
 	i386/i386at/mem.h \
 	i386/i386at/rtc.c \
