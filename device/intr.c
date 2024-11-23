@@ -307,6 +307,10 @@ intr_thread (void)
 		e->n_unacked--;
 	      }
 
+	      /* Account for all interrupts that could not be delivered */
+	      irqtab.tot_num_intr -= e->interrupts;
+	      e->interrupts = 0;
+
 #if 0
 #ifndef LINUX_DEV
 	      // TODO: remove from the action list
