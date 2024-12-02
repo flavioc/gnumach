@@ -1036,7 +1036,8 @@ vm_page_seg_balance_page(struct vm_page_seg *seg,
     simple_unlock(&seg->lock);
     simple_unlock(&vm_page_queue_free_lock);
 
-    vm_object_lock(object);
+    // object is already locked as vm_page_seg_alloc_from_buddy return it locked
+    assert(vm_object_lock_taken(object) != 0);
     vm_page_insert(dest, object, offset);
     vm_object_unlock(object);
 
