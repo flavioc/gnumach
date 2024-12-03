@@ -1408,6 +1408,8 @@ device_write (void *d, ipc_port_t reply_port,
 		    copy->cpy_page_list[i]->phys_addr,
 		    VM_PROT_READ|VM_PROT_WRITE, TRUE);
 
+#warning FIXME: if physical adress is beyond VM_PAGE_DMA32 with PAE, we need a bounce buffer
+
       /* Do the write.  */
       amt = (*bd->ds->fops->write) (&td.inode, &td.file,
 				    (char *) addr + (uaddr & PAGE_MASK), len);
