@@ -278,24 +278,8 @@ fpu_module_init(void)
 	/* Get default state from CPU.  */
 	clear_ts();
 	fninit();
-	switch (fp_save_kind) {
-	    case FP_XSAVEC:
-	    case FP_XSAVES:
-		/* XRSTORS requires compact format, a bit faster anyway */
-		fp_default_state->xfp_save_state.header.xcomp_bv = XSAVE_XCOMP_BV_COMPACT;
-		/* Fallthrough */
-	    case FP_XSAVE:
-	    case FP_XSAVEOPT:
-	    case FP_FXSAVE:
-		fxsave(&fp_default_state->xfp_save_state);
-		break;
-	    case FP_FNSAVE:
-		fnsave(&fp_default_state->fp_save_state);
-		break;
-	}
+	fpu_save(fp_default_state);
 	set_ts();
-
-	fp_default_state->fp_valid = TRUE;
 }
 
 /*
