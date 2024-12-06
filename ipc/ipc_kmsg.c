@@ -2796,7 +2796,7 @@ ipc_msg_print(mach_msg_header_t *msgh)
 		  MACH_MSGH_BITS_LOCAL(msgh->msgh_bits),
 		  MACH_MSGH_BITS_REMOTE(msgh->msgh_bits));
 
-	db_printf("msgh_id=%d,size=%d,seqno=%d,",
+	db_printf("msgh_id=%d,size=%u,seqno=%d,",
 		  msgh->msgh_id,
 		  msgh->msgh_size,
 		  msgh->msgh_seqno);
