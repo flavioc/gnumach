@@ -24,6 +24,7 @@
  * the rights to redistribute these changes.
  */
 
+#include <kern/assert.h>
 #include <kern/cpu_number.h>
 #include <kern/debug.h>
 #include <kern/printf.h>
@@ -279,6 +280,8 @@ void
 cpu_ap_main()
 {
     int cpu = cpu_number();
+
+    assert(cpu > 0);
 
     do {
 	cpu_pause();
