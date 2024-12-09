@@ -200,7 +200,7 @@ apboot_jmp_offset:
 	wrmsr
 
 	/* Load int_stack_top[cpu] -> esp */
-	CPU_NUMBER_NO_STACK(%edx)
+	CPU_NUMBER(%edx)
 	movl	CX(EXT(int_stack_top), %edx), %esp
 
 	/* Ensure stack alignment */
