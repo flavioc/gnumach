@@ -455,6 +455,7 @@ i386at_init(void)
 	biosmem_setup();
 
 	pmap_make_temporary_mapping();
+	pmap_set_page_dir();
 
 #ifndef	MACH_HYP
 	/* Turn paging on.

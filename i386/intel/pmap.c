@@ -3289,8 +3289,6 @@ pmap_make_temporary_mapping(void)
 #endif
 #endif	/* PAE */
 #endif	/* MACH_PV_PAGETABLES */
-
-	pmap_set_page_dir();
 }
 
 void

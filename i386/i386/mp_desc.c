@@ -234,6 +234,7 @@ void
 cpu_setup(int cpu)
 {
     pmap_make_temporary_mapping();
+    pmap_set_page_dir();
     printf("AP=(%u) tempmap done\n", cpu);
 
     paging_enable();
