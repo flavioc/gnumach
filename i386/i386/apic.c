@@ -328,15 +328,20 @@ lapic_setup(void)
     unsigned long flags;
     int apic_id;
     volatile uint32_t dummy;
+    int cpu = cpu_number_slow();
 
     cpu_intr_save(&flags);
 
-    apic_id = apic_get_current_cpu();
+    apic_id = apic_get_cpu_apic_id(cpu);
 
+    /* Flat model */
     dummy = lapic->dest_format.r;
-    lapic->dest_format.r = 0xffffffff;		/* flat model */
+    lapic->dest_format.r = 0xffffffff;
+
+    /* Every 8th cpu is in the same logical group */
     dummy = lapic->logical_dest.r;
-    lapic->logical_dest.r = lapic->apic_id.r;	/* target self */
+    lapic->logical_dest.r = 0x01000000 << (APIC_LOGICAL_ID(cpu));
+
     dummy = lapic->lvt_lint0.r;
     lapic->lvt_lint0.r = dummy | LAPIC_DISABLE;
     dummy = lapic->lvt_lint1.r;

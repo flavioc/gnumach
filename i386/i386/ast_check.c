@@ -50,7 +50,7 @@ void init_ast_check(const processor_t processor)
  */
 void cause_ast_check(const processor_t processor)
 {
-    smp_remote_ast(apic_get_cpu_apic_id(processor->slot_num));
+    smp_remote_ast(APIC_LOGICAL_ID(processor->slot_num));
 }
 
 #endif	/* NCPUS > 1 */

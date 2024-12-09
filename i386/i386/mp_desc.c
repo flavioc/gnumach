@@ -210,7 +210,7 @@ cpu_control(int cpu, const int *info, unsigned int count)
 void
 interrupt_processor(int cpu)
 {
-	smp_pmap_update(apic_get_cpu_apic_id(cpu));
+	smp_pmap_update(APIC_LOGICAL_ID(cpu));
 }
 
 static void

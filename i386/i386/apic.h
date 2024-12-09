@@ -312,6 +312,10 @@ extern uint32_t *hpet_addr;
 #define APIC_MSR_X2APIC                0x400 /* LAPIC is in x2APIC mode */
 #define APIC_MSR_ENABLE                0x800 /* LAPIC is enabled */
 
+/* Since Logical Destination Register only has 8 bits of mask,
+ * we can only address 8 unique groups of cpus for IPIs.  */
+#define APIC_LOGICAL_ID(cpu)             ((cpu) % 8)
+
 /* Set or clear a bit in a 255-bit APIC mask register.
    These registers are spread through eight 32-bit registers.  */
 #define APIC_SET_MASK_BIT(reg, bit) \

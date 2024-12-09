@@ -48,19 +48,19 @@ static void smp_data_init(void)
 
 }
 
-static void smp_send_ipi(unsigned apic_id, unsigned vector)
+static void smp_send_ipi(unsigned logical_id, unsigned vector)
 {
     unsigned long flags;
 
     cpu_intr_save(&flags);
 
-    apic_send_ipi(NO_SHORTHAND, FIXED, PHYSICAL, ASSERT, EDGE, vector, apic_id);
+    apic_send_ipi(NO_SHORTHAND, FIXED, LOGICAL, ASSERT, EDGE, vector, logical_id);
 
     do {
         cpu_pause();
     } while(lapic->icr_low.delivery_status == SEND_PENDING);
 
-    apic_send_ipi(NO_SHORTHAND, FIXED, PHYSICAL, DE_ASSERT, EDGE, vector, apic_id);
+    apic_send_ipi(NO_SHORTHAND, FIXED, LOGICAL, DE_ASSERT, EDGE, vector, logical_id);
 
     do {
         cpu_pause();
@@ -69,14 +69,14 @@ static void smp_send_ipi(unsigned apic_id, unsigned vector)
     cpu_intr_restore(flags);
 }
 
-void smp_remote_ast(unsigned apic_id)
+void smp_remote_ast(unsigned logical_id)
 {
-    smp_send_ipi(apic_id, CALL_AST_CHECK);
+    smp_send_ipi(logical_id, CALL_AST_CHECK);
 }
 
-void smp_pmap_update(unsigned apic_id)
+void smp_pmap_update(unsigned logical_id)
 {
-    smp_send_ipi(apic_id, CALL_PMAP_UPDATE);
+    smp_send_ipi(logical_id, CALL_PMAP_UPDATE);
 }
 
 static void
