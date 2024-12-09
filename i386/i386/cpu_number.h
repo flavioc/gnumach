@@ -41,12 +41,14 @@
 #define	CX(addr, reg)	addr(,reg,8)
 #endif
 
+/* Slow version, always works */
 #define	CPU_NUMBER_NO_STACK(reg)	\
 	movl	%cs:lapic, reg		;\
 	movl	%cs:APIC_ID(reg), reg	;\
 	shrl	$24, reg		;\
 	movl	%cs:CX(cpu_id_lut, reg), reg	;\
 
+/* Fast version, requires a stack */
 #ifdef __i386__
 /* Never call CPU_NUMBER_NO_GS(%esi) */
 #define CPU_NUMBER_NO_GS(reg)		\
@@ -86,6 +88,7 @@
 	popq	%rsi
 #endif
 
+/* Fastest version, requires gs being set up */
 #define CPU_NUMBER(reg)	\
 	movl    MY(CPU_ID), reg;
 
