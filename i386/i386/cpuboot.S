@@ -169,12 +169,13 @@ apboot_jmp_offset:
 	movl	%ecx,%eax
 	movl	$PC_SIZE,%ebx
 	mul	%ebx
-	addl	$percpu_array - KERNELBASE, %eax
+	addl	$percpu_array, %eax
 
 	/* Record our cpu number */
-	movl	%ecx, (PERCPU_CPU_ID + KERNELBASE)(%eax)
+	movl	%ecx, (PERCPU_CPU_ID)(%eax)
 
 	/* Set up temporary percpu descriptor */
+	addl	$(-KERNELBASE), %eax
 	movw	%ax, apboot_percpu_low
 	shr	$16, %eax
 	movb	%al, apboot_percpu_med
