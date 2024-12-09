@@ -495,7 +495,8 @@ ipc_mqueue_copyin(
  *		If resume is true, then we are resuming a receive
  *		operation after a blocked receive discarded our stack.
  *	Conditions:
- *		The message queue is locked; it will be returned unlocked.
+ *		The message queue is locked (unless resume is true); it
+ *		will be returned unlocked.
  *
  *		Our caller must hold a reference for the port or port set
  *		to which this queue belongs, to keep the queue
