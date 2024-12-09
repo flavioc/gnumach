@@ -326,13 +326,10 @@ void
 lapic_setup(void)
 {
     unsigned long flags;
-    int apic_id;
     volatile uint32_t dummy;
     int cpu = cpu_number_slow();
 
     cpu_intr_save(&flags);
-
-    apic_id = apic_get_cpu_apic_id(cpu);
 
     /* Flat model */
     dummy = lapic->dest_format.r;
@@ -348,7 +345,7 @@ lapic_setup(void)
     lapic->lvt_lint1.r = dummy | LAPIC_DISABLE;
     dummy = lapic->lvt_performance_monitor.r;
     lapic->lvt_performance_monitor.r = dummy | LAPIC_DISABLE;
-    if (apic_id != 0)
+    if (cpu > 0)
       {
         dummy = lapic->lvt_timer.r;
         lapic->lvt_timer.r = dummy | LAPIC_DISABLE;
