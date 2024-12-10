@@ -314,7 +314,7 @@ extern uint32_t *hpet_addr;
 
 /* Since Logical Destination Register only has 8 bits of mask,
  * we can only address 8 unique groups of cpus for IPIs.  */
-#define APIC_LOGICAL_ID(cpu)             ((cpu) % 8)
+#define APIC_LOGICAL_ID(cpu)             (1u << ((cpu) % 8))
 
 /* Set or clear a bit in a 255-bit APIC mask register.
    These registers are spread through eight 32-bit registers.  */

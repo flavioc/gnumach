@@ -337,7 +337,7 @@ lapic_setup(void)
 
     /* Every 8th cpu is in the same logical group */
     dummy = lapic->logical_dest.r;
-    lapic->logical_dest.r = 0x01000000 << (APIC_LOGICAL_ID(cpu));
+    lapic->logical_dest.r = APIC_LOGICAL_ID(cpu) << 24;
 
     dummy = lapic->lvt_lint0.r;
     lapic->lvt_lint0.r = dummy | LAPIC_DISABLE;
