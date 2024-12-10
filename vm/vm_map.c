@@ -3927,7 +3927,7 @@ kern_return_t vm_map_copyin_page_list(
 	copy->cpy_npages = 0;
 	copy->offset = src_addr;
 	copy->size = len;
-	copy->cpy_cont = ((kern_return_t (*)()) 0);
+	copy->cpy_cont = (vm_map_copy_cont_fn) 0;
 	copy->cpy_cont_args = VM_MAP_COPYIN_ARGS_NULL;
 
 	/*

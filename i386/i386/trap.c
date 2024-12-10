@@ -245,7 +245,7 @@ dump_ss(regs);
 #endif
 				  FALSE,
 				  FALSE,
-				  (void (*)()) 0);
+				  vm_fault_no_continuation);
 #if	MACH_KDB
 		if (result == KERN_SUCCESS) {
 		    /* Look for watchpoints */

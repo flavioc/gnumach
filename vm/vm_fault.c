@@ -1520,7 +1520,7 @@ void vm_fault_wire(
 	for (va = entry->vme_start; va < end_addr; va += PAGE_SIZE) {
 		if (vm_fault_wire_fast(map, va, entry) != KERN_SUCCESS)
 			(void) vm_fault(map, va, VM_PROT_NONE, TRUE,
-					FALSE, (void (*)()) 0);
+					FALSE, vm_fault_no_continuation);
 	}
 }
 
@@ -1554,7 +1554,7 @@ void vm_fault_unwire(
 		if (object == VM_OBJECT_NULL) {
 			vm_map_lock_set_recursive(map);
 			(void) vm_fault(map, va, VM_PROT_NONE, TRUE,
-					FALSE, (void (*)()) 0);
+					FALSE, vm_fault_no_continuation);
 			vm_map_lock_clear_recursive(map);
 		} else {
 		 	vm_prot_t	prot;

@@ -311,14 +311,14 @@ MACRO_BEGIN								\
 	vm_map_copy_page_discard(old_copy);				\
 	*result = (*((old_copy)->cpy_cont))((old_copy)->cpy_cont_args,	\
 					    new_copy);			\
-	(old_copy)->cpy_cont = (kern_return_t (*)()) 0;			\
+	(old_copy)->cpy_cont = (vm_map_copy_cont_fn) 0;			\
 MACRO_END
 
 #define	vm_map_copy_invoke_extend_cont(old_copy, new_copy, result)	\
 MACRO_BEGIN								\
 	*result = (*((old_copy)->cpy_cont))((old_copy)->cpy_cont_args,	\
 					    new_copy);			\
-	(old_copy)->cpy_cont = (kern_return_t (*)()) 0;			\
+	(old_copy)->cpy_cont = (vm_map_copy_cont_fn) 0;			\
 MACRO_END
 
 #define vm_map_copy_abort_cont(old_copy)				\
@@ -326,12 +326,12 @@ MACRO_BEGIN								\
 	vm_map_copy_page_discard(old_copy);				\
 	(*((old_copy)->cpy_cont))((old_copy)->cpy_cont_args,		\
 				  (vm_map_copy_t *) 0);			\
-	(old_copy)->cpy_cont = (kern_return_t (*)()) 0;			\
+	(old_copy)->cpy_cont = (vm_map_copy_cont_fn) 0;			\
 	(old_copy)->cpy_cont_args = VM_MAP_COPYIN_ARGS_NULL;		\
 MACRO_END
 
 #define vm_map_copy_has_cont(copy)					\
-    (((copy)->cpy_cont) != (kern_return_t (*)()) 0)
+    (((copy)->cpy_cont) != (vm_map_copy_cont_fn) 0)
 
 /*
  *	Continuation structures for vm_map_copyin_page_list.

@@ -51,7 +51,7 @@ struct db_variable {
 #define DB_VAR_GET	0
 #define DB_VAR_SET	1
 };
-#define	FCN_NULL	((void (*)())0)
+#define	FCN_NULL	((void (*)(struct db_variable *, db_expr_t *, int, db_var_aux_param_t))0)
 
 #define DB_VAR_LEVEL	3	/* maximum number of suffix level */
 
