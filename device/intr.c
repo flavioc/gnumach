@@ -24,6 +24,8 @@
 
 #ifndef MACH_XEN
 
+def_simple_lock_irq_data(static, intr_lock)
+
 queue_head_t main_intr_queue;
 static boolean_t deliver_intr (int id, ipc_port_t dst_port);
 
@@ -70,7 +72,7 @@ irq_acknowledge (ipc_port_t receive_port)
   user_intr_t *e;
   kern_return_t ret = 0;
 
-  spl_t s = splhigh ();
+  spl_t s = simple_lock_irq(&intr_lock);
   e = search_intr (&irqtab, receive_port);
 
   if (!e)
@@ -85,7 +87,7 @@ irq_acknowledge (ipc_port_t receive_port)
       else
         e->n_unacked--;
     }
-  splx (s);
+  simple_unlock_irq(s, &intr_lock);
 
   if (ret)
     return ret;
@@ -103,11 +105,15 @@ queue_intr (struct irqdev *dev, int id, user_intr_t *e)
    * disabled. Level-triggered interrupts would keep raising otherwise. */
   __disable_irq (dev->irq[id]);
 
-  spl_t s = splhigh ();
+#ifdef LINUX_DEV /* user_irq_handler does its own locking */
+  spl_t s = simple_lock_irq(&intr_lock);
+#endif
   e->n_unacked++;
   e->interrupts++;
   dev->tot_num_intr++;
-  splx (s);
+#ifdef LINUX_DEV
+  simple_unlock_irq(s, &intr_lock);
+#endif
 
   thread_wakeup ((event_t) &intr_thread);
 }
@@ -144,7 +150,7 @@ insert_intr_entry (struct irqdev *dev, int id, ipc_port_t dst_port)
     return NULL;
 
   /* check whether the intr entry has been in the queue. */
-  spl_t s = splhigh ();
+  spl_t s = simple_lock_irq(&intr_lock);
   e = search_intr (dev, dst_port);
   if (e)
     {
@@ -162,7 +168,7 @@ insert_intr_entry (struct irqdev *dev, int id, ipc_port_t dst_port)
 
   queue_enter (dev->intr_queue, new, user_intr_t *, chain);
 out:
-  splx (s);
+  simple_unlock_irq(s, &intr_lock);
   if (free)
     kfree ((vm_offset_t) new, sizeof (*new));
   return ret;
@@ -178,7 +184,7 @@ user_irq_handler (int id)
   user_intr_t *e;
   spl_t s;
 
-  s = splhigh();
+  s = simple_lock_irq(&intr_lock);
 
   for (handler = *prev; handler; handler = handler->next)
     {
@@ -190,7 +196,7 @@ user_irq_handler (int id)
         }
       prev = &handler->next;
     }
-  splx(s);
+  simple_unlock_irq(s, &intr_lock);
 }
 
 int
@@ -226,13 +232,13 @@ install_user_intr_handler (struct irqdev *dev, int id, unsigned long flags,
   new->user_intr = user_intr;
   new->flags = flags;
 
-  s = splhigh();
+  s = simple_lock_irq(&intr_lock);
   new->next = *head;
   *head = new;
   ivect[irq] = user_irq_handler;
   iunit[irq] = (int)irq;
   unmask_irq (irq);
-  splx(s);
+  simple_unlock_irq(s, &intr_lock);
 
   return D_SUCCESS;
 }
@@ -251,7 +257,7 @@ intr_thread (void)
       assert_wait ((event_t) &intr_thread, FALSE);
       /* Make sure we wake up from times to times to check for aborted processes */
       thread_set_timeout (hz);
-      spl_t s = splhigh ();
+      spl_t s = simple_lock_irq(&intr_lock);
 
       /* Now check for interrupts */
       int del;
@@ -279,9 +285,9 @@ intr_thread (void)
 		  e->interrupts--;
 		  irqtab.tot_num_intr--;
 
-		  splx (s);
+		  simple_unlock_irq(s, &intr_lock);
 		  deliver_intr (id, dst_port);
-		  s = splhigh ();
+		  s = simple_lock_irq(&intr_lock);
 		}
 	    }
 
@@ -317,14 +323,14 @@ intr_thread (void)
 #else
 	      // FIXME: with the Linux irq handler we don't actually control the action list
 #endif
-	      splx (s);
+	      simple_unlock_irq(s, &intr_lock);
 	      kfree ((vm_offset_t) e, sizeof (*e));
-	      s = splhigh ();
+	      s = simple_lock_irq(&intr_lock);
 #endif
 	    }
 	}
       while (del || irqtab.tot_num_intr);
-      splx (s);
+      simple_unlock_irq(s, &intr_lock);
       thread_block (NULL);
     }
 }
