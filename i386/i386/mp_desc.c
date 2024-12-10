@@ -323,7 +323,9 @@ start_other_cpus(void)
 	memcpy((void*) phystokv(apboot_addr), (void*) &apboot,
 	       (uint32_t)&apbootend - (uint32_t)&apboot);
 
-	unsigned cpu;
+	unsigned cpu = cpu_number_slow();
+
+	assert (cpu == 0);
 
 	splhigh();
 
