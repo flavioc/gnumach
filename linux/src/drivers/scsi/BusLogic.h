@@ -311,8 +311,11 @@ BusLogic_BIOS_DiskGeometryTranslation_T;
 /*
   Define a Boolean data type.
 */
-
+#if defined(__bool_true_false_are_defined) || __STDC_VERSION__ > 201710L
+typedef bool boolean;
+#else
 typedef enum { false, true } __attribute__ ((packed)) boolean;
+#endif
 
 
 /*
