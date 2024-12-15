@@ -800,7 +800,7 @@ kern_return_t task_info(
 		map = (task == kernel_task) ? kernel_map : task->map;
 
 		basic_info->virtual_size  = map->size;
-		basic_info->resident_size = pmap_resident_count(map->pmap)
+		basic_info->resident_size = ((rpc_vm_size_t) pmap_resident_count(map->pmap))
 						   * PAGE_SIZE;
 
 		task_lock(task);
