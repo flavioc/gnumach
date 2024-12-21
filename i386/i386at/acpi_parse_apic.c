@@ -376,7 +376,7 @@ static void
 acpi_apic_add_lapic(struct acpi_apic_lapic *lapic_entry)
 {
     /* If cpu flag is correct */
-    if (lapic_entry->flags & 0x1) {
+    if (lapic_entry->flags & (ACPI_LAPIC_FLAG_ENABLED | ACPI_LAPIC_FLAG_CAPABLE)) {
         /* Add cpu to processors' list. */
         apic_add_cpu(lapic_entry->apic_id);
     }

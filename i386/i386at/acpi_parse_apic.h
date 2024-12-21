@@ -149,6 +149,8 @@ struct acpi_apic_lapic {
     uint32_t    flags;
 } __attribute__((__packed__));
 
+#define ACPI_LAPIC_FLAG_ENABLED	(1 << 0)
+#define ACPI_LAPIC_FLAG_CAPABLE	(1 << 1)
 
 /*
  * I/O APIC Structure
