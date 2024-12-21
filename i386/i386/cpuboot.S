@@ -31,15 +31,19 @@
 #define BOOT_CS		0x8
 #define BOOT_DS		0x10
 
+#define GDT_DESCR_M32	4
+#define GDT_TABLE_M32	(14*2)
+
 .data
 
 .align 16
 apboot_idt_ptr:
 	.long 0
 .align 16
+apboot_gdt_top:
 	.word 0
 apboot_gdt_descr:
-	.word 14*8-1
+	.word (GDT_TABLE_M32 * 4) - 1
 	.long apboot_gdt - KERNELBASE
 .align 16
 apboot_gdt:
@@ -101,6 +105,9 @@ apboot_percpu_med:
 apboot_percpu_high:
 	.byte 0
 
+/* Empty space for per-cpu gdt descriptor and gdt */
+.space (NCPUS-1) * (GDT_DESCR_M32 + GDT_TABLE_M32) * 4, 0x0
+
 .globl apboot, apbootend, gdt_descr_tmp, apboot_jmp_offset
 .align 16
 .code16
@@ -159,28 +166,62 @@ apboot_jmp_offset:
 	movw	%ax, %gs
 	movw	%ax, %ss
 
-	/* Get CPU number */
+	/* Get CPU number into ebp */
 	movl	$1, %eax
 	cpuid
 	shrl	$24, %ebx
-	movl	%cs:CX(cpu_id_lut, %ebx), %ecx
+	movl	%cs:CX(cpu_id_lut, %ebx), %ebp
+
+	/* Copy first gdt descriptor and gdt to cpu-th area */
+	movl	$(GDT_DESCR_M32 + GDT_TABLE_M32), %ecx
+	movl	$apboot_gdt_top, %esi
+	movl	%esi, %edi
+	movl	$((GDT_DESCR_M32 + GDT_TABLE_M32) * 4), %eax
+	mul	%ebp
+	addl	%eax, %edi
+	rep movsl
 
 	/* Access per_cpu area */
-	movl	%ecx,%eax
+	movl	%ebp, %eax
 	movl	$PC_SIZE,%ebx
 	mul	%ebx
 	addl	$percpu_array, %eax
 
 	/* Record our cpu number */
-	movl	%ecx, (PERCPU_CPU_ID)(%eax)
+	movl	%ebp, (PERCPU_CPU_ID)(%eax)
 
 	/* Set up temporary percpu descriptor */
 	addl	$(-KERNELBASE), %eax
-	movw	%ax, apboot_percpu_low
-	shr	$16, %eax
-	movb	%al, apboot_percpu_med
-	shr	$8, %ax
-	movb	%al, apboot_percpu_high
+	movl	%eax, %ebx
+
+	/* Make eax hold offset to my cpus gdt */
+	movl	$((GDT_DESCR_M32 + GDT_TABLE_M32) * 4), %eax
+	mul	%ebp
+
+	/* Patch only our own copy of gdt */
+	movl	$apboot_percpu_low, %ecx
+	addl	%eax, %ecx
+	movw	%bx, (%ecx)
+	shr	$16, %ebx
+	addl	$2, %ecx
+	movb	%bl, (%ecx)
+	shr	$8, %bx
+	addl	$3, %ecx
+	movb	%bl, (%ecx)
+
+	/* Patch only our own copy of gdt descriptor */
+	movl	$apboot_gdt_descr, %ecx
+	addl	%eax, %ecx
+	movl	%ecx, %edx
+	addl	$2, %edx
+	movl	(%edx), %ebx
+	addl	%eax, %ebx
+	movl	%ebx, (%edx)
+
+	/* Reload our copy of gdt */
+	lgdtl	(%ecx)
+	ljmpl	$KERNEL_CS, $2f
+2:
 
 	movw	$PERCPU_DS, %ax
 	movw	%ax, %gs
@@ -213,8 +254,10 @@ apboot_jmp_offset:
 	/* Finish the cpu configuration */
 	call EXT(cpu_ap_main)
 
+3:
 	/* NOT REACHED */
 	hlt
+	jmp	3b
 
 .align 16
     .word 0
