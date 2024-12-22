@@ -179,6 +179,7 @@ apboot_jmp_offset:
 	movl	$((GDT_DESCR_M32 + GDT_TABLE_M32) * 4), %eax
 	mul	%ebp
 	addl	%eax, %edi
+	cld
 	rep movsl
 
 	/* Access per_cpu area */
