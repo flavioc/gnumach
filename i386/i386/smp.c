@@ -95,6 +95,7 @@ smp_send_ipi_init(int bsp_apic_id)
     int err;
 
     lapic->error_status.r = 0;
+    err = lapic->error_status.r;
 
     /* Assert INIT IPI:
      *
@@ -104,7 +105,6 @@ smp_send_ipi_init(int bsp_apic_id)
 
     /* Wait for delivery */
     wait_for_ipi();
-    hpet_mdelay(10);
 
     /* Deassert INIT IPI:
      *
@@ -126,32 +126,49 @@ smp_send_ipi_init(int bsp_apic_id)
 }
 
 static int
-smp_send_ipi_startup(int bsp_apic_id, int vector)
+smp_send_ipi_startup_twice(int bsp_apic_id, int vector)
 {
-    int err;
+    int i, accept_err, send_err;
+    volatile int err;
 
-    lapic->error_status.r = 0;
+    for (i = 0; i < 2; i++) {
+        lapic->error_status.r = 0;
+        err = lapic->error_status.r;
 
-    /* StartUp IPI:
-     *
-     * Have not seen any documentation for trigger mode for this IPI
-     * but it seems to work with EDGE.  (AMD BKDG FAM16h document specifies dont care)
-     */
-    apic_send_ipi(ALL_EXCLUDING_SELF, STARTUP, PHYSICAL, ASSERT, EDGE, vector, bsp_apic_id);
+        /* StartUp IPI:
+         *
+         * Have not seen any documentation for trigger mode for this IPI
+         * but it seems to work with EDGE.  (AMD BKDG FAM16h document specifies dont care)
+         */
+        apic_send_ipi(ALL_EXCLUDING_SELF, STARTUP, PHYSICAL, DE_ASSERT, EDGE, vector, bsp_apic_id);
 
-    /* Wait for delivery */
-    wait_for_ipi();
+        hpet_udelay(10);
 
-    err = lapic->error_status.r;
-    if (err) {
-        printf("ESR error upon STARTUP 0x%x\n", err);
+        /* Wait for other cpu to accept IPI */
+        wait_for_ipi();
+        send_err = lapic->error_status.r;
+
+        hpet_udelay(10);
+
+        lapic->error_status.r = 0;
+        accept_err = lapic->error_status.r & 0xef;
+
+        if (send_err || accept_err)
+            break;
     }
-    return 0;
+
+    if (send_err)
+        printf("ESR error: DID NOT SEND? 0x%x\n", send_err);
+    if (accept_err)
+        printf("ESR error: delivery 0x%x\n", accept_err);
+
+    return send_err | accept_err;
 }
 
 /* See Intel IA32/64 Software Developer's Manual 3A Section 8.4.4.1 */
 int smp_startup_cpus(unsigned bsp_apic_id, phys_addr_t start_eip)
 {
+    int err;
 #if 0
     /* This block goes with a legacy method of INIT that only works with
      * old hardware that does not support SIPIs.
@@ -177,12 +194,13 @@ int smp_startup_cpus(unsigned bsp_apic_id, phys_addr_t start_eip)
     printf("Sending IPIs from BSP APIC ID %u...\n", bsp_apic_id);
 
     smp_send_ipi_init(bsp_apic_id);
-    hpet_mdelay(10);
-    smp_send_ipi_startup(bsp_apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
-    hpet_udelay(200);
-    smp_send_ipi_startup(bsp_apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
-    hpet_udelay(200);
-
+    err = smp_send_ipi_startup_twice(bsp_apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
+    if (err) {
+        printf("FATAL: APs failed to start\n");
+        while(1) {
+            cpu_pause();
+        }
+    }
     printf("done\n");
     return 0;
 }
