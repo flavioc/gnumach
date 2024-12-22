@@ -44,6 +44,7 @@ apboot_gdt_top:
 	.word 0
 apboot_gdt_descr:
 	.word (GDT_TABLE_M32 * 4) - 1
+apboot_gdt_descr_addr:
 	.long apboot_gdt - KERNELBASE
 .align 16
 apboot_gdt:
@@ -200,27 +201,17 @@ apboot_jmp_offset:
 	mul	%ebp
 
 	/* Patch only our own copy of gdt */
-	movl	$apboot_percpu_low, %ecx
-	addl	%eax, %ecx
-	movw	%bx, (%ecx)
+	movw	%bx, apboot_percpu_low(%eax)
 	shr	$16, %ebx
-	addl	$2, %ecx
-	movb	%bl, (%ecx)
+	movb	%bl, apboot_percpu_med(%eax)
 	shr	$8, %bx
-	addl	$3, %ecx
-	movb	%bl, (%ecx)
+	movb	%bl, apboot_percpu_high(%eax)
 
 	/* Patch only our own copy of gdt descriptor */
-	movl	$apboot_gdt_descr, %ecx
-	addl	%eax, %ecx
-	movl	%ecx, %edx
-	addl	$2, %edx
-	movl	(%edx), %ebx
-	addl	%eax, %ebx
-	movl	%ebx, (%edx)
+	addl	%eax, apboot_gdt_descr_addr(%eax)
 
 	/* Reload our copy of gdt */
-	lgdtl	(%ecx)
+	lgdtl	apboot_gdt_descr(%eax)
 	ljmpl	$KERNEL_CS, $2f
 2:
 
