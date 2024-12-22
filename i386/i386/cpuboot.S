@@ -171,6 +171,7 @@ apboot_jmp_offset:
 	movl	$1, %eax
 	cpuid
 	shrl	$24, %ebx
+	andl	%cs:apic_id_mask, %ebx
 	movl	%cs:CX(cpu_id_lut, %ebx), %ebp
 
 	/* Copy first gdt descriptor and gdt to cpu-th area */

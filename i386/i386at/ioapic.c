@@ -366,7 +366,7 @@ void
 ioapic_configure(void)
 {
     /* Assume first IO APIC maps to GSI base 0 */
-    int gsi, apic = 0, bsp = 0, pin;
+    int gsi, apic = 0, pin;
     IrqOverrideData *irq_over;
     int timer_gsi;
     int version = ioapic_version(apic);
@@ -387,7 +387,11 @@ ioapic_configure(void)
     entry.both.delvmode = IOAPIC_FIXED;
     entry.both.destmode = IOAPIC_PHYSICAL;
     entry.both.mask = IOAPIC_MASK_DISABLED;
-    entry.both.dest = apic_get_cpu_apic_id(bsp);
+    /* This does not use apic_id_mask because
+     * the IOAPIC seems to use what is actually set
+     * in lapic's apic_id register.
+     */
+    entry.both.dest = lapic->apic_id.r >> 24;
 
     for (pin = 0; pin < 16; pin++) {
         gsi = pin;

@@ -46,6 +46,7 @@
 	movl	%cs:lapic, reg		;\
 	movl	%cs:APIC_ID(reg), reg	;\
 	shrl	$24, reg		;\
+	andl	%cs:apic_id_mask, reg	;\
 	movl	%cs:CX(cpu_id_lut, reg), reg	;\
 
 /* Fast version, requires a stack */
@@ -60,6 +61,7 @@
 	movl	$1, %eax	;\
 	cpuid			;\
 	shrl	$24, %ebx	;\
+	andl	%cs:apic_id_mask, %ebx	;\
 	movl	%cs:CX(cpu_id_lut, %ebx), %esi	;\
 	popl	%edx		;\
 	popl	%ecx		;\
@@ -79,6 +81,7 @@
 	movl	$1, %eax	;\
 	cpuid			;\
 	shrl	$24, %ebx	;\
+	andl	%cs:apic_id_mask, %ebx	;\
 	movl	%cs:CX(cpu_id_lut, %ebx), %esi	;\
 	popq	%rdx		;\
 	popq	%rcx		;\

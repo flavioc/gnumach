@@ -46,6 +46,13 @@ int cpu_id_lut[UINT8_MAX + 1] = {0};
 
 ApicInfo apic_data;
 
+/* xAPIC: This is supposed to be an 8 bit mask.  On some platforms it needs to be a
+ * lower 4 bit mask because the chipset only matches on 4 bits of the id when doing IPIs.
+ * The cpuid accessor and lapic may report full 8 bit id so always & with this mask when
+ * reading the APIC id.  Increases to 8 bits if no workaround is required.
+*/
+uint8_t apic_id_mask = 0xf;
+
 /*
  * apic_data_init: initialize the apic_data structures to preliminary values.
  * Reserve memory to the lapic list dynamic vector.
@@ -206,7 +213,7 @@ apic_get_current_cpu(void)
     eax = 1;
     ecx = 0;
     cpuid(eax, ebx, ecx, edx);
-    return (ebx >> 24);
+    return (ebx >> 24) & apic_id_mask;
 }
 
 
@@ -320,6 +327,25 @@ void
 lapic_disable(void)
 {
     lapic->spurious_vector.r &= ~LAPIC_ENABLE;
+}
+
+void
+fix_apic_id_mask(void)
+{
+    if (lapic->version.r & APIC_VERSION_HAS_EXT_APIC_SPACE) {
+        /* Extended registers beyond 0x3f0 are present */
+        if (lapic->extended_feature.r & APIC_EXT_FEATURE_HAS_8BITID) {
+            /* 8 bit APIC ids are supported on this local APIC */
+            if (!(lapic->extended_control.r & APIC_EXT_CTRL_ENABLE_8BITID)) {
+                printf("WARNING: Only 4 bit APIC ids\n");
+                apic_id_mask = 0xf;
+                return;
+            }
+        }
+    }
+
+    printf("8 bit APIC ids\n");
+    apic_id_mask = 0xff;
 }
 
 void

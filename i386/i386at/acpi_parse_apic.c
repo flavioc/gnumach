@@ -378,7 +378,7 @@ acpi_apic_add_lapic(struct acpi_apic_lapic *lapic_entry)
     /* If cpu flag is correct */
     if (lapic_entry->flags & (ACPI_LAPIC_FLAG_ENABLED | ACPI_LAPIC_FLAG_CAPABLE)) {
         /* Add cpu to processors' list. */
-        apic_add_cpu(lapic_entry->apic_id);
+        apic_add_cpu(lapic_entry->apic_id & apic_id_mask);
     }
 
 }
@@ -541,6 +541,9 @@ acpi_apic_setup(struct acpi_apic *apic)
         return ACPI_NO_LAPIC;
 
     apic_lapic_init(lapic_unit);
+
+    fix_apic_id_mask();
+
     acpi_apic_parse_table(apic);
 
     ncpus = apic_get_numcpus();

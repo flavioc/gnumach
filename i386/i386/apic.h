@@ -189,7 +189,19 @@ typedef struct ApicLocalUnit {
         ApicReg reserved3d;              /* 0x3d0 */
         ApicReg divider_config;          /* 0x3e0 */
         ApicReg reserved3f;              /* 0x3f0 */
+        ApicReg extended_feature;        /* 0x400  Present if version extended apic space bit is set */
+        ApicReg extended_control;        /* 0x410 */
+        ApicReg specific_eoi;            /* 0x420 */
 } ApicLocalUnit;
+
+#define APIC_VERSION_HAS_EXT_APIC_SPACE	(1 << 31)
+#define APIC_VERSION_HAS_DIRECTED_EOI	(1 << 24)
+
+#define APIC_EXT_FEATURE_HAS_SEOI	(1 << 1)
+#define APIC_EXT_FEATURE_HAS_8BITID	(1 << 2)
+
+#define APIC_EXT_CTRL_ENABLE_SEOI	(1 << 1)
+#define APIC_EXT_CTRL_ENABLE_8BITID	(1 << 2)
 
 typedef struct IoApicData {
         uint8_t  apic_id;
@@ -244,6 +256,7 @@ int apic_get_total_gsis(void);
 void picdisable(void);
 void lapic_eoi(void);
 void ioapic_irq_eoi(int pin);
+void fix_apic_id_mask(void);
 void lapic_setup(void);
 void lapic_disable(void);
 void lapic_enable(void);
@@ -261,6 +274,7 @@ extern void intnull(int unit);
 extern volatile ApicLocalUnit* lapic;
 extern int cpu_id_lut[];
 extern uint32_t *hpet_addr;
+extern uint8_t apic_id_mask;
 
 #endif
 
@@ -292,7 +306,6 @@ extern uint32_t *hpet_addr;
 #define LAPIC_TIMER_DIVIDE_8           2
 #define LAPIC_TIMER_DIVIDE_16          3
 #define LAPIC_TIMER_BASEDIV            0x100000
-#define LAPIC_HAS_DIRECTED_EOI         0x1000000
 
 #define NINTR                          64 /* Max 32 GSIs on each of two IOAPICs */
 #define IOAPIC_FIXED                   0
