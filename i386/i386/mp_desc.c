@@ -95,11 +95,6 @@ interrupt_stack_alloc(void)
 }
 
 #if	NCPUS > 1
-/*
- * Flag to mark SMP init by BSP complete
- */
-int bspdone;
-
 phys_addr_t apboot_addr;
 extern void *apboot, *apbootend;
 extern volatile ApicLocalUnit* lapic;
@@ -233,9 +228,8 @@ paging_enable(void)
 void
 cpu_setup(int cpu)
 {
-    pmap_make_temporary_mapping();
     pmap_set_page_dir();
-    printf("AP=(%u) tempmap done\n", cpu);
+    printf("AP=(%u) pagedir done\n", cpu);
 
     paging_enable();
     flush_instr_queue();
@@ -260,13 +254,6 @@ cpu_setup(int cpu)
     ap_ktss_init(cpu);
     printf("AP=(%u) ktss done\n", cpu);
 
-    pmap_remove_temporary_mapping();
-    printf("AP=(%u) remove tempmap done\n", cpu);
-
-    pmap_set_page_dir();
-    flush_tlb();
-    printf("AP=(%u) reset page dir done\n", cpu);
-
     /* Initialize machine_slot fields with the cpu data */
     machine_slot[cpu].cpu_subtype = CPU_SUBTYPE_AT386;
     machine_slot[cpu].cpu_type = machine_slot[0].cpu_type;
@@ -284,34 +271,7 @@ cpu_ap_main()
 
     assert(cpu > 0);
 
-    do {
-	cpu_pause();
-    } while (bspdone != cpu);
-
-    __sync_synchronize();
-
     cpu_setup(cpu);
-}
-
-kern_return_t
-cpu_start(int cpu)
-{
-    int err;
-
-    assert(machine_slot[cpu].running != TRUE);
-
-    uint16_t apic_id = apic_get_cpu_apic_id(cpu);
-
-    printf("Trying to enable: %d at 0x%lx\n", apic_id, apboot_addr);
-
-    err = smp_startup_cpu(apic_id, apboot_addr);
-
-    if (!err) {
-        printf("Started cpu %d (lapic id %04x)\n", cpu, apic_id);
-        return KERN_SUCCESS;
-    }
-    printf("FATAL: Cannot init AP %d\n", cpu);
-    for (;;);
 }
 
 void
@@ -340,22 +300,31 @@ start_other_cpus(void)
 	 */
 	lapic_disable();
 
-	bspdone = 0;
+	/* This is set once for all APs to use */
+	pmap_make_temporary_mapping();
+
 	for (cpu = 1; cpu < ncpus; cpu++) {
 		machine_slot[cpu].running = FALSE;
+	}
 
-		//Start cpu
-		printf("Starting AP %d\n", cpu);
-		cpu_start(cpu);
+	smp_startup_cpus(apic_get_current_cpu(), apboot_addr);
 
-		bspdone++;
+	for (cpu = 1; cpu < ncpus; cpu++) {
+		printf("Waiting for AP %d\n", cpu);
+
 		do {
 			cpu_pause();
 		} while (machine_slot[cpu].running == FALSE);
-
-		__sync_synchronize();
 	}
 	printf("BSP: Completed SMP init\n");
+
+	pmap_remove_temporary_mapping();
+
+	/* Flush TLB on all cpu groups */
+	ncpus = (ncpus < APIC_LOGICAL_CPU_GROUPS) ? ncpus : APIC_LOGICAL_CPU_GROUPS;
+	for (cpu = 1; cpu < ncpus; cpu++) {
+		interrupt_processor(cpu);
+	}
 
 	/* Re-enable IOAPIC interrupts as per setup */
 	lapic_enable();

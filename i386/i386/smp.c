@@ -90,7 +90,7 @@ wait_for_ipi(void)
 }
 
 static int
-smp_send_ipi_init(int apic_id)
+smp_send_ipi_init(int bsp_apic_id)
 {
     int err;
 
@@ -100,7 +100,7 @@ smp_send_ipi_init(int apic_id)
      *
      * This is EDGE triggered to match the deassert
      */
-    apic_send_ipi(NO_SHORTHAND, INIT, PHYSICAL, ASSERT, EDGE, 0, apic_id);
+    apic_send_ipi(ALL_EXCLUDING_SELF, INIT, PHYSICAL, ASSERT, EDGE, 0, bsp_apic_id);
 
     /* Wait for delivery */
     wait_for_ipi();
@@ -113,7 +113,7 @@ smp_send_ipi_init(int apic_id)
      * that does not support STARTUP IPIs at all, and instead jump
      * via a warm reset vector.
      */
-    apic_send_ipi(NO_SHORTHAND, INIT, PHYSICAL, DE_ASSERT, EDGE, 0, apic_id);
+    apic_send_ipi(ALL_EXCLUDING_SELF, INIT, PHYSICAL, DE_ASSERT, EDGE, 0, bsp_apic_id);
 
     /* Wait for delivery */
     wait_for_ipi();
@@ -126,7 +126,7 @@ smp_send_ipi_init(int apic_id)
 }
 
 static int
-smp_send_ipi_startup(int apic_id, int vector)
+smp_send_ipi_startup(int bsp_apic_id, int vector)
 {
     int err;
 
@@ -137,7 +137,7 @@ smp_send_ipi_startup(int apic_id, int vector)
      * Have not seen any documentation for trigger mode for this IPI
      * but it seems to work with EDGE.  (AMD BKDG FAM16h document specifies dont care)
      */
-    apic_send_ipi(NO_SHORTHAND, STARTUP, PHYSICAL, ASSERT, EDGE, vector, apic_id);
+    apic_send_ipi(ALL_EXCLUDING_SELF, STARTUP, PHYSICAL, ASSERT, EDGE, vector, bsp_apic_id);
 
     /* Wait for delivery */
     wait_for_ipi();
@@ -150,7 +150,7 @@ smp_send_ipi_startup(int apic_id, int vector)
 }
 
 /* See Intel IA32/64 Software Developer's Manual 3A Section 8.4.4.1 */
-int smp_startup_cpu(unsigned apic_id, phys_addr_t start_eip)
+int smp_startup_cpus(unsigned bsp_apic_id, phys_addr_t start_eip)
 {
 #if 0
     /* This block goes with a legacy method of INIT that only works with
@@ -174,13 +174,13 @@ int smp_startup_cpu(unsigned apic_id, phys_addr_t start_eip)
     /* Local cache flush */
     asm("wbinvd":::"memory");
 
-    printf("Sending IPIs to APIC ID %u...\n", apic_id);
+    printf("Sending IPIs from BSP APIC ID %u...\n", bsp_apic_id);
 
-    smp_send_ipi_init(apic_id);
+    smp_send_ipi_init(bsp_apic_id);
     hpet_mdelay(10);
-    smp_send_ipi_startup(apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
+    smp_send_ipi_startup(bsp_apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
     hpet_udelay(200);
-    smp_send_ipi_startup(apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
+    smp_send_ipi_startup(bsp_apic_id, start_eip >> STARTUP_VECTOR_SHIFT);
     hpet_udelay(200);
 
     printf("done\n");

@@ -452,11 +452,7 @@ kern_return_t processor_start(
 {
     	if (processor == PROCESSOR_NULL)
 		return KERN_INVALID_ARGUMENT;
-#if	NCPUS > 1
-	return cpu_start(processor->slot_num);
-#else	/* NCPUS > 1 */
 	return KERN_FAILURE;
-#endif	/* NCPUS > 1 */
 }
 
 kern_return_t processor_exit(

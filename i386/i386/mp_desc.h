@@ -74,8 +74,6 @@ extern struct real_descriptor	*mp_gdt[NCPUS];
 
 extern uint8_t solid_intstack[];
 
-extern int bspdone;
-
 /*
  * Each CPU calls this routine to set up its descriptor tables.
  */
@@ -88,8 +86,6 @@ extern void interrupt_processor(int cpu);
 #endif /* MULTIPROCESSOR */
 
 extern void start_other_cpus(void);
-
-extern kern_return_t cpu_start(int cpu);
 
 extern kern_return_t cpu_control(int cpu, const int *info, unsigned int count);
 
