@@ -215,7 +215,7 @@ install_user_intr_handler (struct irqdev *dev, int id, unsigned long flags,
   /* Don't allow overriding hardclock/kdintr etc */
   if ((ivect[irq] != user_irq_handler) && (ivect[irq] != intnull))
     {
-      printf("You can't have this interrupt\n");
+      printf("You can't have this interrupt %d:%d\n", id, irq);
       return D_ALREADY_OPEN;
     }
 
