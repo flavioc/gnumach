@@ -354,6 +354,9 @@ ds_device_intr_register (device_t dev, int id,
   if (! name_equal(mdev->dev_ops->d_name, 3, "irq"))
     return D_INVALID_OPERATION;
 
+  if (id < 0 || id >= NINTR)
+    return D_INVALID_OPERATION;
+
   user_intr_t *e = insert_intr_entry (&irqtab, id, receive_port);
   if (!e)
     return D_NO_MEMORY;
