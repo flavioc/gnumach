@@ -68,7 +68,7 @@
 
 int		hz = HZ;		/* number of ticks per second */
 int		tick = (MICROSECONDS_IN_ONE_SECOND / HZ);	/* number of usec per tick */
-time_value64_t	time = { 0, 0 };	/* time since bootup (uncorrected) */
+time_value64_t	time = { 0, 0 };	/* wallclock time (unadjusted) */
 unsigned long	elapsed_ticks = 0;	/* ticks elapsed since bootup */
 
 int		timedelta = 0;
