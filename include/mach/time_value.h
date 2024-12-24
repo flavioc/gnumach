@@ -172,6 +172,8 @@ typedef struct mapped_time_value {
 	integer_t check_seconds;
 	struct time_value64 time_value;
 	int64_t check_seconds64;
+	struct time_value64 uptime_value;
+	int64_t check_upseconds64;
 } mapped_time_value_t;
 
 /* Macros for converting between struct timespec and time_value_t. */

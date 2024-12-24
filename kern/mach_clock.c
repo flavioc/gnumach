@@ -69,6 +69,7 @@
 int		hz = HZ;		/* number of ticks per second */
 int		tick = (MICROSECONDS_IN_ONE_SECOND / HZ);	/* number of usec per tick */
 time_value64_t	time = { 0, 0 };	/* wallclock time (unadjusted) */
+time_value64_t	uptime = { 0, 0 };	/* time since bootup */
 unsigned long	elapsed_ticks = 0;	/* ticks elapsed since bootup */
 
 int		timedelta = 0;
@@ -109,6 +110,17 @@ MACRO_BEGIN								\
 	}								\
 MACRO_END
 
+#define update_mapped_uptime(uptime)					\
+MACRO_BEGIN								\
+	if (mtime != 0) {						\
+		mtime->check_upseconds64 = (uptime)->seconds;		\
+		__sync_synchronize();					\
+		mtime->uptime_value.nanoseconds = (uptime)->nanoseconds;\
+		__sync_synchronize();					\
+		mtime->uptime_value.seconds = (uptime)->seconds;	\
+	}								\
+MACRO_END
+
 #define read_mapped_time(time)						\
 MACRO_BEGIN								\
 	do {								\
@@ -117,6 +129,16 @@ MACRO_BEGIN								\
 		(time)->nanoseconds = mtime->time_value.nanoseconds;	\
 		__sync_synchronize();					\
 	} while ((time)->seconds != mtime->check_seconds64);	\
+MACRO_END
+
+#define read_mapped_uptime(uptime)				    	\
+MACRO_BEGIN								\
+	do {								\
+		(uptime)->seconds = mtime->uptime_value.seconds;	\
+		__sync_synchronize();					\
+		(uptime)->nanoseconds = mtime->uptime_value.nanoseconds;\
+		__sync_synchronize();					\
+	} while ((uptime)->seconds != mtime->check_upseconds64);	\
 MACRO_END
 
 def_simple_lock_irq_data(static,	timer_lock)	/* lock for ... */
@@ -230,6 +252,7 @@ void clock_interrupt(
 	     */
 	    if (timedelta == 0) {
 		time_value64_add_nanos(&time, usec * 1000);
+		time_value64_add_nanos(&uptime, usec * 1000);
 	    }
 	    else {
 		int	delta;
@@ -251,8 +274,10 @@ void clock_interrupt(
 		    timedelta -= tickdelta;
 		}
 		time_value64_add_nanos(&time, delta * 1000);
+		time_value64_add_nanos(&uptime, delta * 1000);
 	    }
 	    update_mapped_time(&time);
+	    update_mapped_uptime(&uptime);
 
 	    /*
 	     *	Schedule soft-interrupt for timeout if needed
@@ -571,6 +596,19 @@ host_adjust_time64(
 	return (KERN_SUCCESS);
 }
 
+/*
+ * Read the uptime (the elapsed time since boot up).
+ */
+kern_return_t
+host_get_uptime64(const host_t host, time_value64_t *uptime)
+{
+	if (host == HOST_NULL)
+		return (KERN_INVALID_HOST);
+
+	read_mapped_uptime(uptime);
+	return (KERN_SUCCESS);
+}
+
 void mapable_time_init(void)
 {
 	if (kmem_alloc_wired(kernel_map, (vm_offset_t *) &mtime, PAGE_SIZE)
@@ -578,6 +616,7 @@ void mapable_time_init(void)
 		panic("mapable_time_init");
 	memset((void *) mtime, 0, PAGE_SIZE);
 	update_mapped_time(&time);
+	update_mapped_uptime(&uptime);
 }
 
 int timeopen(dev_t dev, int flag, io_req_t ior)

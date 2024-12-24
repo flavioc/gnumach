@@ -41,6 +41,7 @@ extern int		hz;		/* number of ticks per second */
 extern int		tick;		/* number of usec per tick */
 
 extern time_value64_t	time; 		/* wallclock time (unadjusted) */
+extern time_value64_t	uptime;		/* time since bootup */
 
 typedef void timer_func_t(void *);
 

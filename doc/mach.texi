@@ -5664,6 +5664,11 @@ Get the current time as seen by @var{host}.  On success, the time passed
 since the epoch is returned in @var{current_time}.
 @end deftypefun
 
+@deftypefun kern_return_t host_get_uptime64 (@w{host_t @var{host}}, @w{time_value64_t *@var{uptime}})
+Get the elapsed time since the boot up as seen by @var{host}.  On success, the time passed
+since the boot up is returned in @var{uptime}.
+@end deftypefun
+
 @deftypefun kern_return_t host_set_time64 (@w{host_priv_t @var{host_priv}}, @w{time_value64_t @var{new_time}})
 Set the time of @var{host_priv} to @var{new_time}.
 @end deftypefun

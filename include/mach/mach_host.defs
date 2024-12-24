@@ -386,3 +386,10 @@ routine	host_adjust_time64(
 routine	host_get_kernel_version(
 		host		: host_t;
 	out	kernel_version	: new_kernel_version_t);
+
+/*
+ *     Get the uptime on this host.
+ */
+routine	host_get_uptime64(
+		host		: host_t;
+	out	uptime		: time_value64_t);
