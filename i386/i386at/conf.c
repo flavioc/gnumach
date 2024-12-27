@@ -160,10 +160,12 @@ struct dev_ops	dev_name_list[] =
           nodev_async_in,        nulldev_reset,        nulldev_portdeath,0,
           nodev_info },
 
+#ifndef	MACH_HYP
         { mbinfoname,	nulldev_open,	nulldev_close,	mbinforead,
           nulldev_write,nulldev_getstat,nulldev_setstat,nomap,
           nodev_async_in,	nulldev_reset,	nulldev_portdeath,0,
           nodev_info },
+#endif	/* MACH_HYP */
 
 };
 int	dev_name_count = sizeof(dev_name_list)/sizeof(dev_name_list[0]);
