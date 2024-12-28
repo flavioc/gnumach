@@ -36,6 +36,7 @@ $(MIG_OUTDIR):
 	mkdir -p $@
 
 define generate_mig_client
+$(MACH_TESTINCLUDE)/$(1)/$(2).defs: $(MACH_TESTINSTALL)
 $(MIG_OUTDIR)/$(2).user.c: prepare-test $(MIG_OUTDIR) $(MACH_TESTINCLUDE)/$(1)/$(2).defs
 	$(USER_CPP) $(USER_CPPFLAGS) $(MIG_CPPFLAGS) 	\
 		-o $(MIG_OUTDIR)/$(2).user.defs 	\
@@ -48,6 +49,7 @@ $(MIG_OUTDIR)/$(2).user.c: prepare-test $(MIG_OUTDIR) $(MACH_TESTINCLUDE)/$(1)/$
 endef
 
 define generate_mig_server
+$(MACH_TESTINCLUDE)/$(1)/$(2).defs: $(MACH_TESTINSTALL)
 $(MIG_OUTDIR)/$(2).server.c: prepare-test $(MIG_OUTDIR) $(srcdir)/include/$(1)/$(2).defs
 	$(USER_CPP) $(USER_CPPFLAGS) $(MIG_CPPFLAGS) 	\
 		-o $(MIG_OUTDIR)/$(2).server.defs 	\
