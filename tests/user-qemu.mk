@@ -175,15 +175,16 @@ QEMU_OPTS += -cpu core2duo-v1
 endif
 
 tests/test-%.iso: tests/module-% gnumach $(srcdir)/tests/grub.cfg.single.template
-	rm -rf $(builddir)/tests/isofiles
-	mkdir -p $(builddir)/tests/isofiles/boot/grub/
+	rm -rf $(builddir)/tests/isofiles-$*
+	mkdir -p $(builddir)/tests/isofiles-$*/boot/grub/
 	< $(srcdir)/tests/grub.cfg.single.template		\
 		sed -e "s|BOOTMODULE|$(notdir $<)|g"		\
 		    -e "s/GNUMACHARGS/$(GNUMACH_ARGS)/g"	\
 		    -e "s/TEST_START_MARKER/$(TEST_START_MARKER)/g"	\
-		>$(builddir)/tests/isofiles/boot/grub/grub.cfg
-	cp gnumach $< $(builddir)/tests/isofiles/boot/
-	grub-mkrescue -o $@ $(builddir)/tests/isofiles
+		>$(builddir)/tests/isofiles-$*/boot/grub/grub.cfg
+	cp gnumach $< $(builddir)/tests/isofiles-$*/boot/
+	grub-mkrescue -o $@ $(builddir)/tests/isofiles-$*
+	rm -rf $(builddir)/tests/isofiles-$*
 
 tests/test-%: tests/test-%.iso $(srcdir)/tests/run-qemu.sh.template
 	< $(srcdir)/tests/run-qemu.sh.template			\
