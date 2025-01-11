@@ -279,6 +279,9 @@ start_other_cpus(void)
 {
 	int ncpus = smp_get_numcpus();
 
+	if (ncpus == 1)
+	  return;
+
 	//Copy cpu initialization assembly routine
 	memcpy((void*) phystokv(apboot_addr), (void*) &apboot,
 	       (uint32_t)&apbootend - (uint32_t)&apboot);
