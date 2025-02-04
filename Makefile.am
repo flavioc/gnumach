@@ -209,6 +209,7 @@ exec_boot_PROGRAMS = \
 
 EXTRA_DIST += \
 	config.status.dep.patch \
+	Makefile.in.dep.2.patch \
 	Makefile.in.dep.patch
 
 EXTRA_DIST += \
