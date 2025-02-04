@@ -1085,7 +1085,7 @@ void		vm_page_print(const vm_page_t	p)
 {
 	iprintf("Page 0x%X: object 0x%X,", (vm_offset_t) p, (vm_offset_t) p->object);
 	 printf(" offset 0x%X", p->offset);
-	 printf("wire_count %d,", p->wire_count);
+	 printf(" wire_count %d,", p->wire_count);
 	 printf(" %s",
 		(p->active ? "active" : (p->inactive ? "inactive" : "loose")));
 	 printf("%s",
