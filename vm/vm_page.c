@@ -2035,7 +2035,7 @@ again:
          * Eviction failed, consider pages from internal objects on the
          * next attempt.
          */
-        if (external_only) {
+        if (external_only && memory_manager_default) {
             simple_unlock(&vm_page_queue_free_lock);
             external_only = FALSE;
             goto again;
