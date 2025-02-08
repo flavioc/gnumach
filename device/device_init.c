@@ -62,6 +62,6 @@ device_service_create(void)
 	device_pager_init();
 	chario_init();
 
-	(void) kernel_thread(kernel_task, io_done_thread, 0);
-	(void) kernel_thread(kernel_task, net_thread, 0);
+	(void) kernel_thread(kernel_task, "io_done", io_done_thread, 0);
+	(void) kernel_thread(kernel_task, "net", net_thread, 0);
 }

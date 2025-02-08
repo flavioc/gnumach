@@ -326,7 +326,7 @@ printf("ERROR:mach_sample_thread:cannot set pbuf_nb\n");
 		cur_thread->thread_profiled = TRUE;
 		cur_thread->thread_profiled_own     = TRUE;
 		if (profile_thread_id == THREAD_NULL)
-			profile_thread_id = kernel_thread(current_task(), profile_thread);
+			profile_thread_id = kernel_thread(current_task(), "profile", profile_thread);
 	} else {
 		if (!cur_thread->thread_profiled_own)
 			cur_thread->thread_profiled = FALSE;
@@ -379,7 +379,7 @@ mach_sample_task (ipc_space_t task, ipc_object_t reply, task_t cur_task)
 
 		if (turnon && profile_thread_id == THREAD_NULL)
 			profile_thread_id =
-				kernel_thread(current_task(), profile_thread);
+				kernel_thread(current_task(), "profile", profile_thread);
 		cur_task->task_profiled = turnon;
 		actual = cur_task->thread_count;
 		sentone = 0;

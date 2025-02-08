@@ -304,6 +304,7 @@ extern void		thread_start(
 	continuation_t	start);
 extern thread_t		kernel_thread(
 	task_t		task,
+	const char *	name,
 	continuation_t	start,
 	void		*arg);
 extern kern_return_t	thread_priority(
@@ -353,6 +354,12 @@ extern kern_return_t	thread_assign(
 extern kern_return_t	thread_assign_default(
 	thread_t	thread);
 extern void		stack_collect(void);
+extern kern_return_t thread_set_name(
+	thread_t	thread,
+	const_kernel_debug_name_t	name);
+extern kern_return_t thread_get_name(
+	thread_t	thread,
+	kernel_debug_name_t	name);
 #endif
 
 /*
@@ -374,6 +381,7 @@ extern void		thread_halt_self(continuation_t);
 extern void		thread_force_terminate(thread_t);
 extern thread_t		kernel_thread(
 	task_t		task,
+	const char *	name,
 	void		(*start)(void),
 	void *		arg);
 

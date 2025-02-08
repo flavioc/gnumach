@@ -50,6 +50,7 @@
 #include <kern/xpr.h>
 #include <kern/bootstrap.h>
 #include <kern/startup.h>
+#include <kern/printf.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 #include <vm/vm_object.h>
@@ -175,6 +176,7 @@ void setup_main(void)
 	 * Create the thread, and point it at the routine.
 	 */
 	(void) thread_create(kernel_task, &startup_thread);
+	thread_set_name(startup_thread, "startup");
 	thread_start(startup_thread, start_kernel_threads);
 
 	/*
@@ -215,8 +217,11 @@ void start_kernel_threads(void)
 	for (i = 0; i < NCPUS; i++) {
 	    if (machine_slot[i].is_cpu) {
 		thread_t	th;
+		char name[10];
 
 		(void) thread_create(kernel_task, &th);
+		snprintf(name, sizeof(name), "idle/%d", i);
+		thread_set_name(th, name);
 		thread_bind(th, cpu_to_processor(i));
 		thread_start(th, idle_thread);
 		thread_doswapin(th);
@@ -224,18 +229,18 @@ void start_kernel_threads(void)
 	    }
 	}
 
-	(void) kernel_thread(kernel_task, reaper_thread, (char *) 0);
-	(void) kernel_thread(kernel_task, swapin_thread, (char *) 0);
-	(void) kernel_thread(kernel_task, sched_thread, (char *) 0);
+	(void) kernel_thread(kernel_task, "reaper", reaper_thread, (char *) 0);
+	(void) kernel_thread(kernel_task, "swapin", swapin_thread, (char *) 0);
+	(void) kernel_thread(kernel_task, "sched", sched_thread, (char *) 0);
 #ifndef MACH_XEN
-	(void) kernel_thread(kernel_task, intr_thread, (char *)0);
+	(void) kernel_thread(kernel_task, "intr", intr_thread, (char *)0);
 #endif	/* MACH_XEN */
 
 #if	NCPUS > 1
 	/*
 	 *	Create the shutdown thread.
 	 */
-	(void) kernel_thread(kernel_task, action_thread, (char *) 0);
+	(void) kernel_thread(kernel_task, "action", action_thread, (char *) 0);
 
 	/*
 	 *	Allow other CPUs to run.

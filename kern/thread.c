@@ -1712,6 +1712,7 @@ thread_start(
 
 thread_t kernel_thread(
 	task_t		task,
+	const char *	name,
 	continuation_t	start,
 	void *		arg)
 {

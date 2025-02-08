@@ -335,7 +335,9 @@ bootstrap_exec_compat(void *e)
 	 */
 
 	(void) task_create(TASK_NULL, FALSE, &bootstrap_task);
+	(void) task_set_name(bootstrap_task, "bootstrap");
 	(void) thread_create(bootstrap_task, &bootstrap_thread);
+	(void) thread_set_name(bootstrap_thread, "bootstrap");
 
 	/*
 	 * Insert send rights to the master host and device ports.
