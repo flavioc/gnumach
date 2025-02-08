@@ -275,6 +275,7 @@ void start_kernel_threads(void)
 	 *	Become the pageout daemon.
 	 */
 	(void) spl0();
+	thread_set_name(startup_thread, "pageout");
 	vm_pageout();
 	/*NOTREACHED*/
 }
