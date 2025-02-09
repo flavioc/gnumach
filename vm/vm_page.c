@@ -1205,15 +1205,15 @@ out:
      * one unnecessarily.
      */
 
-    if (!object->pager_initialized) {
+    if (double_paging && !object->pager_initialized) {
         vm_object_collapse(object);
     }
 
-    if (!object->pager_initialized) {
+    if (double_paging && !object->pager_initialized) {
         vm_object_pager_create(object);
     }
 
-    if (!object->pager_initialized) {
+    if (double_paging && !object->pager_initialized) {
         panic("vm_page_seg_evict");
     }
 
