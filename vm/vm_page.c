@@ -43,6 +43,7 @@
 #include <kern/thread.h>
 #include <mach/vm_param.h>
 #include <machine/pmap.h>
+#include <ipc/ipc_port.h>
 #include <sys/types.h>
 #include <vm/memory_object.h>
 #include <vm/vm_page.h>
@@ -2035,7 +2036,7 @@ again:
          * Eviction failed, consider pages from internal objects on the
          * next attempt.
          */
-        if (external_only && memory_manager_default) {
+        if (external_only && IP_VALID(memory_manager_default)) {
             simple_unlock(&vm_page_queue_free_lock);
             external_only = FALSE;
             goto again;
