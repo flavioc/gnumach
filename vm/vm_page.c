@@ -1170,6 +1170,7 @@ restart:
     assert(!(double_paging && page->external));
 
     if (object->internal || !alloc_paused ||
+        ! IP_VALID(memory_manager_default) ||
         memory_manager_default_port(object->pager)) {
         double_paging = FALSE;
     } else {
