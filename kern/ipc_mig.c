@@ -273,10 +273,12 @@ mig_put_reply_port(
 /*
  * mig_strncpy.c - by Joshua Block
  *
- * mig_strncpy -- Bounded string copy.  Does what the library routine
+ * mig_strncpy -- Bounded string copy.  Does almost what the library routine
  * strncpy does: Copies the (null terminated) string in src into dest,
- * a buffer of length len.  Returns the length of the destination
- * string excluding the terminating null.
+ * a buffer of length len, but ensures dest is null terminated. If len is
+ * less than the length of the src string plus the null character, the
+ * string is truncated.
+ * Returns the length of the destination string excluding the terminating null.
  *
  * Parameters:
  *
@@ -289,20 +291,19 @@ mig_put_reply_port(
 vm_size_t
 mig_strncpy(char *dest, const char *src, vm_size_t len)
 {
-	char *dest_ = dest;
-	int i;
+	vm_size_t i;
 
-	if (len <= 0)
+	if (len == 0)
 		return 0;
 
-	for (i = 0; i < len; i++) {
-		if (! (*dest = *src))
-			break;
-		dest++;
-		src++;
+	for (i = 0; i < len - 1; i++) {
+		if (! (*dest++ = *src++))
+			return i;
 	}
 
-	return dest - dest_;
+	/* Always null terminate the string. */
+	*dest = '\0';
+	return len - 1;
 }
 
 /* Called by MiG to deallocate memory, which in this case happens
