@@ -672,7 +672,7 @@ void db_show_all_slocks(void)
 	for (i = 0; i < simple_locks_taken; i++) {
 		info = &simple_locks_info[i];
 		db_printf("%d: %s (", i, info->expr);
-		db_printsym(info->l, DB_STGY_ANY);
+		db_printsym((uintptr_t) info->l, DB_STGY_ANY);
 		db_printf(") locked by %s\n", info->loc);
 	}
 }
