@@ -29,6 +29,9 @@
 #ifndef	_I386_LOCK_H_
 #define	_I386_LOCK_H_
 
+#define	SIMPLE_LOCK_INITIALIZER(l) \
+	{.lock_data = 0}
+
 #if NCPUS > 1
 #include <i386/smp.h>
 
@@ -55,9 +58,6 @@
 
 #define	simple_lock_init(l) \
 	((l)->lock_data = 0)
-
-#define	SIMPLE_LOCK_INITIALIZER(l) \
-	{.lock_data = 0}
 
 #define	_simple_lock(l) \
     ({ \
