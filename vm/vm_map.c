@@ -2067,7 +2067,7 @@ kern_return_t vm_map_delete(
 	/*
 	 *	Must be called with map lock taken unless refcount is zero
 	 */
-	assert((map->ref_count > 0 && have_lock(map->lock)) || (map->ref_count == 0));
+	assert((map->ref_count > 0 && have_lock(&map->lock)) || (map->ref_count == 0));
 
 	/*
 	 *	Find the start of the region, and clip it
