@@ -128,20 +128,22 @@ pv_entry_t	pv_head_table;		/* array of entries, one per page */
 pv_entry_t	pv_free_list;		/* free list at SPLVM */
 def_simple_lock_data(static, pv_free_list_lock)
 
-#define	PV_ALLOC(pv_e) { \
+#define	PV_ALLOC(pv_e) \
+MACRO_BEGIN \
 	simple_lock(&pv_free_list_lock); \
 	if ((pv_e = pv_free_list) != 0) { \
 	    pv_free_list = pv_e->next; \
 	} \
 	simple_unlock(&pv_free_list_lock); \
-}
+MACRO_END
 
-#define	PV_FREE(pv_e) { \
+#define	PV_FREE(pv_e) \
+MACRO_BEGIN \
 	simple_lock(&pv_free_list_lock); \
 	pv_e->next = pv_free_list; \
 	pv_free_list = pv_e; \
 	simple_unlock(&pv_free_list_lock); \
-}
+MACRO_END
 
 struct kmem_cache	pv_list_cache;		/* cache of pv_entry structures */
 
@@ -242,54 +244,61 @@ vm_object_t	pmap_object = VM_OBJECT_NULL;
  *	interrupts during pmap operations.  We must take the CPU out of
  *	the cpus_active set while interrupts are blocked.
  */
-#define SPLVM(spl)	{ \
+#define SPLVM(spl)	\
+MACRO_BEGIN \
 	spl = splvm(); \
 	i_bit_clear(cpu_number(), &cpus_active); \
-}
+MACRO_END
 
-#define SPLX(spl)	{ \
+#define SPLX(spl)	\
+MACRO_BEGIN \
 	i_bit_set(cpu_number(), &cpus_active); \
 	splx(spl); \
-}
+MACRO_END
 
 /*
  *	Lock on pmap system
  */
 lock_data_t	pmap_system_lock;
 
-#define PMAP_READ_LOCK(pmap, spl) { \
+#define PMAP_READ_LOCK(pmap, spl) \
+MACRO_BEGIN \
 	SPLVM(spl); \
 	lock_read(&pmap_system_lock); \
 	simple_lock(&(pmap)->lock); \
-}
+MACRO_END
 
-#define PMAP_WRITE_LOCK(spl) { \
+#define PMAP_WRITE_LOCK(spl) \
+MACRO_BEGIN \
 	SPLVM(spl); \
 	lock_write(&pmap_system_lock); \
-}
+MACRO_END
 
-#define PMAP_READ_UNLOCK(pmap, spl) { \
+#define PMAP_READ_UNLOCK(pmap, spl) \
+MACRO_BEGIN \
 	simple_unlock(&(pmap)->lock); \
 	lock_read_done(&pmap_system_lock); \
 	SPLX(spl); \
-}
+MACRO_END
 
-#define PMAP_WRITE_UNLOCK(spl) { \
+#define PMAP_WRITE_UNLOCK(spl) \
+MACRO_BEGIN \
 	lock_write_done(&pmap_system_lock); \
 	SPLX(spl); \
-}
+MACRO_END
 
-#define PMAP_WRITE_TO_READ_LOCK(pmap) { \
+#define PMAP_WRITE_TO_READ_LOCK(pmap) \
+MACRO_BEGIN \
 	simple_lock(&(pmap)->lock); \
 	lock_write_to_read(&pmap_system_lock); \
-}
+MACRO_END
 
 #define LOCK_PVH(index)		(lock_pvh_pai(index))
 
 #define UNLOCK_PVH(index)	(unlock_pvh_pai(index))
 
 #define PMAP_UPDATE_TLBS(pmap, s, e) \
-{ \
+MACRO_BEGIN \
 	cpu_set	cpu_mask = 1 << cpu_number(); \
 	cpu_set	users; \
  \
@@ -310,7 +319,7 @@ lock_data_t	pmap_system_lock;
 	if ((pmap)->cpus_using & cpu_mask) { \
 	    INVALIDATE_TLB((pmap), (s), (e)); \
 	} \
-}
+MACRO_END
 
 #else	/* NCPUS > 1 */
 
@@ -326,33 +335,36 @@ lock_data_t	pmap_system_lock;
 #define LOCK_PVH(index)
 #define UNLOCK_PVH(index)
 
-#define PMAP_UPDATE_TLBS(pmap, s, e) { \
+#define PMAP_UPDATE_TLBS(pmap, s, e) \
+MACRO_BEGIN \
 	/* invalidate our own TLB if pmap is in use */ \
 	if ((pmap)->cpus_using) { \
 	    INVALIDATE_TLB((pmap), (s), (e)); \
 	} \
-}
+MACRO_END
 
 #endif	/* NCPUS > 1 */
 
 #ifdef	MACH_PV_PAGETABLES
-#define INVALIDATE_TLB(pmap, s, e) do { \
+#define INVALIDATE_TLB(pmap, s, e) \
+MACRO_BEGIN \
 	if (__builtin_constant_p((e) - (s)) \
 		&& (e) - (s) == PAGE_SIZE) \
 		hyp_invlpg((pmap) == kernel_pmap ? kvtolin(s) : (s)); \
 	else \
 		hyp_mmuext_op_void(MMUEXT_TLB_FLUSH_LOCAL); \
-} while(0)
+MACRO_END
 #else	/* MACH_PV_PAGETABLES */
 /* It is hard to know when a TLB flush becomes less expensive than a bunch of
  * invlpgs.  But it surely is more expensive than just one invlpg.  */
-#define INVALIDATE_TLB(pmap, s, e) do { \
+#define INVALIDATE_TLB(pmap, s, e) \
+MACRO_BEGIN \
 	if (__builtin_constant_p((e) - (s)) \
 		&& (e) - (s) == PAGE_SIZE) \
 		invlpg_linear((pmap) == kernel_pmap ? kvtolin(s) : (s)); \
 	else \
 		flush_tlb(); \
-} while (0)
+MACRO_END
 #endif	/* MACH_PV_PAGETABLES */
 
 

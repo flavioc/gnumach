@@ -1044,13 +1044,13 @@ check:
 
 #define DECL_DATA	struct temp_data td
 #define INIT_DATA()			\
-{					\
+MACRO_BEGIN				\
   list_init (&td.pages);		\
   td.inode.i_rdev = bd->dev;		\
   td.file.f_mode = bd->mode;		\
   td.file.f_flags = bd->flags;		\
   current_thread ()->pcb->data = &td;	\
-}
+MACRO_END
 
 static io_return_t
 device_open (ipc_port_t reply_port, mach_msg_type_name_t reply_port_type,

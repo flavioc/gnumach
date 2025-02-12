@@ -96,7 +96,7 @@ typedef struct buffer		*buffer_t;
 extern vm_map_t kernel_map; 
 
 #define dealloc_pbuf_area(pbuf) \
-          { \
+          MACRO_BEGIN \
 	  register int i; \
 				   \
 	    for(i=0; i < NB_PROF_BUFFER ; i++)  \
@@ -106,10 +106,11 @@ extern vm_map_t kernel_map;
             kmem_free(kernel_map, \
                           (vm_offset_t)(pbuf), \
                           sizeof(struct prof_data)); \
-          }
+          MACRO_END
 	
 
 #define alloc_pbuf_area(pbuf, vmpbuf) \
+MACRO_BEGIN \
       (vmpbuf) = (vm_offset_t) 0; \
       if (kmem_alloc(kernel_map, &(vmpbuf) , sizeof(struct prof_data)) == \
                                            KERN_SUCCESS) { \
@@ -130,7 +131,8 @@ extern vm_map_t kernel_map;
        	    } \
 	} \
 	else \
-	  (pbuf) = NULLPBUF; 
+	  (pbuf) = NULLPBUF; \
+MACRO_END
 	
 
 
@@ -146,7 +148,7 @@ extern vm_map_t kernel_map;
 */ 
 	  
 #define set_pbuf_value(pbuf, val) \
-	 { \
+	 MACRO_BEGIN \
 	  register buffer_t a = &((pbuf)->prof_area[(pbuf)->prof_index]); \
 	  register int i = a->p_index++; \
 	  register boolean_t f = a->p_full; \
@@ -162,16 +164,16 @@ extern vm_map_t kernel_map;
             else \
 		*(val) = 1; \
           } \
-	}
+	MACRO_END
 
          
 #define	reset_pbuf_area(pbuf) \
-	{ \
+	MACRO_BEGIN \
 	 register int *i = &((pbuf)->prof_index); \
 					      \
 	 *i = (*i == NB_PROF_BUFFER-1) ? 0 : ++(*i); \
 	 (pbuf)->prof_area[*i].p_index = 0; \
-	}
+	MACRO_END
 
 
 /**************************************************************/

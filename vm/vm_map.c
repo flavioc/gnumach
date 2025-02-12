@@ -572,9 +572,11 @@ void vm_map_deallocate(vm_map_t map)
  *	future lookups.  Performs necessary interlocks.
  */
 #define	SAVE_HINT(map,value) \
+	MACRO_BEGIN \
 		simple_lock(&(map)->hint_lock); \
 		(map)->hint = (value); \
-		simple_unlock(&(map)->hint_lock);
+		simple_unlock(&(map)->hint_lock); \
+	MACRO_END
 
 /*
  *	vm_map_lookup_entry:	[ internal use only ]
@@ -974,7 +976,10 @@ kern_return_t vm_map_enter(
 	vm_offset_t	end;
 	kern_return_t	result = KERN_SUCCESS;
 
-#define	RETURN(value)	{ result = value; goto BailOut; }
+#define	RETURN(value)	\
+MACRO_BEGIN \
+	result = value; goto BailOut; \
+MACRO_END
 
 	if (size == 0)
 		return KERN_INVALID_ARGUMENT;
@@ -1314,14 +1319,14 @@ void _vm_map_clip_end(
  *	addresses fall within the valid range of the map.
  */
 #define	VM_MAP_RANGE_CHECK(map, start, end)		\
-		{					\
+		MACRO_BEGIN				\
 		if (start < vm_map_min(map))		\
 			start = vm_map_min(map);	\
 		if (end > vm_map_max(map))		\
 			end = vm_map_max(map);		\
 		if (start > end)			\
 			start = end;			\
-		}
+		MACRO_END
 
 /*
  *	vm_map_submap:		[ kernel use only ]
@@ -4685,11 +4690,11 @@ kern_return_t vm_map_lookup(
 	vm_map_lock_read(map);
 
 #define	RETURN(why) \
-		{ \
+		MACRO_BEGIN \
 		if (!(keep_map_locked && (why == KERN_SUCCESS))) \
 		  vm_map_unlock_read(map); \
 		return(why); \
-		}
+		MACRO_END
 
 	/*
 	 *	If the map has an interesting hint, try it before calling

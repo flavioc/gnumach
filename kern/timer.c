@@ -378,10 +378,11 @@ static void timer_grab(
 	} while ( (save)->high != (timer)->high_bits_check);
 }
 
-#define TIMER_TO_TIME_VALUE64(tv, timer) do {							\
+#define TIMER_TO_TIME_VALUE64(tv, timer) 				\
+MACRO_BEGIN								\
 		(tv)->seconds = (timer)->high + (timer)->low / 1000000;	\
-		(tv)->nanoseconds = (timer)->low % 1000000 * 1000;			\
-} while(0);
+		(tv)->nanoseconds = (timer)->low % 1000000 * 1000;	\
+MACRO_END
 
 /*
  *	timer_read reads the value of a timer into a time_value64_t.  If the

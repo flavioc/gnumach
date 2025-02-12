@@ -1637,33 +1637,37 @@ kern_return_t vm_fault_wire_fast(
  */
 
 #undef	RELEASE_PAGE
-#define RELEASE_PAGE(m)	{				\
+#define RELEASE_PAGE(m)					\
+MACRO_BEGIN						\
 	PAGE_WAKEUP_DONE(m);				\
 	vm_page_lock_queues();				\
 	vm_page_unwire(m);				\
 	vm_page_unlock_queues();			\
-}
+MACRO_END
 
 
 #undef	UNLOCK_THINGS
-#define UNLOCK_THINGS	{				\
+#define UNLOCK_THINGS					\
+MACRO_BEGIN						\
 	object->paging_in_progress--;			\
 	vm_object_unlock(object);			\
-}
+MACRO_END
 
 #undef	UNLOCK_AND_DEALLOCATE
-#define UNLOCK_AND_DEALLOCATE	{			\
+#define UNLOCK_AND_DEALLOCATE				\
+MACRO_BEGIN						\
 	UNLOCK_THINGS;					\
 	vm_object_deallocate(object);			\
-}
+MACRO_END
 /*
  *	Give up and have caller do things the hard way.
  */
 
-#define GIVE_UP {					\
+#define GIVE_UP						\
+MACRO_BEGIN						\
 	UNLOCK_AND_DEALLOCATE;				\
 	return(KERN_FAILURE);				\
-}
+MACRO_END
 
 
 	/*

@@ -317,7 +317,8 @@ pt_entry_t *pmap_pte(const pmap_t pmap, vm_offset_t addr);
  *	fields to control TLB invalidation on other CPUS.
  */
 
-#define	PMAP_ACTIVATE_KERNEL(my_cpu)	{				\
+#define	PMAP_ACTIVATE_KERNEL(my_cpu)					\
+MACRO_BEGIN 								\
 									\
 	/*								\
 	 *	Let pmap updates proceed while we wait for this pmap.	\
@@ -348,17 +349,19 @@ pt_entry_t *pmap_pte(const pmap_t pmap, vm_offset_t addr);
 	i_bit_set((my_cpu), &cpus_active);				\
 									\
 	simple_unlock(&kernel_pmap->lock);				\
-}
+MACRO_END
 
-#define	PMAP_DEACTIVATE_KERNEL(my_cpu)	{				\
+#define	PMAP_DEACTIVATE_KERNEL(my_cpu)					\
+MACRO_BEGIN								\
 	/*								\
 	 *	Mark pmap no longer in use by this cpu even if		\
 	 *	pmap is locked against updates.				\
 	 */								\
 	i_bit_clear((my_cpu), &kernel_pmap->cpus_using);		\
-}
+MACRO_END
 
-#define PMAP_ACTIVATE_USER(pmap, th, my_cpu)	{			\
+#define PMAP_ACTIVATE_USER(pmap, th, my_cpu)				\
+MACRO_BEGIN								\
 	pmap_t		tpmap = (pmap);					\
 									\
 	if (tpmap == kernel_pmap) {					\
@@ -398,9 +401,10 @@ pt_entry_t *pmap_pte(const pmap_t pmap, vm_offset_t addr);
 									\
 	    simple_unlock(&tpmap->lock);				\
 	}								\
-}
+MACRO_END
 
-#define PMAP_DEACTIVATE_USER(pmap, thread, my_cpu)	{		\
+#define PMAP_DEACTIVATE_USER(pmap, thread, my_cpu)			\
+MACRO_BEGIN								\
 	pmap_t		tpmap = (pmap);					\
 									\
 	/*								\
@@ -413,9 +417,10 @@ pt_entry_t *pmap_pte(const pmap_t pmap, vm_offset_t addr);
 	     */								\
 	    i_bit_clear((my_cpu), &(pmap)->cpus_using);			\
 	}								\
-}
+MACRO_END
 
-#define MARK_CPU_IDLE(my_cpu)	{					\
+#define MARK_CPU_IDLE(my_cpu)						\
+MACRO_BEGIN								\
 	/*								\
 	 *	Mark this cpu idle, and remove it from the active set,	\
 	 *	since it is not actively using any pmap.  Signal_cpus	\
@@ -427,9 +432,10 @@ pt_entry_t *pmap_pte(const pmap_t pmap, vm_offset_t addr);
 	i_bit_set((my_cpu), &cpus_idle);				\
 	i_bit_clear((my_cpu), &cpus_active);				\
 	splx(s);							\
-}
+MACRO_END
 
-#define MARK_CPU_ACTIVE(my_cpu)	{					\
+#define MARK_CPU_ACTIVE(my_cpu)						\
+MACRO_BEGIN								\
 									\
 	int	s = splvm();						\
 	/*								\
@@ -453,7 +459,7 @@ pt_entry_t *pmap_pte(const pmap_t pmap, vm_offset_t addr);
 	 */								\
 	i_bit_set((my_cpu), &cpus_active);				\
 	splx(s);							\
-}
+MACRO_END
 
 #else	/* NCPUS > 1 */
 
@@ -462,17 +468,20 @@ pt_entry_t *pmap_pte(const pmap_t pmap, vm_offset_t addr);
  *	in use.
  */
 
-#define	PMAP_ACTIVATE_KERNEL(my_cpu)	{				\
+#define	PMAP_ACTIVATE_KERNEL(my_cpu)					\
+MACRO_BEGIN								\
 	(void) (my_cpu);						\
 	kernel_pmap->cpus_using = TRUE;					\
-}
+MACRO_END
 
-#define	PMAP_DEACTIVATE_KERNEL(my_cpu)	{				\
+#define	PMAP_DEACTIVATE_KERNEL(my_cpu)					\
+MACRO_BEGIN\								\
 	(void) (my_cpu);						\
 	kernel_pmap->cpus_using = FALSE;				\
-}
+MACRO_END
 
-#define	PMAP_ACTIVATE_USER(pmap, th, my_cpu)	{			\
+#define	PMAP_ACTIVATE_USER(pmap, th, my_cpu)				\
+MACRO_BEGIN								\
 	pmap_t		tpmap = (pmap);					\
 	(void) (th);							\
 	(void) (my_cpu);						\
@@ -481,14 +490,15 @@ pt_entry_t *pmap_pte(const pmap_t pmap, vm_offset_t addr);
 	if (tpmap != kernel_pmap) {					\
 	    tpmap->cpus_using = TRUE;					\
 	}								\
-}
+MACRO_END
 
-#define PMAP_DEACTIVATE_USER(pmap, thread, cpu)	{			\
+#define PMAP_DEACTIVATE_USER(pmap, thread, cpu)				\
+MACRO_BEGIN								\
 	(void) (thread);						\
 	(void) (cpu);							\
 	if ((pmap) != kernel_pmap)					\
 	    (pmap)->cpus_using = FALSE;					\
-}
+MACRO_END
 
 #endif	/* NCPUS > 1 */
 

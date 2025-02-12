@@ -383,22 +383,22 @@ extern unsigned long cr3;
  * use them :/ */
 #ifdef __x86_64__
 #define cpuid(eax, ebx, ecx, edx) \
-{ \
+MACRO_BEGIN \
 	uint64_t sav_rbx; \
 	asm(	"mov %%rbx,%2\n\t" \
 		"cpuid\n\t" \
 		"xchg %2,%%rbx\n\t" \
 		"movl %k2,%1\n\t" \
 		: "+a" (eax), "=m" (ebx), "=&r" (sav_rbx), "+c" (ecx), "=&d" (edx)); \
-}
+MACRO_END
 #else
 #define cpuid(eax, ebx, ecx, edx) \
-{ \
+MACRO_BEGIN \
 	asm (	"mov %%ebx,%1\n\t" \
 		"cpuid\n\t" \
 		"xchg %%ebx,%1\n\t" \
 		: "+a" (eax), "=&SD" (ebx), "+c" (ecx), "=&d" (edx)); \
-}
+MACRO_END
 #endif
 
 #endif	/* __GNUC__ */

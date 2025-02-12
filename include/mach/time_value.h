@@ -93,7 +93,8 @@ static __inline__ time_value_t convert_time_value_from_user(rpc_time_value_t tv)
 #define time_value64_assert(val)			\
   assert(0 <= (val)->nanoseconds && (val)->nanoseconds < TIME_NANOS_MAX);
 
-#define	time_value_add_usec(val, micros)	{	\
+#define	time_value_add_usec(val, micros)		\
+MACRO_BEGIN						\
 	time_value_assert(val);				\
 	if (((val)->microseconds += (micros))		\
 		>= TIME_MICROS_MAX) {			\
@@ -101,9 +102,10 @@ static __inline__ time_value_t convert_time_value_from_user(rpc_time_value_t tv)
 	    (val)->seconds++;				\
 	}						\
 	time_value_assert(val);				\
-}
+MACRO_END
 
-#define	time_value64_add_nanos(val, nanos)	{	\
+#define	time_value64_add_nanos(val, nanos)		\
+MACRO_BEGIN						\
 	time_value64_assert(val);			\
 	if (((val)->nanoseconds += (nanos))		\
 		>= TIME_NANOS_MAX) {			\
@@ -111,49 +113,56 @@ static __inline__ time_value_t convert_time_value_from_user(rpc_time_value_t tv)
 	    (val)->seconds++;				\
 	}						\
 	time_value64_assert(val);			\
-}
+MACRO_END
 
-#define	time_value64_sub_nanos(val, nanos)	{	\
+#define	time_value64_sub_nanos(val, nanos)		\
+MACRO_BEGIN						\
 	time_value64_assert(val);			\
 	if (((val)->nanoseconds -= (nanos)) < 0) {	\
 	    (val)->nanoseconds += TIME_NANOS_MAX;	\
 	    (val)->seconds--;				\
 	}						\
-	time_value64_assert(val);				\
-}
+	time_value64_assert(val);			\
+MACRO_END
 
-#define	time_value_add(result, addend) {			\
+#define	time_value_add(result, addend) 				\
+MACRO_BEGIN							\
     time_value_assert(addend);					\
     (result)->seconds += (addend)->seconds;			\
     time_value_add_usec(result, (addend)->microseconds);	\
-  }
+MACRO_END
 
-#define	time_value64_add(result, addend) {			\
+#define	time_value64_add(result, addend) 			\
+MACRO_BEGIN							\
     time_value64_assert(addend);				\
     (result)->seconds += (addend)->seconds;			\
     time_value64_add_nanos(result, (addend)->nanoseconds);	\
-  }
+MACRO_END
 
-#define	time_value64_sub(result, subtrahend) {			\
+#define	time_value64_sub(result, subtrahend) 			\
+MACRO_BEGIN							\
     time_value64_assert(subtrahend);				\
     (result)->seconds -= (subtrahend)->seconds;			\
     time_value64_sub_nanos(result, (subtrahend)->nanoseconds);	\
-  }
+MACRO_END
 
-#define time_value64_init(tv)	{				\
+#define time_value64_init(tv)					\
+MACRO_BEGIN							\
 		(tv)->seconds = 0;				\
 		(tv)->nanoseconds = 0;				\
-	}
+MACRO_END
 
-#define TIME_VALUE64_TO_TIME_VALUE(tv64, tv) do {			\
+#define TIME_VALUE64_TO_TIME_VALUE(tv64, tv) 				\
+MACRO_BEGIN								\
 		(tv)->seconds = (tv64)->seconds;			\
 		(tv)->microseconds = (tv64)->nanoseconds / 1000;	\
-} while(0)
+MACRO_END
 
-#define TIME_VALUE_TO_TIME_VALUE64(tv, tv64) do {			\
+#define TIME_VALUE_TO_TIME_VALUE64(tv, tv64) 				\
+MACRO_BEGIN								\
 		(tv64)->seconds = (tv)->seconds;			\
 		(tv64)->nanoseconds = (tv)->microseconds * 1000;	\
-} while(0)
+MACRO_END
 
 /*
  *	Time value available through the mapped-time interface.
@@ -178,26 +187,30 @@ typedef struct mapped_time_value {
 
 /* Macros for converting between struct timespec and time_value_t. */
 
-#define TIME_VALUE_TO_TIMESPEC(tv, ts) do {                             \
+#define TIME_VALUE_TO_TIMESPEC(tv, ts)                                  \
+MACRO_BEGIN                                                             \
         (ts)->tv_sec = (tv)->seconds;                                   \
         (ts)->tv_nsec = (tv)->microseconds * 1000;                      \
-} while(0)
+MACRO_END
 
-#define TIMESPEC_TO_TIME_VALUE(tv, ts) do {                             \
+#define TIMESPEC_TO_TIME_VALUE(tv, ts)                                  \
+MACRO_BEGIN                                                             \
         (tv)->seconds = (ts)->tv_sec;                                   \
         (tv)->microseconds = (ts)->tv_nsec / 1000;                      \
-} while(0)
+MACRO_END
 
 /* Macros for converting between struct timespec and time_value64_t. */
 
-#define TIME_VALUE64_TO_TIMESPEC(tv, ts) do {                           \
+#define TIME_VALUE64_TO_TIMESPEC(tv, ts)                                \
+MACRO_BEGIN                                                             \
         (ts)->tv_sec = (tv)->seconds;                                   \
         (ts)->tv_nsec = (tv)->nanoseconds;                              \
-} while(0)
+MACRO_END
 
-#define TIMESPEC_TO_TIME_VALUE64(tv, ts) do {                           \
+#define TIMESPEC_TO_TIME_VALUE64(tv, ts)                                \
+MACRO_BEGIN                                                             \
         (tv)->seconds = (ts)->tv_sec;                                   \
         (tv)->nanoseconds = (ts)->tv_nsec;                              \
-} while(0)
+MACRO_END
 
 #endif	/* _MACH_TIME_VALUE_H_ */

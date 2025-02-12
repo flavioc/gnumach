@@ -90,14 +90,16 @@ extern struct processor_set	*slave_pset;
 #endif
 
 #ifdef MACH_LDEBUG
-#define pset_idle_lock()	do { \
+#define pset_idle_lock()	\
+MACRO_BEGIN \
 	assert_splsched(); \
 	simple_lock_nocheck(&pset->idle_lock); \
-} while (0)
-#define pset_idle_unlock()	do { \
+MACRO_END
+#define pset_idle_unlock()	\
+MACRO_BEGIN \
 	assert_splsched(); \
 	simple_unlock_nocheck(&pset->idle_lock); \
-} while (0)
+MACRO_END
 #else
 #define pset_idle_lock()	simple_lock_nocheck(&pset->idle_lock)
 #define pset_idle_unlock()	simple_unlock_nocheck(&pset->idle_lock)

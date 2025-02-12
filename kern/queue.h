@@ -187,7 +187,7 @@ void		insque(queue_entry_t, queue_entry_t);
  *			<field> is the chain field in (*<type>)
  */
 #define queue_enter(head, elt, type, field)			\
-{ 								\
+MACRO_BEGIN							\
 	queue_assert(head);					\
 	queue_assert(&(elt)->field);				\
 	queue_entry_t prev;					\
@@ -202,7 +202,7 @@ void		insque(queue_entry_t, queue_entry_t);
 	(elt)->field.prev = prev;				\
 	(elt)->field.next = head;				\
 	(head)->prev = (queue_entry_t) elt;			\
-}
+MACRO_END
 
 /*
  *	Macro:		queue_enter_first
@@ -216,7 +216,7 @@ void		insque(queue_entry_t, queue_entry_t);
  *			<field> is the chain field in (*<type>)
  */
 #define queue_enter_first(head, elt, type, field)		\
-{ 								\
+MACRO_BEGIN							\
 	queue_assert(head);					\
 	queue_assert(&(elt)->field);				\
 	queue_entry_t next;					\
@@ -231,7 +231,7 @@ void		insque(queue_entry_t, queue_entry_t);
 	(elt)->field.next = next;				\
 	(elt)->field.prev = head;				\
 	(head)->next = (queue_entry_t) elt;			\
-}
+MACRO_END
 
 /*
  *	Macro:		queue_field [internal use only]
@@ -251,7 +251,7 @@ void		insque(queue_entry_t, queue_entry_t);
  *			arguments as in queue_enter
  */
 #define	queue_remove(head, elt, type, field)			\
-{								\
+MACRO_BEGIN							\
 	queue_assert(head);					\
 	queue_assert(&(elt)->field);				\
 	queue_entry_t	next, prev;				\
@@ -268,7 +268,7 @@ void		insque(queue_entry_t, queue_entry_t);
 		(head)->next = next;				\
 	else							\
 		((type)prev)->field.next = next;		\
-}
+MACRO_END
 
 /*
  *	Macro:		queue_remove_first
@@ -280,7 +280,7 @@ void		insque(queue_entry_t, queue_entry_t);
  *		entry is returned by reference
  */
 #define	queue_remove_first(head, entry, type, field)		\
-{								\
+MACRO_BEGIN							\
 	queue_assert(head);					\
 	queue_assert(&(entry)->field);				\
 	queue_entry_t	next;					\
@@ -293,7 +293,7 @@ void		insque(queue_entry_t, queue_entry_t);
 	else							\
 		((type)(next))->field.prev = (head);		\
 	(head)->next = next;					\
-}
+MACRO_END
 
 /*
  *	Macro:		queue_remove_last
@@ -305,7 +305,7 @@ void		insque(queue_entry_t, queue_entry_t);
  *		entry is returned by reference
  */
 #define	queue_remove_last(head, entry, type, field)		\
-{								\
+MACRO_BEGIN							\
 	queue_assert(head);					\
 	queue_assert(&(entry)->field);				\
 	queue_entry_t	prev;					\
@@ -318,19 +318,19 @@ void		insque(queue_entry_t, queue_entry_t);
 	else							\
 		((type)(prev))->field.next = (head);		\
 	(head)->prev = prev;					\
-}
+MACRO_END
 
 /*
  *	Macro:		queue_assign
  */
 #define	queue_assign(to, from, type, field)			\
-{								\
+MACRO_BEGIN							\
 	queue_assert(&(to)->field);				\
 	queue_assert(&(from)->field);				\
 	((type)((from)->prev))->field.next = (to);		\
 	((type)((from)->next))->field.prev = (to);		\
 	*to = *from;						\
-}
+MACRO_END
 
 /*
  *	Macro:		queue_iterate
@@ -366,23 +366,27 @@ typedef struct mpqueue_head	mpqueue_head_t;
 #define	round_mpq(size)		(size)
 
 #define mpqueue_init(q) \
-	{ \
+	MACRO_BEGIN \
 		queue_init(&(q)->head); \
 		simple_lock_init(&(q)->lock); \
-	}
+	MACRO_END
 
 #define mpenqueue_tail(q, elt) \
+	MACRO_BEGIN \
 		simple_lock(&(q)->lock); \
 		enqueue_tail(&(q)->head, elt); \
-		simple_unlock(&(q)->lock);
+		simple_unlock(&(q)->lock); \
+	MACRO_END
 
 #define mpdequeue_head(q, elt) \
+	MACRO_BEGIN \
 		simple_lock(&(q)->lock); \
 		if (queue_empty(&(q)->head)) \
 			*(elt) = 0; \
 		else \
 			*(elt) = dequeue_head(&(q)->head); \
-		simple_unlock(&(q)->lock);
+		simple_unlock(&(q)->lock); \
+	MACRO_END
 
 /*
  *	Old queue stuff, will go away soon.

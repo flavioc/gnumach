@@ -133,14 +133,16 @@ decl_simple_lock_data(static,	wait_lock[NUMQUEUES])	 /* Lock for... */
 queue_head_t		wait_queue[NUMQUEUES];
 
 #ifdef MACH_LDEBUG
-#define waitq_lock(wl)		do { \
+#define waitq_lock(wl)		\
+MACRO_BEGIN \
 	assert_splsched(); \
 	simple_lock_nocheck(wl); \
-} while (0)
-#define waitq_unlock(wl)	do { \
+MACRO_END
+#define waitq_unlock(wl)	\
+MACRO_BEGIN \
 	assert_splsched(); \
 	simple_unlock_nocheck(wl); \
-} while (0)
+MACRO_END
 #else
 #define waitq_lock(wl)		simple_lock_nocheck(wl)
 #define waitq_unlock(wl)	simple_unlock_nocheck(wl)

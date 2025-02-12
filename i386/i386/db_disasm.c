@@ -857,8 +857,10 @@ int db_lengths[] = {
 };
 
 #define	get_value_inc(result, loc, size, is_signed, task) \
+MACRO_BEGIN \
 	result = db_get_task_value((loc), (size), (is_signed), (task)); \
-	(loc) += (size);
+	(loc) += (size); \
+MACRO_END
 
 /*
  * Read address at location and return updated location.

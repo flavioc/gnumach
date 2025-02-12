@@ -267,18 +267,20 @@ extern unsigned long in_interrupt[NCPUS];
 
 /* These are defined elsewhere with lock monitoring */
 #if MACH_LOCK_MON == 0
-#define simple_lock(l)		do { \
+#define simple_lock(l)		\
+MACRO_BEGIN \
 	lock_check_no_interrupts(); \
 	simple_lock_nocheck(l); \
-} while (0)
+MACRO_END
 #define simple_lock_try(l)	({ \
 	lock_check_no_interrupts(); \
 	simple_lock_try_nocheck(l); \
 })
-#define simple_unlock(l)	do { \
+#define simple_unlock(l)	\
+MACRO_BEGIN \
 	lock_check_no_interrupts(); \
 	simple_unlock_nocheck(l); \
-} while (0)
+MACRO_END
 #endif
 
 /* _irq variants */
@@ -302,10 +304,11 @@ class	simple_lock_irq_data_t	name;
 	simple_lock_nocheck(&(l)->slock); \
 	__s; \
 })
-#define simple_unlock_irq(s, l)	do { \
+#define simple_unlock_irq(s, l)	\
+MACRO_BEGIN \
 	simple_unlock_nocheck(&(l)->slock); \
 	splx(s); \
-} while (0)
+MACRO_END
 
 #if	MACH_KDB
 extern void db_show_all_slocks(void);

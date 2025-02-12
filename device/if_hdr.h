@@ -130,35 +130,39 @@ struct ifnet {
 
 #define	IF_QFULL(ifq)		((ifq)->ifq_len >= (ifq)->ifq_maxlen)
 #define	IF_DROP(ifq)		((ifq)->ifq_drops++)
-#define	IF_ENQUEUE(ifq, ior) { \
+#define	IF_ENQUEUE(ifq, ior) \
+MACRO_BEGIN \
 	simple_lock(&(ifq)->ifq_lock); \
 	enqueue_tail(&(ifq)->ifq_head, (queue_entry_t)ior); \
 	(ifq)->ifq_len++; \
 	simple_unlock(&(ifq)->ifq_lock); \
-}
-#define	IF_PREPEND(ifq, ior) { \
+MACRO_END
+#define	IF_PREPEND(ifq, ior) \
+MACRO_BEGIN \
 	simple_lock(&(ifq)->ifq_lock); \
 	enqueue_head(&(ifq)->ifq_head, (queue_entry_t)ior); \
 	(ifq)->ifq_len++; \
 	simple_unlock(&(ifq)->ifq_lock); \
-}
+MACRO_END
 
-#define	IF_DEQUEUE(ifq, ior) { \
+#define	IF_DEQUEUE(ifq, ior) \
+MACRO_BEGIN \
 	simple_lock(&(ifq)->ifq_lock); \
 	if (((ior) = (io_req_t)dequeue_head(&(ifq)->ifq_head)) != 0) \
 	    (ifq)->ifq_len--; \
 	simple_unlock(&(ifq)->ifq_lock); \
-}
+MACRO_END
 
 #define	IFQ_MAXLEN	50
 
-#define	IFQ_INIT(ifq) { \
+#define	IFQ_INIT(ifq) \
+MACRO_BEGIN \
 	queue_init(&(ifq)->ifq_head); \
 	simple_lock_init(&(ifq)->ifq_lock); \
 	(ifq)->ifq_len = 0; \
 	(ifq)->ifq_maxlen = IFQ_MAXLEN; \
 	(ifq)->ifq_drops = 0; \
-}
+MACRO_END
 
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
 

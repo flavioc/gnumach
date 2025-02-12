@@ -201,28 +201,31 @@ typedef struct bpf_insn *bpf_insn_t;
 #define BPF_JUMP(code, k, jt, jf) { (unsigned short)(code), jt, jf, k }
 #define BPF_RETMATCH(code, k, nkey) { (unsigned short)(code), nkey, 0, k }
 
-#define	BPF_INSN_STMT(pc, c, n)  {\
+#define	BPF_INSN_STMT(pc, c, n)  \
+MACRO_BEGIN				\
 	(pc)->code = (c);		\
 	(pc)->jt = (pc)->jf = 0;	\
 	(pc)->k = (n);			\
 	(pc)++;				\
-}
+MACRO_END
 
-#define BPF_INSN_JUMP(pc, c, n, jtrue, jfalse) {\
+#define BPF_INSN_JUMP(pc, c, n, jtrue, jfalse) \
+MACRO_BEGIN				\
 	(pc)->code = (c);		\
 	(pc)->jt = (jtrue);		\
 	(pc)->jf = (jfalse);		\
 	(pc)->k = (n);			\
 	(pc)++;				\
-}
+MACRO_END
 
-#define BPF_INSN_RETMATCH(pc, c, n, nkey) {\
+#define BPF_INSN_RETMATCH(pc, c, n, nkey) \
+MACRO_BEGIN				\
 	(pc)->code = (c);		\
 	(pc)->jt = (nkey);		\
 	(pc)->jf = 0;			\
 	(pc)->k = (n);			\
 	(pc)++;				\
-}
+MACRO_END
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).

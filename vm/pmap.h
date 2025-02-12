@@ -209,17 +209,19 @@ extern vm_offset_t pmap_map_bd(
  * Routines defined as macros.
  */
 #ifndef	PMAP_ACTIVATE_USER
-#define	PMAP_ACTIVATE_USER(pmap, thread, cpu) {		\
+#define	PMAP_ACTIVATE_USER(pmap, thread, cpu)		\
+MACRO_BEGIN						\
 	if ((pmap) != kernel_pmap)			\
 	    PMAP_ACTIVATE(pmap, thread, cpu);		\
-}
+MACRO_END
 #endif	/* PMAP_ACTIVATE_USER */
 
 #ifndef	PMAP_DEACTIVATE_USER
-#define	PMAP_DEACTIVATE_USER(pmap, thread, cpu) {	\
+#define	PMAP_DEACTIVATE_USER(pmap, thread, cpu)		\
+MACRO_BEGIN						\
 	if ((pmap) != kernel_pmap)			\
 	    PMAP_DEACTIVATE(pmap, thread, cpu);		\
-}
+MACRO_END
 #endif	/* PMAP_DEACTIVATE_USER */
 
 #ifndef	PMAP_ACTIVATE_KERNEL

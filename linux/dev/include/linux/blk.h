@@ -356,6 +356,7 @@ static void (DEVICE_REQUEST)(void);
 #endif
 
 #define INIT_REQUEST \
+MACRO_BEGIN \
 	if (!CURRENT) {\
 		CLEAR_INTR; \
 		return; \
@@ -365,7 +366,8 @@ static void (DEVICE_REQUEST)(void);
 	if (CURRENT->bh) { \
 		if (!buffer_locked(CURRENT->bh)) \
 			panic(DEVICE_NAME ": block not locked"); \
-	}
+	} \
+MACRO_END
 
 #endif /* !defined(IDE_DRIVER) */
 

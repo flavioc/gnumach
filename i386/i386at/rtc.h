@@ -116,26 +116,26 @@ struct rtc_st {
  * this macro reads contents of real time clock to specified buffer 
  */
 #define load_rtc(regs) \
-{\
+MACRO_BEGIN \
 	int i; \
 	\
 	for (i = 0; i < RTC_NREG; i++) { \
 		outb(RTC_ADDR, i); \
 		regs[i] = inb(RTC_DATA); \
 	} \
-}
+MACRO_END
 
 /*
  * this macro writes contents of specified buffer to real time clock 
  */ 
 #define save_rtc(regs) \
-{ \
+MACRO_BEGIN \
 	int i; \
 	for (i = 0; i < RTC_NREGP; i++) { \
 		outb(RTC_ADDR, i); \
 		outb(RTC_DATA, regs[i]);\
 	} \
-}	
+MACRO_END
 
 extern int readtodc(uint64_t *tp);
 extern int writetodc(void);

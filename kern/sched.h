@@ -76,14 +76,16 @@ typedef struct run_queue	*run_queue_t;
 
 /* Shall be taken at splsched only */
 #ifdef MACH_LDEBUG
-#define runq_lock(rq)		do { \
+#define runq_lock(rq)		\
+MACRO_BEGIN \
 	assert_splsched(); \
 	simple_lock_nocheck(&(rq)->lock); \
-} while (0)
-#define runq_unlock(rq)	do { \
+MACRO_END
+#define runq_unlock(rq)	\
+MACRO_BEGIN \
 	assert_splsched(); \
 	simple_unlock_nocheck(&(rq)->lock); \
-} while (0)
+MACRO_END
 #else
 #define runq_lock(rq)		simple_lock_nocheck(&(rq)->lock)
 #define runq_unlock(rq)	simple_unlock_nocheck(&(rq)->lock)

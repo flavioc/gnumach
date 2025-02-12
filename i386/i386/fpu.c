@@ -59,12 +59,12 @@
 #if 0
 #include <i386/ipl.h>
 #define ASSERT_IPL(L) \
-{ \
+MACRO_BEGIN \
       if (curr_ipl[cpu_number()] != L) { \
 	      printf("IPL is %d, expected %d\n", curr_ipl[cpu_number()], L); \
 	      panic("fpu: wrong ipl"); \
       } \
-}
+MACRO_END
 #else
 #define ASSERT_IPL(L)
 #endif
@@ -91,16 +91,16 @@ volatile thread_t	fp_intr_thread = THREAD_NULL;
 
 
 #define	clear_fpu() \
-    { \
+    MACRO_BEGIN \
 	set_ts(); \
 	fp_thread = THREAD_NULL; \
-    }
+    MACRO_END
 
 #else	/* NCPUS > 1 */
 #define	clear_fpu() \
-    { \
+    MACRO_BEGIN \
 	set_ts(); \
-    }
+    MACRO_END
 
 #endif
 

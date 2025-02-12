@@ -200,7 +200,7 @@ static inline void set_xcr0(uint64_t value) {
  */
 #if	NCPUS > 1
 #define	fpu_save_context(thread) \
-    { \
+    MACRO_BEGIN \
 	struct i386_fpsave_state *ifps; \
 	ifps = (thread)->pcb->ims.ifps; \
 	if (ifps != 0 && !ifps->fp_valid) { \
@@ -208,13 +208,13 @@ static inline void set_xcr0(uint64_t value) {
 	    fpu_save(ifps); \
 	    set_ts(); \
 	} \
-    }
+    MACRO_END
 	    
 #else	/* NCPUS == 1 */
 #define	fpu_save_context(thread) \
-    { \
+    MACRO_BEGIN \
 	    set_ts(); \
-    }
+    MACRO_END
 
 #endif	/* NCPUS == 1 */
 

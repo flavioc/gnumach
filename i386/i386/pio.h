@@ -48,14 +48,14 @@
 
 
 #define outl(x, y) \
-{ asm volatile("outl %0, %1" : : "a" ((unsigned int)(y)) , "dN" ((unsigned short)(x))); }
+MACRO_BEGIN asm volatile("outl %0, %1" : : "a" ((unsigned int)(y)) , "dN" ((unsigned short)(x))); MACRO_END
 
 
 #define outw(x, y) \
-{ asm volatile("outw %0, %1" : : "a" ((unsigned short)(y)) , "dN" ((unsigned short)(x))); }
+MACRO_BEGIN asm volatile("outw %0, %1" : : "a" ((unsigned short)(y)) , "dN" ((unsigned short)(x))); MACRO_END
 
 
 #define outb(x, y) \
-{ asm volatile("outb %0, %1" : : "a" ((unsigned char)(y)) , "dN" ((unsigned short)(x))); }
+MACRO_BEGIN asm volatile("outb %0, %1" : : "a" ((unsigned char)(y)) , "dN" ((unsigned short)(x))); MACRO_END
 
 #endif /* _I386_PIO_H_ */

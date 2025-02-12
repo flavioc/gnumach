@@ -352,10 +352,11 @@ def_simple_lock_data(static,net_hash_header_lock)
 #define FILTER_ITERATE_END }
 
 /* entry_p must be net_rcv_port_t or net_hash_entry_t */
-#define ENQUEUE_DEAD(dead, entry_p, chain) {			\
+#define ENQUEUE_DEAD(dead, entry_p, chain)			\
+MACRO_BEGIN							\
 	(entry_p)->chain.next = (queue_entry_t) (dead);		\
 	(dead) = (queue_entry_t)(entry_p);			\
-}
+MACRO_END
 
 /*
  *	ethernet_priority:
