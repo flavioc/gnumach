@@ -191,6 +191,8 @@ def_simple_lock_data(static,vm_object_cached_lock_data)
 		simple_lock_try(&vm_object_cached_lock_data)
 #define vm_object_cache_unlock()	\
 		simple_unlock(&vm_object_cached_lock_data)
+#define vm_object_cache_locked()		\
+		simple_lock_taken(&vm_object_cached_lock_data)
 
 /*
  *	Number of physical pages referenced by cached objects.
@@ -359,6 +361,9 @@ void vm_object_init(void)
 static void vm_object_cache_add(
 	vm_object_t	object)
 {
+	assert(vm_object_lock_taken(object));
+	assert(vm_object_cache_locked());
+
 	assert(!object->cached);
 	queue_enter(&vm_object_cached_list, object, vm_object_t, cached_list);
 	object->cached = TRUE;
@@ -367,6 +372,9 @@ static void vm_object_cache_add(
 static void vm_object_cache_remove(
 	vm_object_t	object)
 {
+	assert(vm_object_lock_taken(object));
+	assert(vm_object_cache_locked());
+
 	assert(object->cached);
 	queue_remove(&vm_object_cached_list, object, vm_object_t, cached_list);
 	object->cached = FALSE;
@@ -528,6 +536,9 @@ void vm_object_terminate(
 {
 	vm_page_t	p;
 	vm_object_t	shadow_object;
+
+	assert(vm_object_lock_taken(object));
+	assert(vm_object_cache_locked());
 
 	/*
 	 *	Make sure the object isn't already being terminated
@@ -731,6 +742,8 @@ static void vm_object_abort_activity(
 {
 	vm_page_t	p;
 	vm_page_t	next;
+
+	assert(vm_object_lock_taken(object));
 
 	/*
 	 *	Abort all activity that would be waiting
@@ -1031,6 +1044,8 @@ kern_return_t vm_object_copy_slowly(
 	vm_object_t	new_object;
 	vm_offset_t	new_offset;
 
+	assert(vm_object_lock_taken(src_object));
+
 	if (size == 0) {
 		vm_object_unlock(src_object);
 		*_result_object = VM_OBJECT_NULL;
@@ -1303,6 +1318,8 @@ static kern_return_t vm_object_copy_call(
 	ipc_port_t	new_memory_object;
 	vm_object_t	new_object;
 	vm_page_t	p;
+
+	assert(vm_object_lock_taken(src_object));
 
 	/*
 	 *	Create a memory object port to be associated
@@ -2155,6 +2172,8 @@ void vm_object_pager_create(
 {
 	ipc_port_t	pager;
 
+	assert(vm_object_lock_taken(object));
+
 	if (object->pager_created) {
 		/*
 		 *	Someone else got to it first...
@@ -2249,6 +2268,8 @@ void vm_object_remove(
 {
 	ipc_port_t port;
 
+	assert(vm_object_cache_locked());
+
 	if ((port = object->pager) != IP_NULL) {
 		if (ip_kotype(port) == IKOT_PAGER)
 			ipc_kobject_set(port, IKO_NULL,
@@ -2303,6 +2324,8 @@ void vm_object_collapse(
 	vm_offset_t	new_offset;
 	vm_page_t	p, pp;
 	ipc_port_t 	old_name_port;
+
+	assert(vm_object_lock_taken(object));
 
 	if (!vm_object_collapse_allowed)
 		return;
@@ -2653,6 +2676,8 @@ void vm_object_page_remove(
 	vm_offset_t	end)
 {
 	vm_page_t	p, next;
+
+	assert(vm_object_lock_taken(object));
 
 	/*
 	 *	One and two page removals are most popular.

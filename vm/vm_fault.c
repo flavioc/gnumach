@@ -127,6 +127,8 @@ vm_fault_cleanup(
 	vm_object_t	object,
 	vm_page_t	top_page)
 {
+	assert(vm_object_lock_taken(object));
+
 	vm_object_paging_end(object);
 	vm_object_unlock(object);
 

@@ -755,6 +755,7 @@ vm_page_seg_free(struct vm_page_seg *seg, struct vm_page *page,
 static void
 vm_page_seg_add_active_page(struct vm_page_seg *seg, struct vm_page *page)
 {
+    assert(simple_lock_taken(&seg->lock));
     assert(page->object != NULL);
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
@@ -770,6 +771,7 @@ vm_page_seg_add_active_page(struct vm_page_seg *seg, struct vm_page *page)
 static void
 vm_page_seg_remove_active_page(struct vm_page_seg *seg, struct vm_page *page)
 {
+    assert(simple_lock_taken(&seg->lock));
     assert(page->object != NULL);
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
@@ -784,6 +786,7 @@ vm_page_seg_remove_active_page(struct vm_page_seg *seg, struct vm_page *page)
 static void
 vm_page_seg_add_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
 {
+    assert(simple_lock_taken(&seg->lock));
     assert(page->object != NULL);
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
@@ -798,6 +801,7 @@ vm_page_seg_add_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
 static void
 vm_page_seg_remove_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
 {
+    assert(simple_lock_taken(&seg->lock));
     assert(page->object != NULL);
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
@@ -1726,6 +1730,9 @@ vm_page_mem_free(void)
 void
 vm_page_wire(struct vm_page *page)
 {
+    assert(vm_page_locked_queues());
+    assert(vm_object_lock_taken(page->object));
+
     VM_PAGE_CHECK(page);
 
     if (page->wire_count == 0) {
@@ -1748,6 +1755,9 @@ void
 vm_page_unwire(struct vm_page *page)
 {
     struct vm_page_seg *seg;
+
+    assert(vm_page_locked_queues());
+    assert(vm_object_lock_taken(page->object));
 
     VM_PAGE_CHECK(page);
 
@@ -1780,6 +1790,8 @@ void
 vm_page_deactivate(struct vm_page *page)
 {
     struct vm_page_seg *seg;
+
+    assert(vm_page_locked_queues());
 
     VM_PAGE_CHECK(page);
 
@@ -1820,6 +1832,8 @@ vm_page_activate(struct vm_page *page)
 {
     struct vm_page_seg *seg;
 
+    assert(vm_page_locked_queues());
+
     VM_PAGE_CHECK(page);
 
     /*
@@ -1844,6 +1858,8 @@ void
 vm_page_queues_remove(struct vm_page *page)
 {
     struct vm_page_seg *seg;
+
+    assert(vm_page_locked_queues());
 
     assert(!page->active || !page->inactive);
 

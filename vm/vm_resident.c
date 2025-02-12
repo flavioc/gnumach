@@ -325,6 +325,9 @@ void vm_page_insert(
 {
 	vm_page_bucket_t *bucket;
 
+	assert(vm_page_locked_queues());
+	assert(vm_object_lock_taken(object));
+
 	VM_PAGE_CHECK(mem);
 
 	assert(!mem->active && !mem->inactive);
@@ -402,6 +405,9 @@ void vm_page_replace(
 	vm_offset_t	offset)
 {
 	vm_page_bucket_t *bucket;
+
+	assert(vm_page_locked_queues());
+	assert(vm_object_lock_taken(object));
 
 	VM_PAGE_CHECK(mem);
 
@@ -502,6 +508,10 @@ void vm_page_remove(
 	vm_page_t		this;
 
 	assert(mem->tabled);
+
+	assert(vm_page_locked_queues());
+	assert(vm_object_lock_taken(mem->object));
+
 	VM_PAGE_CHECK(mem);
 
 	/*
@@ -564,6 +574,8 @@ vm_page_t vm_page_lookup(
 	vm_page_t		mem;
 	vm_page_bucket_t 	*bucket;
 
+	assert(vm_object_lock_taken(object));
+
 	/*
 	 *	Search the hash table for this object/offset pair
 	 */
@@ -597,6 +609,8 @@ void vm_page_rename(
 	 *	Changes to mem->object require the page lock because
 	 *	the pageout daemon uses that lock to get the object.
 	 */
+
+	assert(vm_object_lock_taken(new_object));
 
 	vm_page_lock_queues();
     	vm_page_remove(mem);
@@ -742,6 +756,7 @@ boolean_t vm_page_convert(struct vm_page **mp)
 		return FALSE;
 
 	object = fict_m->object;
+	assert(vm_object_lock_taken(object));
 	offset = fict_m->offset;
 	vm_page_lock_queues();
 	vm_page_remove(fict_m);
@@ -947,6 +962,8 @@ vm_page_t vm_page_alloc(
 {
 	vm_page_t	mem;
 
+	assert(vm_object_lock_taken(object));
+
 	mem = vm_page_grab(VM_PAGE_HIGHMEM);
 	if (mem == VM_PAGE_NULL)
 		return VM_PAGE_NULL;
@@ -975,6 +992,9 @@ void vm_page_free(
 	if (mem->tabled) {
 		vm_page_remove(mem);
 	}
+
+	assert(vm_page_locked_queues());
+	assert(vm_object_lock_taken(mem->object));
 
 	assert(!mem->active && !mem->inactive);
 

@@ -293,6 +293,7 @@ extern unsigned int	vm_page_info(
 
 #define vm_page_lock_queues()	simple_lock(&vm_page_queue_lock)
 #define vm_page_unlock_queues()	simple_unlock(&vm_page_queue_lock)
+#define vm_page_locked_queues()	simple_lock_taken(&vm_page_queue_lock)
 
 #define VM_PAGE_QUEUES_REMOVE(mem) vm_page_queues_remove(mem)
 
