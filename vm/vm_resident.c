@@ -743,6 +743,7 @@ boolean_t vm_page_convert(struct vm_page **mp)
 
 	object = fict_m->object;
 	offset = fict_m->offset;
+	vm_page_lock_queues();
 	vm_page_remove(fict_m);
 
 	memcpy(&real_m->vm_page_header,
@@ -751,6 +752,7 @@ boolean_t vm_page_convert(struct vm_page **mp)
 	real_m->fictitious = FALSE;
 
 	vm_page_insert(real_m, object, offset);
+	vm_page_unlock_queues();
 
 	assert(real_m->phys_addr != vm_page_fictitious_addr);
 	assert(fict_m->fictitious);

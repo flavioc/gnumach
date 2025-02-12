@@ -1066,10 +1066,14 @@ kern_return_t vm_object_copy_slowly(
 		vm_page_t	new_page;
 		vm_fault_return_t result;
 
+		vm_object_lock(new_object);
 		while ((new_page = vm_page_alloc(new_object, new_offset))
 				== VM_PAGE_NULL) {
+			vm_object_unlock(new_object);
 			VM_PAGE_WAIT((void (*)()) 0);
+			vm_object_lock(new_object);
 		}
+		vm_object_unlock(new_object);
 
 		do {
 			vm_prot_t	prot = VM_PROT_READ;
