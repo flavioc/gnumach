@@ -1096,7 +1096,6 @@ vm_page_seg_evict(struct vm_page_seg *seg, boolean_t external_only,
     boolean_t reclaim, double_paging;
     vm_object_t object;
     boolean_t was_active;
-    boolean_t internal;
 
     page = NULL;
     object = NULL;
@@ -1170,9 +1169,9 @@ restart:
     assert(!page->laundry);
     assert(!(double_paging && page->external));
 
-    internal = object->internal || memory_manager_default_port(object->pager);
-    if (internal || !alloc_paused ||
-        ! IP_VALID(memory_manager_default)) {
+    if (object->internal || !alloc_paused ||
+        ! IP_VALID(memory_manager_default) ||
+        memory_manager_default_port(object->pager)) {
         double_paging = FALSE;
     } else {
         double_paging = page->laundry = TRUE;
@@ -1222,8 +1221,7 @@ out:
     vm_pageout_page(page, FALSE, TRUE); /* flush it */
     vm_object_unlock(object);
 
-    if (!internal && alloc_paused) {
-        /* We have only told external pager, continue evicting.  */
+    if (double_paging) {
         goto restart;
     }
 
