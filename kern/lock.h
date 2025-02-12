@@ -58,8 +58,8 @@
  * MACH_LDEBUG is set.
  */
 
-#if NCPUS > 1
 #include <machine/lock.h>/*XXX*/
+#if NCPUS > 1
 #if MACH_LOCK_MON == 0
 #define simple_lock_nocheck	_simple_lock
 #define simple_lock_try_nocheck	_simple_lock_try
