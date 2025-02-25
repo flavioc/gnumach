@@ -195,15 +195,6 @@ def_simple_lock_data(static,vm_object_cached_lock_data)
 		simple_lock_taken(&vm_object_cached_lock_data)
 
 /*
- *	Number of physical pages referenced by cached objects.
- *	This counter is protected by its own lock to work around
- *	lock ordering issues.
- */
-int		vm_object_cached_pages;
-
-def_simple_lock_data(static,vm_object_cached_pages_lock_data)
-
-/*
  *	Virtual memory objects are initialized from
  *	a template (see vm_object_allocate).
  *
