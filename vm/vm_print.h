@@ -31,6 +31,7 @@ extern void vm_map_copy_print(const vm_map_copy_t);
 
 #include <vm/vm_object.h>
 
+extern void vm_object_print_part(vm_object_t object, vm_offset_t offset, vm_size_t size);
 extern void vm_object_print(vm_object_t);
 
 #include <vm/vm_page.h>

@@ -2955,12 +2955,14 @@ boolean_t	vm_object_print_pages = FALSE;
 /*
  *	vm_object_print:	[ debug ]
  */
-void vm_object_print(
-	vm_object_t	object)
+void vm_object_print_part(
+	vm_object_t	object,
+	vm_offset_t	offset,
+	vm_size_t	size)
 {
 	vm_page_t	p;
 
-	int 		count;
+	int 		count, count2;
 
 	if (object == VM_OBJECT_NULL)
 		return;
@@ -2991,24 +2993,46 @@ void vm_object_print(
 		(vm_offset_t) object->shadow, (vm_offset_t) object->shadow_offset);
 	 printf("copy=0x%X\n", (vm_offset_t) object->copy);
 
+	count = 0;
+	count2 = 0;
+	p = (vm_page_t) queue_first(&object->memq);
+	while (!queue_end(&object->memq, (queue_entry_t) p)) {
+		if (p->offset >= offset && p->offset + PAGE_SIZE <= size) {
+			if (p->wire_count)
+				count++;
+			count2++;
+		}
+		p = (vm_page_t) queue_next(&p->listq);
+	}
+	iprintf("wired: %d/%d\n", count, count2);
+
 	indent += 1;
 
 	if (vm_object_print_pages) {
 		count = 0;
 		p = (vm_page_t) queue_first(&object->memq);
 		while (!queue_end(&object->memq, (queue_entry_t) p)) {
-			if (count == 0) iprintf("memory:=");
-			else if (count == 4) {printf("\n"); iprintf(" ..."); count = 0;}
-			else printf(",");
-			count++;
+			if (p->offset >= offset && p->offset + PAGE_SIZE <= size) {
+				if (count == 0) iprintf("memory:=");
+				else if (count == 4) {printf("\n"); iprintf(" ..."); count = 0;}
+				else printf(",");
+				count++;
 
-			printf("(off=0x%X,page=0x%X)", p->offset, (vm_offset_t) p);
+				printf("(off=0x%X,page=0x%X)", p->offset, (vm_offset_t) p);
+			}
+
 			p = (vm_page_t) queue_next(&p->listq);
 		}
 		if (count != 0)
 			printf("\n");
 	}
 	indent -= 2;
+}
+
+void vm_object_print(
+	vm_object_t	object)
+{
+	vm_object_print_part(object, 0ULL, ~0ULL);
 }
 
 #endif	/* MACH_KDB */

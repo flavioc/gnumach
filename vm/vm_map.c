@@ -5208,7 +5208,7 @@ void vm_map_print(db_expr_t addr, boolean_t have_addr, db_expr_t count, const ch
 			if ((entry->vme_prev == vm_map_to_entry(map)) ||
 			    (entry->vme_prev->object.vm_object != entry->object.vm_object)) {
 				indent += 1;
-				vm_object_print(entry->object.vm_object);
+				vm_object_print_part(entry->object.vm_object, entry->offset, entry->vme_end - entry->vme_start);
 				indent -= 1;
 			}
 		}
