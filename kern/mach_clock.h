@@ -110,4 +110,8 @@ extern boolean_t untimeout(timer_func_t *fcn, const void *param);
 extern int timeopen(dev_t dev, int flag, io_req_t ior);
 extern void timeclose(dev_t dev, int flag);
 
+/* For high-precision clocks.  */
+extern uint32_t hpclock_read_counter(void);
+extern uint32_t hpclock_get_counter_period_nsec(void);
+
 #endif /* _KERN_MACH_CLOCK_H_ */

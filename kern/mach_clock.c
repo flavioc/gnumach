@@ -83,6 +83,15 @@ unsigned	tickadj = 500 / HZ;	/* can adjust 100 usecs per second */
 unsigned	bigadj = 1000000;	/* adjust 10*tickadj if adjustment
 					   > bigadj */
 
+/* A high-precision (hardware) clock is taken into account to increase the
+ * accuracy of the functions used for getting time (e.g. host_get_time64()).
+ * The counter of the clock is read once in every clock interrupt.  When any
+ * of the functions used for getting time is called, the counter is read again
+ * and the difference between these two read is multiplied by the counter
+ * period and added to the read value from time or uptime to get a more
+ * accurate time read.  */
+uint32_t	last_hpc_read = 0;
+
 /*
  *	This update protocol, with a check value, allows
  *		do {
@@ -128,7 +137,8 @@ MACRO_BEGIN								\
 		__sync_synchronize();					\
 		(time)->nanoseconds = mtime->time_value.nanoseconds;	\
 		__sync_synchronize();					\
-	} while ((time)->seconds != mtime->check_seconds64);	\
+	} while ((time)->seconds != mtime->check_seconds64);		\
+	time_value64_add_hpc(time);					\
 MACRO_END
 
 #define read_mapped_uptime(uptime)				    	\
@@ -139,6 +149,7 @@ MACRO_BEGIN								\
 		(uptime)->nanoseconds = mtime->uptime_value.nanoseconds;\
 		__sync_synchronize();					\
 	} while ((uptime)->seconds != mtime->check_upseconds64);	\
+	time_value64_add_hpc(uptime);					\
 MACRO_END
 
 def_simple_lock_irq_data(static,	timer_lock)	/* lock for ... */
@@ -292,6 +303,7 @@ void clock_interrupt(
 		}
 	    }
 	}
+	last_hpc_read = hpclock_read_counter();
 }
 
 /*
@@ -425,6 +437,26 @@ clock_boottime_update(const struct time_value64 *new_time)
 	time_value64_sub(&delta, new_time);
 	time_value64_add(&clock_boottime_offset, &delta);
 }
+
+/*
+ * Add the time value since last clock interrupt in nanosecond.
+ */
+static void
+time_value64_add_hpc(time_value64_t *value)
+{
+	uint32_t now = hpclock_read_counter();
+	/* Time since last clock interrupt in nanosecond.  */
+	int64_t ns = (now - last_hpc_read) * hpclock_get_counter_period_nsec();
+
+	/* Limit the value of ns under the period of a clock interrupt.  */
+	if (ns >= tick * 1000)
+	    /* Let ns stuck at the end of the clock interrupt period when
+	       something bad happens.  */
+	    ns = (tick * 1000) - 1;
+
+	time_value64_add_nanos(value, ns);
+}
+
 
 /*
  * Record a timestamp in STAMP.  Records values in the boot-time clock

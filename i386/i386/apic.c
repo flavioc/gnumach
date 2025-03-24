@@ -479,3 +479,21 @@ hpet_mdelay(uint32_t ms)
     hpet_udelay(ms * 1000);
 }
 
+/* This function is called in clock_interrupt(), so it's possible to be called
+   when HPET is not available.  */
+uint32_t
+hpclock_read_counter(void)
+{
+    /* We assume the APIC machines have HPET.  */
+#ifdef APIC
+    return HPET32(HPET_COUNTER);
+#else
+    return 0;
+#endif
+}
+
+uint32_t
+hpclock_get_counter_period_nsec(void)
+{
+    return hpet_period_nsec;
+}

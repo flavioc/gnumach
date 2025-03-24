@@ -223,7 +223,9 @@ void machine_init(void)
 	 */
 	gdt_descr_tmp.linear_base += apboot_addr;
 	apboot_jmp_offset += apboot_addr;
+#endif
 
+#ifdef APIC
 	/*
 	 * Initialize the HPET
 	 */
