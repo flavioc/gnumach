@@ -994,7 +994,8 @@ void vm_page_free(
 	}
 
 	assert(vm_page_locked_queues());
-	assert(vm_object_lock_taken(mem->object));
+	if (mem->absent)
+		assert(vm_object_lock_taken(mem->object));
 
 	assert(!mem->active && !mem->inactive);
 
