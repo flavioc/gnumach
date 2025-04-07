@@ -236,7 +236,7 @@ dump_ss(regs);
 		 */
 		result = vm_fault(map,
 				  trunc_page((vm_offset_t)subcode),
-#if !(__i486__ || __i586__ || __i686__)
+#if (__i386__ && !(__i486__ || __i586__ || __i686__))
 				  VM_PROT_READ|VM_PROT_WRITE,
 #else
 				  (code & T_PF_WRITE)
@@ -258,7 +258,7 @@ dump_ss(regs);
 		}
 		else
 #endif	/* MACH_KDB */
-#if !(__i486__ || __i586__ || __i686__)
+#if (__i386__ && !(__i486__ || __i586__ || __i686__))
 		if ((code & T_PF_WRITE) == 0 &&
 		    result == KERN_PROTECTION_FAILURE)
 		{

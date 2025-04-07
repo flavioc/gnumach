@@ -1973,7 +1973,7 @@ void pmap_protect(
 		return;
 	}
 
-#if !(__i486__ || __i586__ || __i686__)
+#if (__i386__ && !(__i486__ || __i586__ || __i686__))
 	/*
 	 * If write-protecting in the kernel pmap,
 	 * remove the mappings; the i386 ignores
@@ -2188,7 +2188,7 @@ void pmap_enter(
 
 	if (pmap == kernel_pmap && (v < kernel_virtual_start || v >= kernel_virtual_end))
 		panic("pmap_enter(%lx, %llx) falls in physical memory area!\n", (unsigned long) v, (unsigned long long) pa);
-#if !(__i486__ || __i586__ || __i686__)
+#if (__i386__ && !(__i486__ || __i586__ || __i686__))
 	if (pmap == kernel_pmap && (prot & VM_PROT_WRITE) == 0
 	    && !wired /* hack for io_wire */ ) {
 	    /*
