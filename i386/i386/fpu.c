@@ -491,6 +491,9 @@ ASSERT_IPL(SPL0);
 		ifps->xfp_save_state.fp_opcode  = user_fp_state->fp_opcode;
 		ifps->xfp_save_state.fp_dp      = user_fp_state->fp_dp;
 		ifps->xfp_save_state.fp_ds      = user_fp_state->fp_ds;
+		ifps->xfp_save_state.fp_dp3     = user_fp_state->fp_dp3;
+		ifps->xfp_save_state.fp_mxcsr   = user_fp_state->fp_mxcsr & mxcsr_feature_mask;
+		ifps->xfp_save_state.fp_mxcsr_mask = user_fp_state->fp_mxcsr_mask & mxcsr_feature_mask;;
 		for (i=0; i<8; i++)
                     memcpy(&ifps->xfp_save_state.fp_reg_word[i], &user_fp_state->fp_reg_word[i], sizeof(user_fp_state->fp_reg_word[i]));
 		for (i=0; i<16; i++)
@@ -619,6 +622,9 @@ ASSERT_IPL(SPL0);
 	    user_fp_state->fp_opcode  = ifps->xfp_save_state.fp_opcode;
 	    user_fp_state->fp_dp      = ifps->xfp_save_state.fp_dp;
 	    user_fp_state->fp_ds      = ifps->xfp_save_state.fp_ds;
+	    user_fp_state->fp_dp3     = ifps->xfp_save_state.fp_dp3;
+	    user_fp_state->fp_mxcsr   = ifps->xfp_save_state.fp_mxcsr;
+	    user_fp_state->fp_mxcsr_mask = ifps->xfp_save_state.fp_mxcsr_mask;
 	    for (i=0; i<8; i++)
 		memcpy(&user_fp_state->fp_reg_word[i], &ifps->xfp_save_state.fp_reg_word[i], sizeof(user_fp_state->fp_reg_word[i]));
 	    for (i=0; i<16; i++)

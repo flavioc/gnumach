@@ -30,9 +30,9 @@ static void printx(struct i386_xfloat_state *state, int size)
   printf("xfloat init %d fp %d exc %d\n",
          state->initialized, state->fpkind, state->exc_status);
   struct i386_xfp_save *xfp = (struct i386_xfp_save *) &state->hw_state[0];
-  printf("xfp %x %x %x %x %x %x %x %x\n",
+  printf("xfp %x %x %x %x %x %x %x %x %x\n",
          xfp->fp_control, xfp->fp_status, xfp->fp_tag, xfp->fp_eip,
-         xfp->fp_cs, xfp->fp_opcode, xfp->fp_dp, xfp->fp_ds);
+         xfp->fp_cs, xfp->fp_opcode, xfp->fp_dp, xfp->fp_ds, xfp->fp_mxcsr);
   for (int i=0; i<8; i++)
     {
       printf("fp%d", i);
@@ -185,8 +185,10 @@ static void thread_xfp_getset(void *arg)
   for (int j=0; j<16; j++)
     ASSERT(xfp->fp_xreg_word[3][j] == 0x33,
            "register xmm3 wasn't correctly retrieved from the getset thread");
+  ASSERT(xfp->fp_mxcsr == 0x1f80, "mxcsr wasn't correctly retrieved from the getset thread");
 
   memset(xfp->fp_xreg_word[7], 0x77, 16);
+  xfp->fp_mxcsr = 0x1fa0;
 
   err = thread_set_state(th, i386_XFLOAT_STATE,
                         (thread_state_t) state, state_count);
@@ -208,6 +210,10 @@ static void test_xfp_state_getset()
   memset(buf3, 0x33, 16);
   asm volatile ("movups (%0),%%xmm3" :: "r" (buf3) :);
 
+  /* And to MXCSR */
+  unsigned int mxcsr = 0x1f80;
+  asm volatile ("ldmxcsr %0" :: "m" (mxcsr));
+
   /* then switch to the get/set test thread, and wait to be resumed */
   test_thread_start(mach_task_self(), thread_xfp_getset, &th);
   err = thread_suspend(th);
@@ -225,6 +231,9 @@ static void test_xfp_state_getset()
   for (int j=0; j<16; j++)
     ASSERT(buf7[j] == 0x77,
            "register xmm7 wasn't correctly set by the getset thread");
+
+  asm volatile ("stmxcsr %0" :: "m" (mxcsr));
+  ASSERT(mxcsr == 0x1fa0, "mxcsr wasn't updated");
 }
 #endif
 
