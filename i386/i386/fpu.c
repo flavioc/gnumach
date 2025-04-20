@@ -485,7 +485,7 @@ ASSERT_IPL(SPL0);
 		struct i386_xfp_save *user_fp_state = (struct i386_xfp_save *) &xfstate->hw_state[0];
 		ifps->xfp_save_state.fp_control = user_fp_state->fp_control;
 		ifps->xfp_save_state.fp_status  = user_fp_state->fp_status;
-		ifps->xfp_save_state.fp_tag     = twd_i387_to_fxsr(user_fp_state->fp_tag);
+		ifps->xfp_save_state.fp_tag     = user_fp_state->fp_tag;
 		ifps->xfp_save_state.fp_eip     = user_fp_state->fp_eip;
 		ifps->xfp_save_state.fp_cs      = user_fp_state->fp_cs;
 		ifps->xfp_save_state.fp_opcode  = user_fp_state->fp_opcode;
@@ -618,7 +618,7 @@ ASSERT_IPL(SPL0);
 
 	    user_fp_state->fp_control = ifps->xfp_save_state.fp_control;
 	    user_fp_state->fp_status  = ifps->xfp_save_state.fp_status;
-	    user_fp_state->fp_tag     = twd_fxsr_to_i387(&ifps->xfp_save_state);
+	    user_fp_state->fp_tag     = ifps->xfp_save_state.fp_tag;
 	    user_fp_state->fp_eip     = ifps->xfp_save_state.fp_eip;
 	    user_fp_state->fp_cs      = ifps->xfp_save_state.fp_cs;
 	    user_fp_state->fp_opcode  = ifps->xfp_save_state.fp_opcode;
