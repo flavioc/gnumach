@@ -234,6 +234,7 @@ extern void fp_save(thread_t thread);
 extern void fp_load(thread_t thread);
 extern void fp_free(struct i386_fpsave_state *fps);
 extern void fpu_module_init(void);
+extern kern_return_t i386_get_xstate_size(host_t host, vm_size_t *size);
 extern kern_return_t fpu_set_state(thread_t thread, void *state, int flavor);
 extern kern_return_t fpu_get_state(thread_t thread, void *state, int flavor);
 extern void fpnoextflt(void);

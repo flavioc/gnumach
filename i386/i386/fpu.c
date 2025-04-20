@@ -77,7 +77,7 @@ _Static_assert(sizeof(struct i386_xfp_save) == 512 + 8*8,
 int			fp_kind = FP_387;	/* 80387 present */
 enum fp_save_kind	fp_save_kind = FP_FNSAVE;	/* Which instruction we use to save/restore FPU state */
 uint64_t		fp_xsave_support;	/* Bitmap of supported XSAVE save areas */
-unsigned		fp_xsave_size = sizeof(struct i386_fpsave_state);
+unsigned		fp_xsave_size = sizeof(struct i386_xfp_save);	/* size saved by XSAVE */
 struct i386_fpsave_state *fp_default_state;
 struct kmem_cache	ifps_cache;	/* cache for FPU save area */
 static unsigned long	mxcsr_feature_mask = 0xffffffff;	/* Always AND user-provided mxcsr with this security mask */
@@ -182,12 +182,12 @@ init_fpu(void)
 
 		    if (xsave_cpu_features & CPU_FEATURE_XSAVES) {
 			// all states enabled by XCR0|IA32_XSS
-			fp_xsave_size = offsetof(struct i386_fpsave_state, xfp_save_state) + ebx;
-			if (fp_xsave_size < sizeof(struct i386_fpsave_state))
+			fp_xsave_size = ebx;
+			if (fp_xsave_size < sizeof(struct i386_xfp_save))
 				panic("CPU-provided xstate size %d "
 				      "is smaller than our minimum %d!\n",
 				      fp_xsave_size,
-				      (int) sizeof(struct i386_fpsave_state));
+				      (int) sizeof(struct i386_xfp_save));
 
 			fp_save_kind = FP_XSAVES;
 		    } else {
@@ -195,12 +195,12 @@ init_fpu(void)
 			ecx = 0x0;
 			cpuid(eax, ebx, ecx, edx);
 			// all states enabled by XCR0
-			fp_xsave_size = offsetof(struct i386_fpsave_state, xfp_save_state) + ebx;
-			if(fp_xsave_size < sizeof(struct i386_fpsave_state))
+			fp_xsave_size = ebx;
+			if(fp_xsave_size < sizeof(struct i386_xfp_save))
 				panic("CPU-provided xstate size %d "
 				      "is smaller than our minimum %d!\n",
 				      fp_xsave_size,
-				      (int) sizeof(struct i386_fpsave_state));
+				      (int) sizeof(struct i386_xfp_save));
 
 			if (xsave_cpu_features & CPU_FEATURE_XSAVEOPT)
 			    fp_save_kind = FP_XSAVEOPT;
@@ -268,12 +268,12 @@ void
 fpu_module_init(void)
 {
 	kmem_cache_init(&ifps_cache, "i386_fpsave_state",
-			fp_xsave_size,
+			offsetof(struct i386_fpsave_state, xfp_save_state) + fp_xsave_size,
 			alignof(struct i386_fpsave_state),
 			NULL, 0);
 
 	fp_default_state = (struct i386_fpsave_state *) kmem_cache_alloc(&ifps_cache);
-	memset(fp_default_state, 0, fp_xsave_size);
+	memset(fp_default_state, 0, offsetof(struct i386_fpsave_state, xfp_save_state) + fp_xsave_size);
 
 	/* Get default state from CPU.  */
 	clear_ts();
@@ -445,7 +445,7 @@ ASSERT_IPL(SPL0);
 	    /*
 	     * Ensure that reserved parts of the environment are 0.
 	     */
-	    memset(ifps, 0, fp_xsave_size);
+	    memset(ifps, 0, offsetof(struct i386_fpsave_state, xfp_save_state) + fp_xsave_size);
 	    ifps->fp_valid = TRUE;
 
 	    if (flavor == i386_FLOAT_STATE) {
@@ -544,9 +544,9 @@ ASSERT_IPL(SPL0);
 	     */
 	    simple_unlock(&pcb->lock);
             if (flavor == i386_FLOAT_STATE)
-                memset(state, 0, sizeof(struct i386_float_state));
+                memset(fstate, 0, sizeof(struct i386_float_state));
             else if (flavor == i386_XFLOAT_STATE)
-                memset(state, 0, fp_xsave_size);
+                memset(xfstate, 0, sizeof(struct i386_xfloat_state) + fp_xsave_size);
 	    return KERN_SUCCESS;
 	}
 
@@ -936,7 +936,7 @@ ASSERT_IPL(SPL0);
 	ifps = pcb->ims.ifps;
 	if (ifps == 0) {
 	    ifps = (struct i386_fpsave_state *) kmem_cache_alloc(&ifps_cache);
-	    memcpy(ifps, fp_default_state, fp_xsave_size);
+	    memcpy(ifps, fp_default_state, offsetof(struct i386_fpsave_state, xfp_save_state) + fp_xsave_size);
 	    pcb->ims.ifps = ifps;
 	    fpinit(thread);
 #if 1
