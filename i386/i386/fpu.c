@@ -533,6 +533,8 @@ fpu_get_state(const thread_t thread, void *state, int flavor)
 ASSERT_IPL(SPL0);
 	if (fp_kind == FP_NO)
 	    return KERN_FAILURE;
+	if (flavor != i386_FLOAT_STATE && fp_save_kind == FP_FNSAVE)
+	    return KERN_FAILURE;
 
 	simple_lock(&pcb->lock);
 	ifps = pcb->ims.ifps;
