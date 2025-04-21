@@ -143,3 +143,15 @@ clkstart(void)
 	/* 10ms tick rest */
 	hyp_do_set_timer_op(hyp_get_stime()+10*1000*1000);
 }
+
+uint32_t
+hpclock_read_counter(void)
+{
+	return hyp_get_stime();
+}
+
+uint32_t
+hpclock_get_counter_period_nsec(void)
+{
+	return 1;
+}
