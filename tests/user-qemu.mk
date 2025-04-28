@@ -184,7 +184,7 @@ tests/test-%.iso: tests/module-% $(GNUMACH) $(srcdir)/tests/grub.cfg.single.temp
 		    -e "s/GNUMACHARGS/$(GNUMACH_ARGS)/g"	\
 		    -e "s/TEST_START_MARKER/$(TEST_START_MARKER)/g"	\
 		>$(builddir)/tests/isofiles-$*/boot/grub/grub.cfg
-	cp $(GNUMACH) $< $(builddir)/tests/isofiles-$*/boot/
+	cp $(GNUMACH) $< $(builddir)/tests/isofiles-$*/boot/gnumach
 	grub-mkrescue -o $@ $(builddir)/tests/isofiles-$*
 	rm -rf $(builddir)/tests/isofiles-$*
 
