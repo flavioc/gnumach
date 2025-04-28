@@ -185,6 +185,8 @@ static void thread_xfp_getset(void *arg)
   for (int j=0; j<16; j++)
     ASSERT(xfp->fp_xreg_word[3][j] == 0x33,
            "register xmm3 wasn't correctly retrieved from the getset thread");
+
+  printf("mxcsr (after get) %04x\n", xfp->fp_mxcsr);
   ASSERT(xfp->fp_mxcsr == 0x1f80, "mxcsr wasn't correctly retrieved from the getset thread");
 
   memset(xfp->fp_xreg_word[7], 0x77, 16);
