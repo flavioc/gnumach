@@ -14,9 +14,6 @@
 # along with the program ; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-# Let user specify a kernel to test
-GNUMACH ?= gnumach
-
 #
 # MIG stubs generation for user-space tests
 #

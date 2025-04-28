@@ -22,6 +22,10 @@
 
 if !PLATFORM_xen
 
+# Let user specify a kernel to test
+GNUMACH ?= gnumach
+export GNUMACH
+
 .NOTPARALLEL: check
 
 include tests/user-qemu.mk

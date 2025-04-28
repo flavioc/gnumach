@@ -18,8 +18,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
+[ -n "$GNUMACH" ] || GNUMACH=gnumach
 if grub-file --help > /dev/null 2>&1
-then grub-file --is-x86-multiboot gnumach
+then grub-file --is-x86-multiboot $GNUMACH
 else
   # `grub-file' is not available -- ignore this test.
   exit 77
