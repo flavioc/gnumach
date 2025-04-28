@@ -14,6 +14,9 @@
 # along with the program ; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+# Let user specify a kernel to test
+GNUMACH ?= gnumach
+
 #
 # MIG stubs generation for user-space tests
 #
@@ -176,7 +179,7 @@ QEMU_BIN = qemu-system-x86_64
 QEMU_OPTS += -cpu core2duo-v1
 endif
 
-tests/test-%.iso: tests/module-% gnumach $(srcdir)/tests/grub.cfg.single.template
+tests/test-%.iso: tests/module-% $(GNUMACH) $(srcdir)/tests/grub.cfg.single.template
 	rm -rf $(builddir)/tests/isofiles-$*
 	mkdir -p $(builddir)/tests/isofiles-$*/boot/grub/
 	< $(srcdir)/tests/grub.cfg.single.template		\
@@ -184,7 +187,7 @@ tests/test-%.iso: tests/module-% gnumach $(srcdir)/tests/grub.cfg.single.templat
 		    -e "s/GNUMACHARGS/$(GNUMACH_ARGS)/g"	\
 		    -e "s/TEST_START_MARKER/$(TEST_START_MARKER)/g"	\
 		>$(builddir)/tests/isofiles-$*/boot/grub/grub.cfg
-	cp gnumach $< $(builddir)/tests/isofiles-$*/boot/
+	cp $(GNUMACH) $< $(builddir)/tests/isofiles-$*/boot/
 	grub-mkrescue -o $@ $(builddir)/tests/isofiles-$*
 	rm -rf $(builddir)/tests/isofiles-$*
 
