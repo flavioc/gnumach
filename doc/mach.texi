@@ -3730,7 +3730,7 @@ written, in bytes.  This will be an integral number of memory object
 pages.
 
 The kernel will also use this call to return precious pages.  If an
-unmodified precious age is returned, @var{dirty} is set to @code{FALSE},
+unmodified precious page is returned, @var{dirty} is set to @code{FALSE},
 otherwise it is @code{TRUE}.  If @var{kernel_copy} is @code{TRUE}, the
 kernel kept a copy of the page.  Precious data remains precious if the
 kernel keeps a copy.  The indication that the kernel kept a copy is only
