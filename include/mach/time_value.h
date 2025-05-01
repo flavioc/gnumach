@@ -57,7 +57,7 @@ typedef struct time_value rpc_time_value_t;
 
 /*
  * Time value used internally by the kernel that uses 64 bits to track seconds
- * and nanoseconds. Note that the current resolution is only microseconds.
+ * and nanoseconds.
  */
 struct time_value64 {
 	int64_t seconds;
