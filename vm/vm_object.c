@@ -1925,7 +1925,9 @@ void vm_object_destroy(
 	 *	Restart pending page requests
 	 */
 
+	vm_object_lock(object);
 	vm_object_abort_activity(object);
+	vm_object_unlock(object);
 
 	/*
 	 *	Lose the object reference.
