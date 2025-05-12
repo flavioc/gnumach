@@ -1027,6 +1027,8 @@ vm_page_seg_balance_page(struct vm_page_seg *seg,
     vm_page_copy(src, dest);
 
     if (!src->dirty) {
+        /* Avoid spuriously thinking the page is now dirty just because we have
+         * copied the data into it just above.  */
         pmap_clear_modify(dest->phys_addr);
     }
 
