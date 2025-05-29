@@ -1138,6 +1138,7 @@ restart:
         current_task()->reactivations++;
         vm_page_unlock_queues();
         page = NULL;
+        object = NULL;
         goto restart;
     }
 
