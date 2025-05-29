@@ -1213,16 +1213,19 @@ out:
      * one unnecessarily.
      */
 
-    if (double_paging && !object->pager_initialized) {
-        vm_object_collapse(object);
-    }
+    if (IP_VALID(memory_manager_default)) {
 
-    if (double_paging && !object->pager_initialized) {
-        vm_object_pager_create(object);
-    }
+        if (!object->pager_initialized) {
+            vm_object_collapse(object);
+        }
 
-    if (double_paging && !object->pager_initialized) {
-        panic("vm_page_seg_evict");
+        if (!object->pager_initialized) {
+            vm_object_pager_create(object);
+        }
+
+        if (!object->pager_initialized) {
+            panic("vm_page_seg_evict");
+        }
     }
 
     vm_pageout_page(page, FALSE, TRUE); /* flush it */
