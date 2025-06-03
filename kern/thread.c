@@ -428,6 +428,9 @@ kern_return_t thread_create(
 	 */
 
 	new_thread->task = parent_task;
+	if (parent_task && current_thread() && current_task() != kernel_task &&
+		parent_task == current_task() && current_thread()->vm_privilege)
+		new_thread->vm_privilege = 1;
 	simple_lock_init(&new_thread->lock);
 	new_thread->sched_stamp = sched_tick;
 	thread_timeout_setup(new_thread);
