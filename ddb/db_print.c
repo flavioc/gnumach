@@ -133,7 +133,7 @@ db_show_regs(
 static char *
 db_thread_stat(
 	const thread_t 	thread,
-	char	 	*status)
+	char	 	status[9])
 {
 	char *p = status;
 
@@ -144,6 +144,8 @@ db_thread_stat(
 	*p++ = (thread->state & TH_UNINT) ? 'N' : '.';
 	/* show if the FPU has been used */
 	*p++ = db_thread_fp_used(thread) ? 'F' : '.';
+	/* show if thread is VM-privileged */
+	*p++ = thread->vm_privilege ? 'P' : '.';
 	*p++ = 0;
 	return(status);
 }
@@ -154,8 +156,9 @@ db_print_thread(
 	int	 thread_id,
 	int	 flag)
 {
+	char status[9];
+
 	if (flag & OPTION_USER) {
-	    char status[8];
 	    char *indent = "";
 	    if (flag & OPTION_INDENT)
 	      indent = "    ";
@@ -227,7 +230,6 @@ db_print_thread(
 		strncmp (thread->name, thread->task->name, THREAD_NAME_SIZE))
 		db_printf("%s ", thread->name);
 	    db_printf("(%0*X) ", 2*sizeof(vm_offset_t), thread);
-	    char status[8];
 	    db_printf("%s", db_thread_stat(thread, status));
 	    if (thread->state & TH_SWAPPED) {
 		if (thread->swap_func) {
