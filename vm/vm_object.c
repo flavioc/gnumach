@@ -986,12 +986,28 @@ void vm_object_pmap_remove(
 		return;
 
 	vm_object_lock(object);
-	queue_iterate(&object->memq, p, vm_page_t, listq) {
+
+	while (TRUE) {
+	     queue_iterate(&object->memq, p, vm_page_t, listq) {
 		if (!p->fictitious &&
 		    (start <= p->offset) &&
 		    (p->offset < end))
 			pmap_page_protect(p->phys_addr, VM_PROT_NONE);
+	     }
+
+	     if (object->shadow == VM_OBJECT_NULL)
+	       break;
+
+	     vm_object_t prev_object = object;
+
+	     start += object->shadow_offset;
+	     end   += object->shadow_offset;
+	     object = object->shadow;
+
+	     vm_object_lock(object);
+	     vm_object_unlock(prev_object);
 	}
+
 	vm_object_unlock(object);
 }
 
