@@ -69,6 +69,23 @@ void test_host_info()
       printf("avenrun %d\n", linfo.avenrun[i]);
       printf("mach_factor %d\n", linfo.mach_factor[i]);
   }
+
+  time_value_t start_time;
+  err = host_get_time (mach_host_self (), &start_time);
+  ASSERT_RET(err, "host_get_time");
+
+  printf("time %d.%06d\n", start_time.seconds, start_time.microseconds);
+
+  time_value64_t start_time64;
+  err = host_get_time64 (mach_host_self (), &start_time64);
+  ASSERT_RET(err, "host_get_time64");
+
+  printf("time64 %d.%09d\n", start_time64.seconds, start_time64.nanoseconds);
+
+  err = host_get_uptime64 (mach_host_self (), &start_time64);
+  ASSERT_RET(err, "host_get_uptime64");
+
+  printf("uptime64 %d.%09d\n", start_time64.seconds, start_time64.nanoseconds);
 }
 
 // TODO processor sets
