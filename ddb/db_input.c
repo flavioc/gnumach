@@ -343,6 +343,17 @@ db_inputchar(int c)
 
 	    default:
 	    plain:
+		if (was_csi) {
+			if (c == '?' || c == '<' || (c >= '0' && c <= '9') || c == ';') {
+				/* Still in CSI */
+				csi = 1;
+				break;
+			}
+			if (c >= '@' && c <= '~')
+				/* Unsupported sequence, silently drop */
+				break;
+			/* Odd sequence, print it */
+		}
 		if (db_le == db_lbuf_end) {
 		    cnputc('\007');
 		}
