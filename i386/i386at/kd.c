@@ -1499,7 +1499,7 @@ kd_parserest(u_char *cp)
 		case '\0':
 			break;			/* not enough yet */
 		default:
-			if ((*cp >= 'a' && *cp <= 'z') || (*cp >= 'A' && *cp <= 'Z'))
+			if (*cp >= '@' && *cp <= '~')
 			{
 				/* Unsupported sequence, just silently drop */
 			}
@@ -1517,7 +1517,7 @@ kd_parserest(u_char *cp)
 		case '\0':
 			break;			/* not enough yet */
 		default:
-			if ((*cp >= 'a' && *cp <= 'z') || (*cp >= 'A' && *cp <= 'Z'))
+			if (*cp >= '@' && *cp <= '~')
 			{
 				/* Unsupported sequence, just silently drop */
 			}
@@ -1775,7 +1775,7 @@ kd_parserest(u_char *cp)
 		case '\0':
 			break;			/* not enough yet */
 		default:
-			if ((*cp >= 'a' && *cp <= 'z') || (*cp >= 'A' && *cp <= 'Z'))
+			if (*cp >= '@' && *cp <= '~')
 			{
 				/* Unsupported sequence, just silently drop */
 			}
