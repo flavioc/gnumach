@@ -193,6 +193,7 @@ static void __attribute__((noreturn)) swapin_thread_continue(void)
 
 void swapin_thread(void)
 {
+	current_thread()->vm_privilege = 1;
 	stack_privilege(current_thread());
 
 	swapin_thread_continue();
