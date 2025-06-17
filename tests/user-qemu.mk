@@ -201,7 +201,7 @@ tests/test-%: tests/test-%.iso $(srcdir)/tests/run-qemu.sh.template
 	chmod +x $@
 
 clean-test-%:
-	rm -f tests/test-$*.iso tests/module-$* tests/test-$**
+	rm -f tests/test-$* tests/test-$*.iso tests/test-$*.log tests/test-$*.raw tests/test-$*.trs tests/module-$*
 
 
 USER_TESTS := \
