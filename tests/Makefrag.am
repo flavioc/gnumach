@@ -49,6 +49,6 @@ EXTRA_DIST += \
 	$(TESTSRC_TESTLIB)
 
 clean-local: $(USER_TESTS_CLEAN)
-	rm -fr tests/include-mach
+	rm -fr tests/include-mach tests/test-multiboot tests/errlist.c tests/mig-out
 
 endif # !PLATFORM_xen
