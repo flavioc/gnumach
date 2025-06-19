@@ -134,6 +134,8 @@ smp_send_ipi_startup_twice(int bsp_apic_id, int vector)
     for (i = 0; i < 2; i++) {
         lapic->error_status.r = 0;
         err = lapic->error_status.r;
+        /* Suppress unused variable warning for the necessary dummy read.*/
+        (void) err;
 
         /* StartUp IPI:
          *
