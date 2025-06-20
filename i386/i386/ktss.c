@@ -40,13 +40,16 @@
 /* A kernel TSS with a complete I/O bitmap.  */
 struct task_tss ktss;
 
-void
+static void
 ktss_fill(struct task_tss *myktss, struct real_descriptor *mygdt)
 {
 	/* XXX temporary exception stacks */
 	/* FIXME: make it per-processor */
 	static int exception_stack[1024];
+	/* only used on 64-bit builds */
+#ifdef __x86_64__
 	static int double_fault_stack[1024];
+#endif /* __x86_64__ */
 
 #ifdef	MACH_RING1
 	/* Xen won't allow us to do any I/O by default anyway, just register
