@@ -51,8 +51,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
-static void lis(int arg, int abs, int count);
-
 def_simple_lock_data(, kdb_lock)
 def_simple_lock_data(, printf_lock)
 
@@ -169,12 +167,6 @@ decl_simple_lock_data(, *lock)
 	}
 }
 
-void lip(void) {
-	lis(4, 1, 0);
-}
-
-#define lock_info_sort lis
-
 static void lock_info_sort(int arg, int abs, int count)
 {
 	struct lock_info *li, mean;
@@ -249,6 +241,10 @@ static void lock_info_sort(int arg, int abs, int count)
 		db_printf(", default: %d", default_lock_info.success + default_lock_info.fail);
 	db_printf("\n");
 	print_lock_info(&mean);
+}
+
+void lip(void) {
+	lock_info_sort(4, 1, 0);
 }
 
 #define lock_info_clear lic
