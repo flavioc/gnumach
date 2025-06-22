@@ -119,6 +119,12 @@ TESTCFLAGS = -static -nostartfiles -nolibc \
 	-ggdb3 \
 	-DMIG_EOPNOTSUPP
 
+# The smashing stack protector might be enabled by default, but might emit
+# unsuitable code.
+if disable_smashing_stack_protector
+TESTCFLAGS += \
+	-fno-stack-protector
+endif
 
 TESTSRC_TESTLIB= \
 	$(srcdir)/tests/syscalls.S \
