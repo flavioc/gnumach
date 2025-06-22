@@ -393,10 +393,11 @@ ioapic_configure(void)
      */
     entry.both.dest = lapic->apic_id.r >> 24;
 
-    for (pin = 0; pin < 16; pin++) {
+    /* ISA legacy IRQs */
+    for (pin = 0; pin < 14; pin++) {
         gsi = pin;
 
-        /* ISA legacy IRQs */
+        /* Legacy interrupts are on rising edge */
         entry.both.trigger = IOAPIC_EDGE_TRIGGERED;
         entry.both.polarity = IOAPIC_ACTIVE_HIGH;
 
@@ -426,10 +427,11 @@ ioapic_configure(void)
         }
     }
 
-    for (pin = 16; pin < ngsis; pin++) {
+    /* 14,15 and PCI IRQs PIRQ A-H */
+    for (pin = 14; pin < ngsis; pin++) {
         gsi = pin;
 
-        /* PCI IRQs PIRQ A-H */
+        /* ACPI interrupts default to level-triggered active-low */
         entry.both.trigger = IOAPIC_LEVEL_TRIGGERED;
         entry.both.polarity = IOAPIC_ACTIVE_LOW;
 
