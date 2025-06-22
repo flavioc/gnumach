@@ -34,8 +34,8 @@ AC_CHECK_PROG([USER_MIG], [$ac_miguser], [$ac_miguser])
 # Try mig as well if we are not cross-building
 [if test x"$USER_MIG" = x -a x"$host" = x"$build" ; then
     ac_miguser=mig
-    AC_CHECK_PROG([USER_MIG], [$ac_miguser], [$ac_miguser])
 ]
+    AC_CHECK_PROG([USER_MIG], [$ac_miguser], [$ac_miguser])
 [fi]
 
 AC_ARG_VAR([USER_MIG], [Path to the mig tool for user-space tests])
