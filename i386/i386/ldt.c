@@ -54,7 +54,7 @@ struct real_descriptor ldt[LDTSZ];
 #define USER_SEGMENT_SIZEBITS SZ_32
 #endif
 
-void
+static void
 ldt_fill(struct real_descriptor *myldt, struct real_descriptor *mygdt)
 {
 #ifdef	MACH_PV_DESCRIPTORS
