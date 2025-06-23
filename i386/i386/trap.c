@@ -65,6 +65,9 @@
 
 #include "debug.h"
 
+/* Called from assembly (locore.S) */
+void handle_double_fault(struct i386_saved_state *regs);
+
 #if	MACH_KDB
 boolean_t	debug_all_traps_with_kdb = FALSE;
 extern struct db_watchpoint *db_watchpoint_list;
