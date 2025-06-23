@@ -35,6 +35,7 @@
 
 #include <kern/printf.h>
 #include <string.h>
+#include <stdint.h>
 
 #include <mach/memory_object.h>
 #include <vm/memory_object_default.user.h>
@@ -3050,7 +3051,7 @@ void vm_object_print_part(
 void vm_object_print(
 	vm_object_t	object)
 {
-	vm_object_print_part(object, 0ULL, ~0ULL);
+	vm_object_print_part(object, 0, UINTPTR_MAX);
 }
 
 #endif	/* MACH_KDB */
