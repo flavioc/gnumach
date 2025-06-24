@@ -48,7 +48,7 @@ acpi_print_info(phys_addr_t rsdp, void *rsdt, int acpi_rsdt_n)
 {
 
     printf("ACPI:\n");
-    printf(" rsdp = 0x%llx\n", rsdp);
+    printf(" rsdp = 0x%llx\n", (unsigned long long) rsdp);
     printf(" rsdt/xsdt = 0x%p (n = %d)\n", rsdt, acpi_rsdt_n);
 }
 
