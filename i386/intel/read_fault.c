@@ -30,6 +30,7 @@
 #include <vm/vm_object.h>
 #include <vm/vm_page.h>
 #include <vm/pmap.h>
+#include <intel/read_fault.h>
 
 #include <kern/macros.h>
 
