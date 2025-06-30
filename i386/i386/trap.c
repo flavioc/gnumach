@@ -383,7 +383,7 @@ int user_trap(struct i386_saved_state *regs)
 	((short*)0xb8700)[5] = 0x0f30+(type % 10);
 #endif
 #if 0
-	printf("user trap %d error %d\n", type, code);
+	printf("user trap %ld error %ld\n", type, code);
 	dump_ss(regs);
 #endif
 
