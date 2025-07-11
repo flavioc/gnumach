@@ -34,32 +34,57 @@ irq_eoi (struct irqdev *dev, int id)
 #endif
 }
 
-static unsigned int ndisabled_irq[NINTR];
+/* Each array elem fits in a cache line */
+struct nested_irq {
+  simple_lock_irq_data_t irq_lock;
+  int32_t ndisabled;
+  uint32_t unused[14];
+} __attribute__((packed)) nested_irqs[NINTR];
+
+void
+init_irqs (void)
+{
+  int i;
+
+  for (i = 0; i < NINTR; i++)
+    {
+      simple_lock_init_irq(&nested_irqs[i].irq_lock);
+      nested_irqs[i].ndisabled = 0;
+    }
+}
 
 void
 __disable_irq (irq_t irq_nr)
 {
+  spl_t s;
   assert (irq_nr < NINTR);
+  struct nested_irq *nirq = &nested_irqs[irq_nr];
 
-  spl_t s = splhigh();
-  ndisabled_irq[irq_nr]++;
-  assert (ndisabled_irq[irq_nr] > 0);
-  if (ndisabled_irq[irq_nr] == 1)
+  s = simple_lock_irq(&nirq->irq_lock);
+
+  nirq->ndisabled++;
+  assert (nirq->ndisabled > 0);
+  if (nirq->ndisabled == 1)
     mask_irq (irq_nr);
-  splx(s);
+
+  simple_unlock_irq(s, &nirq->irq_lock);
 }
 
 void
 __enable_irq (irq_t irq_nr)
 {
+  spl_t s;
   assert (irq_nr < NINTR);
+  struct nested_irq *nirq = &nested_irqs[irq_nr];
 
-  spl_t s = splhigh();
-  assert (ndisabled_irq[irq_nr] > 0);
-  ndisabled_irq[irq_nr]--;
-  if (ndisabled_irq[irq_nr] == 0)
+  s = simple_lock_irq(&nirq->irq_lock);
+
+  assert (nirq->ndisabled > 0);
+  nirq->ndisabled--;
+  if (nirq->ndisabled == 0)
     unmask_irq (irq_nr);
-  splx(s);
+
+  simple_unlock_irq(s, &nirq->irq_lock);
 }
 
 struct irqdev irqtab = {

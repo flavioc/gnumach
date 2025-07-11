@@ -173,6 +173,7 @@ void machine_init(void)
 #if (NCPUS > 1)
 	smp_init();
 #endif
+	init_irqs();
 #if defined(APIC)
 	ioapic_configure();
 #endif

@@ -23,6 +23,7 @@
 
 typedef unsigned int irq_t;
 
+void init_irqs (void);
 void __enable_irq (irq_t irq);
 void __disable_irq (irq_t irq);
 
