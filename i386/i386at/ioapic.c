@@ -290,6 +290,17 @@ ioapic_toggle(int pin, int mask)
     ioapic_toggle_entry(apic, pin, mask);
 }
 
+#if 0
+static int
+lapic_tmr_bit(uint8_t vec)
+{
+    int i;
+
+    i = (vec & ~0x1f) >> 5;
+    return lapic->tmr[i].r & (1 << (vec & 0x1f));
+}
+#endif
+
 void
 ioapic_irq_eoi(int pin)
 {
@@ -303,6 +314,7 @@ ioapic_irq_eoi(int pin)
     spl_t s = simple_lock_irq(&ioapic_lock);
 
     if (!has_irq_specific_eoi) {
+      // XXX Linux conditions on TMR bit: if (!lapic_tmr_bit(entry.both.vector)) {
         /* Workaround for old IOAPICs with no specific EOI */
 
         /* Mask the pin and change to edge triggered */
@@ -314,9 +326,9 @@ ioapic_irq_eoi(int pin)
 
         /* Restore level entry */
         ioapic_write_entry(apic, pin, oldentry.both);
+      //}
     } else {
         volatile ApicIoUnit *ioapic = apic_get_ioapic(apic)->ioapic;
-
         ioapic_read_entry(apic, pin, &entry.both);
         ioapic->eoi.r = entry.both.vector;
     }
