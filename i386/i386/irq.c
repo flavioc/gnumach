@@ -36,7 +36,7 @@ irq_eoi (struct irqdev *dev, int id)
 
 /* Each array elem fits in a cache line */
 struct nested_irq {
-  simple_lock_irq_data_t irq_lock;
+  simple_lock_irq_data_t irq_lock; /* Protects ndisabled */
   int32_t ndisabled;
   uint32_t unused[14];
 } __attribute__((packed)) nested_irqs[NINTR];
