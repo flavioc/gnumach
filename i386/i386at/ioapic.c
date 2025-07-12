@@ -293,6 +293,7 @@ ioapic_toggle(int pin, int mask)
 void
 ioapic_irq_eoi(int pin)
 {
+    /* FIXME: multiple ioapics (not always zero) */
     int apic = 0;
     union ioapic_route_entry_union oldentry, entry;
 
