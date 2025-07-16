@@ -159,7 +159,7 @@ insert_intr_entry (struct irqdev *dev, int id, ipc_port_t dst_port)
       ret = NULL;
       goto out;
     }
-  printf("irq handler [%d]: new delivery port %p entry %p\n", id, dst_port, new);
+  printf("irq handler [%d]: new delivery port %p entry %p for %s\n", id, dst_port, new, current_task()->name);
   ret = new;
   new->id = id;
   new->dst_port = dst_port;
