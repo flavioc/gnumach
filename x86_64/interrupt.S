@@ -61,7 +61,7 @@ ENTRY(interrupt)
 	je	_call_local_ast
 #endif
 
-	movb	EXT(irqinfo)(,%ecx,2),%al	/* look up irq_info[irq].trigger */
+	movb	EXT(irqinfo)(,%rcx,2),%al	/* look up irq_info[irq].trigger */
 	testb	$1,%al			/* was this a level triggered interrupt? */
 	jnz	_call_handler		/* yes: call handler before eoi */
 
@@ -108,7 +108,7 @@ _eoi:
 #endif
 
 	movl	S_IRQ,%ecx
-	movb	EXT(irqinfo)(,%ecx,2),%al	/* look up irq_info[irq].trigger */
+	movb	EXT(irqinfo)(,%rcx,2),%al	/* look up irq_info[irq].trigger */
 	testb	$1,%al			/* was this a level triggered interrupt? */
 	jnz	_completed		/* yes: we are done */
 
@@ -130,7 +130,7 @@ _call_handler:
 	call	*EXT(ivect)(%rax)	/* call interrupt handler */
 
 	movl	S_IRQ,%ecx
-	movb	EXT(irqinfo)(,%ecx,2),%al	/* look up irq_info[irq].trigger */
+	movb	EXT(irqinfo)(,%rcx,2),%al	/* look up irq_info[irq].trigger */
 	testb	$1,%al			/* was this a level triggered interrupt? */
 	jnz	_eoi			/* yes: eoi */
 
