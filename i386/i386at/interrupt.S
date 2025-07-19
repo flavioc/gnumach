@@ -124,11 +124,10 @@ _call_handler:
 
 	movl	S_IRQ,%eax		/* copy irq number */
 
-	shll	$2,%eax			/* irq * 4 */
-	movl	EXT(iunit)(%eax),%edx	/* get device unit number */
+	movl	EXT(iunit)(,%eax,4),%edx	/* get device unit number */
 	movl	%edx,(%esp)		/* unit number as 1st arg */
 
-	call	*EXT(ivect)(%eax)	/* call interrupt handler */
+	call	*EXT(ivect)(,%eax,4)	/* call interrupt handler */
 
 	movl	S_IRQ,%ecx		/* restore irq number */
 	movb	EXT(irqinfo)(,%ecx,2),%al	/* look up irq_info[irq].trigger */

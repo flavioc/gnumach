@@ -123,11 +123,9 @@ _call_handler:
 	movq	S_REGS,S_ARG3		/* address of interrupted registers as 4th arg */
 
 	movl	S_IRQ,%eax		/* copy irq number */
-	shll	$2,%eax			/* irq * 4 */
-	movl	EXT(iunit)(%rax),%edi	/* get device unit number as 1st arg */
+	movl	EXT(iunit)(,%rax,4),%edi	/* get device unit number as 1st arg */
 
-	shll	$1,%eax			/* irq * 8 */
-	call	*EXT(ivect)(%rax)	/* call interrupt handler */
+	call	*EXT(ivect)(,%rax,8)	/* call interrupt handler */
 
 	movl	S_IRQ,%ecx
 	movb	EXT(irqinfo)(,%rcx,2),%al	/* look up irq_info[irq].trigger */
