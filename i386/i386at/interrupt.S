@@ -61,6 +61,11 @@ ENTRY(interrupt)
 	je	_call_local_ast
 #endif
 
+	movb	EXT(irqinfo)(,%ecx,2),%al	/* look up irq_info[irq].trigger */
+	testb	$1,%al			/* was this a level triggered interrupt? */
+	jnz	_call_handler		/* yes: handle before eoi */
+
+_eoi:
 #ifndef APIC
 	movl	$1,%eax
 	shll	%cl,%eax		/* get corresponding IRQ mask */
@@ -102,6 +107,12 @@ ENTRY(interrupt)
 	call	EXT(ioapic_irq_eoi)	/* ioapic irq specific EOI */
 #endif
 
+	movl	S_IRQ,%ecx		/* restore irq number */
+	movb	EXT(irqinfo)(,%ecx,2),%al	/* look up irq_info[irq].trigger */
+	testb	$1,%al			/* was this a level triggered interrupt? */
+	jnz	_completed		/* yes: we are done */
+
+_call_handler:
 	movl	S_IPL,%eax
 	movl	%eax,4(%esp)		/* previous ipl as 2nd arg */
 
@@ -118,6 +129,11 @@ ENTRY(interrupt)
 	movl	%edx,(%esp)		/* unit number as 1st arg */
 
 	call	*EXT(ivect)(%eax)	/* call interrupt handler */
+
+	movl	S_IRQ,%ecx		/* restore irq number */
+	movb	EXT(irqinfo)(,%ecx,2),%al	/* look up irq_info[irq].trigger */
+	testb	$1,%al			/* was this a level triggered interrupt? */
+	jnz	_eoi			/* yes: eoi */
 
 _completed:
 	movl	S_IPL,%eax		/* restore previous ipl */
