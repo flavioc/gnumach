@@ -181,11 +181,17 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define PIC_MASK_ZERO		0x00
 
 #if !defined(__ASSEMBLER__) && !defined(APIC)
+struct irqinfo {
+    unsigned char trigger;
+    unsigned char vector;
+};
+
 extern void picinit (void);
 extern int curr_pic_mask;
 extern void intnull(int unit);
 extern void mask_irq (unsigned int irq_nr);
 extern void unmask_irq (unsigned int irq_nr);
+extern struct irqinfo irqinfo[];
 #endif /* __ASSEMBLER__ */
 
 #endif	/* _I386_PIC_H_ */

@@ -80,6 +80,8 @@ int	spl_init = 0;
 
 int	iunit[NINTR] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
+struct irqinfo irqinfo[NINTR];
+
 unsigned short	master_icw, master_ocw, slaves_icw, slaves_ocw;
 
 u_short PICM_ICW1, PICM_OCW1, PICS_ICW1, PICS_OCW1 ;
@@ -118,6 +120,9 @@ picinit(void)
 	for (i = 0; i < NCPUS; i++)
 		curr_ipl[i] = SPLHI;
 	curr_pic_mask = 0;
+
+	for (i = 0; i < NINTR; i++)
+		irqinfo[i].trigger = EDGE_TRIGGER;
 
 	/*
 	** 1. Generate addresses to each PIC port.

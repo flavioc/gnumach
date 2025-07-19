@@ -128,6 +128,8 @@ interrupt_handler_fn ivect[NINTR] = {
     /* 63 */	intnull,
 };
 
+struct irqinfo irqinfo[NINTR];
+
 void
 picdisable(void)
 {
@@ -290,17 +292,6 @@ ioapic_toggle(int pin, int mask)
     ioapic_toggle_entry(apic, pin, mask);
 }
 
-#if 0
-static int
-lapic_tmr_bit(uint8_t vec)
-{
-    int i;
-
-    i = (vec & ~0x1f) >> 5;
-    return lapic->tmr[i].r & (1 << (vec & 0x1f));
-}
-#endif
-
 void
 ioapic_irq_eoi(int pin)
 {
@@ -314,7 +305,7 @@ ioapic_irq_eoi(int pin)
     spl_t s = simple_lock_irq(&ioapic_lock);
 
     if (!has_irq_specific_eoi) {
-      // XXX Linux conditions on TMR bit: if (!lapic_tmr_bit(entry.both.vector)) {
+      // XXX Linux conditions on trigger mode: if (irqinfo[pin].trigger) {
         /* Workaround for old IOAPICs with no specific EOI */
 
         /* Mask the pin and change to edge triggered */
@@ -329,8 +320,7 @@ ioapic_irq_eoi(int pin)
       //}
     } else {
         volatile ApicIoUnit *ioapic = apic_get_ioapic(apic)->ioapic;
-        ioapic_read_entry(apic, pin, &entry.both);
-        ioapic->eoi.r = entry.both.vector;
+        ioapic->eoi.r = irqinfo[pin].vector;
     }
 
     simple_unlock_irq(s, &ioapic_lock);
@@ -420,6 +410,9 @@ ioapic_configure(void)
         entry.both.vector = IOAPIC_INT_BASE + gsi;
         ioapic_write_entry(apic, pin, entry.both);
 
+        irqinfo[pin].vector = entry.both.vector;
+        irqinfo[pin].trigger = entry.both.trigger;
+
         /* Set initial state to masked */
         mask_irq(pin);
 
@@ -454,6 +447,9 @@ ioapic_configure(void)
         entry.both.vector = IOAPIC_INT_BASE + gsi;
         ioapic_write_entry(apic, pin, entry.both);
 
+        irqinfo[pin].vector = entry.both.vector;
+        irqinfo[pin].trigger = entry.both.trigger;
+
         /* Set initial state to masked */
         mask_irq(pin);
     }
@@ -477,6 +473,9 @@ ioapic_configure(void)
             }
             entry.both.vector = IOAPIC_INT_BASE + gsi;
             ioapic_write_entry(apic, pin, entry.both);
+
+            irqinfo[pin + ngsis].vector = entry.both.vector;
+            irqinfo[pin + ngsis].trigger = entry.both.trigger;
 
             /* Set initial state to masked */
             mask_irq(pin + ngsis);

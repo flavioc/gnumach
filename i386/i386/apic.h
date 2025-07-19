@@ -235,6 +235,11 @@ typedef struct ApicInfo {
         struct    IrqOverrideData irq_override_list[MAX_IRQ_OVERRIDE];
 } ApicInfo;
 
+struct irqinfo {
+    uint8_t trigger;
+    uint8_t vector;
+};
+
 int apic_data_init(void);
 void apic_add_cpu(uint16_t apic_id);
 void apic_lapic_init(ApicLocalUnit* lapic_ptr);
@@ -275,6 +280,7 @@ extern volatile ApicLocalUnit* lapic;
 extern int cpu_id_lut[];
 extern uint32_t *hpet_addr;
 extern uint8_t apic_id_mask;
+extern struct irqinfo irqinfo[];
 
 #endif
 
