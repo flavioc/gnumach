@@ -118,6 +118,11 @@ esac]
   enable_apic=no
 [fi]
 
+[case $host_platform:$host_cpu in
+  xen:*)
+    enable_apic=no;;
+esac]
+
 [if [ x"$enable_apic" = xno ]; then]
   AM_CONDITIONAL([enable_apic], [false])
 [else]
