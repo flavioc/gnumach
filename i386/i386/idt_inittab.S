@@ -134,7 +134,5 @@ EXCEPTION(0x1f,t_trap_1f)
 /* Terminator */
 	.data	2
 	.long	0
-#ifdef	MACH_PV_DESCRIPTORS
 	.long	0
-#endif	/* MACH_PV_DESCRIPTORS */
 
