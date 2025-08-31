@@ -358,3 +358,21 @@ routine mach_port_set_protected_payload(
 routine mach_port_clear_protected_payload(
 		task		: ipc_space_t;
 		name		: mach_port_name_t);
+
+/*
+ *	Set the kernel port type for specific kernel behaviour.
+ *	ktype must be one of:
+ *	MACH_PORT_KTYPE_NONE
+ *	MACH_PORT_KTYPE_USER_DEVICE
+ *	The named port must not be currently associated with any
+ *	other kernel port type.
+ */
+
+type mach_port_ktype_t = unsigned;
+
+routine mach_port_set_ktype(
+		host            : host_priv_t;
+		task		: ipc_space_t;
+		name		: mach_port_name_t;
+		right		: mach_port_right_t;
+		ktype		: mach_port_ktype_t);

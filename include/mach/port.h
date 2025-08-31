@@ -156,4 +156,10 @@ typedef struct mach_port_status {
 #define MACH_PORT_QLIMIT_DEFAULT	((mach_port_msgcount_t) 5)
 #define MACH_PORT_QLIMIT_MAX		((mach_port_msgcount_t) 16)
 
+typedef unsigned int mach_port_ktype_t;
+
+/* Constants for calls to mach_port_set_ktype() */
+#define MACH_PORT_KTYPE_NONE             0
+#define MACH_PORT_KTYPE_USER_DEVICE      28
+
 #endif	/* _MACH_PORT_H_ */

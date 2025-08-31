@@ -944,6 +944,7 @@ char *ikot_print_array[IKOT_MAX_TYPE] = {
 	"(CLOCK)            ",
 	"(CLOCK_CTRL)       ",
 	"(PAGER_PROXY)      ",	/* 27 */
+	"(USER_DEVICE)      ",	/* 28 */
 				/* << new entries here	*/
 	"(UNKNOWN)     "	/* magic catchall	*/
 };	/* Please keep in sync with kern/ipc_kobject.h	*/

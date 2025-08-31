@@ -1567,6 +1567,45 @@ mach_port_clear_protected_payload(
 	return KERN_SUCCESS;
 }
 
+kern_return_t
+mach_port_set_ktype(
+        host_t host_priv,
+        ipc_space_t space,
+        mach_port_name_t name,
+        mach_port_right_t right,
+        mach_port_ktype_t ktype)
+{
+	ipc_port_t port;
+	kern_return_t kr;
+
+	if (host_priv == HOST_NULL)
+	  return KERN_INVALID_HOST;
+
+	if (space == IS_NULL)
+	  return KERN_INVALID_TASK;
+
+	if (ktype != MACH_PORT_KTYPE_NONE
+	    && ktype != MACH_PORT_KTYPE_USER_DEVICE)
+	  return KERN_INVALID_ARGUMENT;
+
+	kr = ipc_object_translate(space, name, right, (ipc_object_t *)&port);
+	if (kr != KERN_SUCCESS)
+	  return kr;
+
+	/* port is locked and active */
+	if (ip_kotype(port) == IKOT_NONE || ip_kotype(port) == IKOT_USER_DEVICE)
+	  ipc_kobject_set(port, IKO_NULL,
+			  ktype == MACH_PORT_KTYPE_NONE
+			  ? IKOT_NONE
+			  : IKOT_USER_DEVICE);
+	else
+	  kr = KERN_INVALID_ARGUMENT;
+
+	ip_unlock(port);
+
+	return kr;
+}
+
 #if	MACH_KDB
 
 void
