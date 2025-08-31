@@ -2787,6 +2787,26 @@ from the call's server (normally the kernel), the call may return
 @code{mach_msg} return codes.
 @end deftypefun
 
+@deftypefun kern_return_t mach_port_set_ktype (@w{host_priv_t @var{host_priv}}, @w{ipc_space_t @var{task}}, @w{mach_port_t @var{name}}, @w{mach_port_right_t @var{right}}, @w{mach_port_ktype_t @var{ktype}})
+The function @code{mach_port_set_ktype} sets the ktype of the right @var{right}
+of the port @var{name}.
+
+For now, this can be used only to set the @code{MACH_PORT_KTYPE_USER_DEVICE}
+ktype, or back to @code{MACH_PORT_KTYPE_NONE}.
+
+@code{MACH_PORT_KTYPE_USER_DEVICE} notably makes ipc_kmsg_copyin_body use page
+lists, which keep them in a busy state that prevents them from being paged out.
+
+The function returns @code{KERN_SUCCESS} if the call succeeded,
+@code{KERN_INVALID_HOST} if @var{host} was not a valid host
+port, @code{KERN_INVALID_TASK} if @var{task} was not a valid
+task, @code{KERN_INVALID_NAME} if @var{name} doesn't denote a
+right, @code{KERN_INVALID_RIGHT} if the name doesn't denote the
+correct right, @code{KERN_INVALID_ARGUMENT} if @var{ktype} is not
+@code{MACH_PORT_KTYPE_USER_DEVICE} or @code{MACH_PORT_KTYPE_NONE} or the port
+right does not currently have such a type.
+@end deftypefun
+
 @node Port Sets
 @subsection Port Sets
 
