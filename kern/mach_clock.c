@@ -373,7 +373,8 @@ void set_timeout(
 
 	s = simple_lock_irq(&timer_lock);
 
-	interval += elapsed_ticks;
+	/* Start counting after next tick, to avoid partial ticks.  */
+	interval += elapsed_ticks + 1;
 
 	for (next = (timer_elt_t)queue_first(&timer_head.chain);
 	     ;
