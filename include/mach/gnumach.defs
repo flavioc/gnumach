@@ -223,3 +223,37 @@ simpleroutine thread_set_name(
 routine thread_get_name(
         thread : thread_t;
         out name : kernel_debug_name_t);
+
+/*
+ *	Set a task virtual memory limit parameters
+ *
+ *	HOST_PORT must be the privileged host control port
+ *	if the caller desires to increase the current max limit.
+ *
+ *	On the other hand, if the max limit is being decreased, the
+ *	unprivileged host control port (as returned by mach_host_self())
+ *	can be provided.
+ *
+ *	Returns:
+ *	  - KERN_SUCCESS
+ *	  - KERN_INVALID_TASK
+ *	  - KERN_INVALID_HOST
+ *	  - KERN_INVALID_ARGUMENT
+ *	      * when current_limit > max_limit
+ *        - KERN_NO_ACCESS
+ *	      * attempt to increase max limit without providing
+ *	        the privileged host control port.
+ */
+routine vm_set_size_limit(
+	host_port     : mach_port_t;
+	map           : vm_task_t;
+	current_limit : vm_size_t;
+	max_limit     : vm_size_t);
+
+/*
+ *	Get a task virtual memory limit parameters
+ */
+routine vm_get_size_limit(
+		map           : vm_task_t;
+	out	current_limit : vm_size_t;
+	out	max_limit     : vm_size_t);

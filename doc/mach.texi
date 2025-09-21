@@ -203,6 +203,7 @@ Virtual Memory Interface
 * Data Transfer::                 Reading, writing and copying memory.
 * Memory Attributes::             Tweaking memory regions.
 * Mapping Memory Objects::        How to map memory objects.
+* Memory Limitations::            Tweaking virtual memory space limts.
 * Memory Statistics::             How to get statistics about memory usage.
 
 External Memory Management
@@ -3029,6 +3030,7 @@ the kernel.
 * Data Transfer::                 Reading, writing and copying memory.
 * Memory Attributes::             Tweaking memory regions.
 * Mapping Memory Objects::        How to map memory objects.
+* Memory Limitations::            Tweaking virtual memory limits.
 * Memory Statistics::             How to get statistics about memory usage.
 * Memory physical addresses::     How to get physical addresses of memory.
 @end menu
@@ -3473,6 +3475,33 @@ The function returns @code{KERN_SUCCESS} if the object is mapped,
 @code{KERN_NO_SPACE} if no unused region of the task's virtual address
 space that meets the address, size, and alignment criteria could be
 found, and @code{KERN_INVALID_ARGUMENT} if an invalid argument was provided.
+@end deftypefun
+
+
+@node Memory Limitations
+@section Memory Limitations
+
+@deftypefun kern_reutrn_t vm_get_size_limit (@w{vm_task_t @var{map}}, @w{vm_size_t *@var{current_limit}}, @w{vm_size_t *@var{max_limit}})
+This function will return the current limit and the maximum limit of the
+virtual memory address space of the task indicated by the @var{map} argument
+in the parameters @var{current_limit} and @var{max_limit}, respectively.
+@end deftypefun
+
+@deftypefun kern_return_t vm_set_size_limit (@w{mach_port_t @var{host_port}}, @w{vm_task_t @var{map}}, @w{vm_size_t @var{current_limit}}, @w{vm_size_t @var{max_limit}})
+This function shall be used to update the virtual address space limits
+of the task given by the @var{map} argument.
+
+If the value of the argument @var{current_limit} is greater than @var{max_limit},
+the function returns @code{KERN_INVALID_ARGUMENT}. The privileged host port
+must be provided in the @var{host_port} argument when the function is used
+to increase the current max limit of the address space. Otherwise the function
+returns @code{KERN_NO_ACCESS}.
+
+The function returns @code{KERN_INVALID_TASK} or @code{KERN_INVALID_HOST} when
+the arguments @var{map} and @var{host_port} are not a vlaid task or host, respectively.
+
+@code{KERN_SUCCESS} is returned when the map limits could be updated
+successfuly.
 @end deftypefun
 
 

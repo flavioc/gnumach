@@ -126,6 +126,11 @@ task_create_kernel(
 					trunc_page(VM_MAX_USER_ADDRESS));
 			if (new_task->map == VM_MAP_NULL)
 				pmap_destroy(new_pmap);
+			else if (parent_task != TASK_NULL) {
+				vm_map_lock_read(parent_task->map);
+				vm_map_copy_limits(new_task->map, parent_task->map);
+				vm_map_unlock_read(parent_task->map);
+			}
 		}
 	}
 	if (new_task->map == VM_MAP_NULL) {

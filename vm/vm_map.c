@@ -189,6 +189,7 @@ void vm_map_setup(
 
 	map->size = 0;
 	map->size_wired = 0;
+	map->size_none = 0;
 	map->ref_count = 1;
 	map->pmap = pmap;
 	map->min_offset = min;
@@ -198,6 +199,14 @@ void vm_map_setup(
 	map->first_free = vm_map_to_entry(map);
 	map->hint = vm_map_to_entry(map);
 	map->name = NULL;
+	/* TODO add to default limit the swap size */
+	if (pmap != kernel_pmap) {
+		map->size_cur_limit = vm_page_mem_size() / 2;
+		map->size_max_limit = vm_page_mem_size() / 2;
+	} else {
+		map->size_cur_limit = (~0UL);
+		map->size_max_limit = (~0UL);
+	}
 	vm_map_lock_init(map);
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
@@ -266,6 +275,46 @@ void vm_map_unlock(struct vm_map *map)
 	}
 
 	lock_write_done(&map->lock);
+}
+
+/*
+ *     Enforces the VM limit of a target map.
+ */
+static kern_return_t
+vm_map_enforce_limit(
+	vm_map_t map,
+	vm_size_t size,
+	const char *fn_name)
+{
+	/* Limit is ignored for the kernel map */
+	if (vm_map_pmap(map) == kernel_pmap) {
+		return KERN_SUCCESS;
+	}
+
+	/* Avoid taking into account the total VM_PROT_NONE virtual memory */
+	vm_size_t really_allocated_size = map->size - map->size_none;
+	vm_size_t new_size = really_allocated_size + size;
+	/* Check for integer overflow */
+	if (new_size < size) {
+		return KERN_INVALID_ARGUMENT;
+	}
+
+	if (new_size > map->size_cur_limit) {
+		return KERN_NO_SPACE;
+	}
+
+	return KERN_SUCCESS;
+}
+
+/*
+ *    Copies the limits from source to destination map.
+ *    Called by task_create_kernel with the src_map locked.
+ */
+void
+vm_map_copy_limits(vm_map_t dst_map, vm_map_t src_map)
+{
+	dst_map->size_cur_limit = src_map->size_cur_limit;
+	dst_map->size_max_limit = src_map->size_max_limit;
 }
 
 /*
@@ -779,6 +828,21 @@ error:
  *		If an entry is allocated, the object/offset fields
  *		are initialized to zero.  If an object is supplied,
  *		then an existing entry may be extended.
+ *
+ *		Before allocating a new virtual address map the VM
+ *		space limits are checked. The protection and max_protection
+ *		arguments are essential for properly enforcing the limits
+ *		at the point where the entry is allocated (i.e. skipping the
+ *		checks when max_protextion is VM_PROT_NONE).
+ *
+ *		Having the max_protection argument allows the size of
+ *		the requested entry to be accounted as used virtual memory
+ *		or unused virtual memory (VM_PROT_NONE), in which case the
+ *		size_none field of the map is incremented by the requested
+ *		size.
+ *
+ *		As a result, the allocated entry will have its protection
+ *		and max_protection fields set before return.
  */
 kern_return_t vm_map_find_entry(
 	vm_map_t		map,
@@ -786,11 +850,19 @@ kern_return_t vm_map_find_entry(
 	vm_size_t		size,
 	vm_offset_t		mask,
 	vm_object_t		object,
-	vm_map_entry_t		*o_entry)	/* OUT */
+	vm_map_entry_t		*o_entry,	/* OUT */
+	vm_prot_t		protection,
+	vm_prot_t		max_protection)
 {
 	vm_map_entry_t	entry, new_entry;
 	vm_offset_t	start;
 	vm_offset_t	end;
+	kern_return_t   err;
+
+
+	if (max_protection != VM_PROT_NONE)
+		if ((err = vm_map_enforce_limit(map, size, "vm_map_find_entry")) != KERN_SUCCESS)
+			return err;
 
 	entry = vm_map_find_entry_anywhere(map, size, mask, TRUE, &start);
 
@@ -827,8 +899,8 @@ kern_return_t vm_map_find_entry(
 	    (entry->object.vm_object == object) &&
 	    (entry->needs_copy == FALSE) &&
 	    (entry->inheritance == VM_INHERIT_DEFAULT) &&
-	    (entry->protection == VM_PROT_DEFAULT) &&
-	    (entry->max_protection == VM_PROT_ALL) &&
+	    (entry->protection == protection) &&
+	    (entry->max_protection == max_protection) &&
 	    (entry->wired_count != 0) &&
 	    (entry->projected_on == 0)) {
 		/*
@@ -853,8 +925,8 @@ kern_return_t vm_map_find_entry(
 		new_entry->needs_copy = FALSE;
 
 		new_entry->inheritance = VM_INHERIT_DEFAULT;
-		new_entry->protection = VM_PROT_DEFAULT;
-		new_entry->max_protection = VM_PROT_ALL;
+		new_entry->protection = protection;
+		new_entry->max_protection = max_protection;
 		new_entry->wired_count = 1;
 		new_entry->wired_access = VM_PROT_DEFAULT;
 
@@ -870,6 +942,8 @@ kern_return_t vm_map_find_entry(
     	}
 
 	map->size += size;
+	if (max_protection == VM_PROT_NONE)
+		map->size_none += size;
 
 	/*
 	 *	Update the free space hint and the lookup hint
@@ -1043,6 +1117,16 @@ MACRO_END
 	}
 
 	/*
+	 *	If the allocation has protection equal to VM_PROT_NONE,
+	 *	don't check for limits as the map's size_none field is
+	 *	not yet incremented.
+	 */
+	if (max_protection != VM_PROT_NONE) {
+		if ((result = vm_map_enforce_limit(map, size, "vm_map_enter")) != KERN_SUCCESS)
+			RETURN(result);
+	}
+
+	/*
 	 *	At this point,
 	 *		"start" and "end" should define the endpoints of the
 	 *			available new range, and
@@ -1082,6 +1166,8 @@ MACRO_END
 			 *	new range.
 			 */
 			map->size += size;
+			if (max_protection == VM_PROT_NONE)
+				map->size_none += size;
 			entry->vme_end = end;
 			vm_map_gap_update(&map->hdr, entry);
 			/*
@@ -1118,6 +1204,8 @@ MACRO_END
 			 *	new range.
 			 */
 			map->size += size;
+			if (max_protection == VM_PROT_NONE)
+				map->size_none += size;
 			next_entry->vme_start = start;
 			vm_map_gap_update(&map->hdr, entry);
 			/*
@@ -1165,6 +1253,8 @@ MACRO_END
 
 	vm_map_entry_link(map, entry, new_entry);
 	map->size += size;
+	if (max_protection == VM_PROT_NONE)
+		map->size_none += size;
 
 	/*
 	 *	Update the free space hint and the lookup hint
@@ -1684,11 +1774,14 @@ kern_return_t vm_map_protect(
 		vm_map_clip_end(map, current, end);
 
 		old_prot = current->protection;
-		if (set_max)
+		if (set_max) {
+			if (current->max_protection != new_prot && new_prot == VM_PROT_NONE)
+				map->size_none += current->vme_end - current->vme_start;
+
 			current->protection =
 				(current->max_protection = new_prot) &
 					old_prot;
-		else
+		} else
 			current->protection = new_prot;
 
 		/*
@@ -2047,6 +2140,8 @@ void vm_map_entry_delete(
 
 	vm_map_entry_unlink(map, entry);
 	map->size -= size;
+	if (entry->max_protection == VM_PROT_NONE)
+		map->size_none -= size;
 
 	vm_map_entry_dispose(map, entry);
 }
@@ -2887,6 +2982,11 @@ kern_return_t vm_map_copyout(
 		return KERN_NO_SPACE;
 	}
 
+	if ((kr = vm_map_enforce_limit(dst_map, size, "vm_map_copyout")) != KERN_SUCCESS) {
+		vm_map_unlock(dst_map);
+		return kr;
+	}
+
 	/*
 	 *	Adjust the addresses in the copy chain, and
 	 *	reset the region attributes.
@@ -2990,6 +3090,10 @@ kern_return_t vm_map_copyout(
 	SAVE_HINT(dst_map, vm_map_copy_last_entry(copy));
 
 	dst_map->size += size;
+	/*
+	 *	dst_map->size_none need no updating because the protection
+	 *	of all entries is VM_PROT_DEFAULT / VM_PROT_ALL
+	 */
 
 	/*
 	 *	Link in the copy
@@ -3065,6 +3169,11 @@ kern_return_t vm_map_copyout_page_list(
 	if (last == NULL) {
 		vm_map_unlock(dst_map);
 		return KERN_NO_SPACE;
+	}
+
+	if ((result = vm_map_enforce_limit(dst_map, size, "vm_map_copyout_page_lists")) != KERN_SUCCESS) {
+		vm_map_unlock(dst_map);
+		return result;
 	}
 
 	end = start + size;
@@ -3155,6 +3264,11 @@ kern_return_t vm_map_copyout_page_list(
 	 *	new range.
 	 */
 	dst_map->size += size;
+	/*
+	 *	dst_map->size_none need no updating because the protection
+	 *	of `last` entry is VM_PROT_DEFAULT / VM_PROT_ALL (otherwise
+	 *	the flow would have jumped to create_object).
+	 */
 	last->vme_end = end;
 	vm_map_gap_update(&dst_map->hdr, last);
 
@@ -3211,6 +3325,10 @@ create_object:
 	}
 	SAVE_HINT(dst_map, entry);
 	dst_map->size += size;
+	/*
+	 *	dst_map->size_none need no updating because the protection
+	 *	of `entry` is VM_PROT_DEFAULT / VM_PROT_ALL
+	 */
 
 	/*
 	 *	Link in the entry
@@ -4395,6 +4513,7 @@ vm_map_t vm_map_fork(vm_map_t old_map)
 	vm_map_entry_t	new_entry;
 	pmap_t		new_pmap = pmap_create((vm_size_t) 0);
 	vm_size_t	new_size = 0;
+	vm_size_t	new_size_none = 0;
 	vm_size_t	entry_size;
 	vm_object_t	object;
 
@@ -4529,6 +4648,8 @@ vm_map_t vm_map_fork(vm_map_t old_map)
 				old_entry->vme_start);
 
 			new_size += entry_size;
+			if (old_entry->max_protection == VM_PROT_NONE)
+				new_size_none += entry_size;
 			break;
 
 		case VM_INHERIT_COPY:
@@ -4577,6 +4698,8 @@ vm_map_t vm_map_fork(vm_map_t old_map)
 
 
 					new_size += entry_size;
+					if (old_entry->max_protection == VM_PROT_NONE)
+						new_size_none += entry_size;
 					break;
 				}
 
@@ -4614,6 +4737,8 @@ vm_map_t vm_map_fork(vm_map_t old_map)
 
 			vm_map_copy_insert(new_map, last, copy);
 			new_size += entry_size;
+			if (old_entry->max_protection == VM_PROT_NONE)
+				new_size_none += entry_size;
 
 			/*
 			 *	Pick up the traversal at the end of
@@ -4635,6 +4760,8 @@ vm_map_t vm_map_fork(vm_map_t old_map)
 	}
 
 	new_map->size = new_size;
+	new_map->size_none = new_size_none;
+	vm_map_copy_limits(new_map, old_map);
 	vm_map_unlock(old_map);
 
 	return(new_map);
@@ -5166,8 +5293,11 @@ void vm_map_print(db_expr_t addr, boolean_t have_addr, db_expr_t count, const ch
 	iprintf("Map 0x%X: name=\"%s\", pmap=0x%X,",
 		(vm_offset_t) map, map->name, (vm_offset_t) (map->pmap));
 	 printf("ref=%d,nentries=%d\n", map->ref_count, map->hdr.nentries);
-	 printf("size=%lu,resident:%lu,wired=%lu\n", map->size,
-	        pmap_resident_count(map->pmap) * PAGE_SIZE, map->size_wired);
+	 printf("size=%lu,resident:%lu,wired=%lu,none=%lu\n", map->size,
+	        pmap_resident_count(map->pmap) * PAGE_SIZE, map->size_wired,
+	        map->size_none);
+	 printf("max_limit=%lu,cur_limit=%lu\n",
+		map->size_max_limit, map->size_cur_limit);
 	 printf("version=%d\n",	map->timestamp);
 	indent += 1;
 	for (entry = vm_map_first_entry(map);

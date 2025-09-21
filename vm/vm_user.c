@@ -813,3 +813,72 @@ kern_return_t vm_pages_phys(
 
 	return KERN_SUCCESS;
 }
+
+/*
+ *	vm_set_size_limit
+ *
+ *	Sets the current/maximum virtual adress space limits
+ *	of the `target_task`.
+ *
+ *	The host privileged port must be provided to increase
+ *	the max limit.
+ */
+kern_return_t
+vm_set_size_limit(
+	const ipc_port_t host_port,
+	vm_map_t         map,
+	vm_size_t        current_limit,
+	vm_size_t        max_limit)
+{
+	ipc_kobject_type_t ikot_host = IKOT_NONE;
+
+	if (current_limit > max_limit)
+		return KERN_INVALID_ARGUMENT;
+	if (map == VM_MAP_NULL)
+		return KERN_INVALID_TASK;
+
+	if (!IP_VALID(host_port))
+		return KERN_INVALID_HOST;
+	ip_lock(host_port);
+	if (ip_active(host_port))
+		ikot_host = ip_kotype(host_port);
+	ip_unlock(host_port);
+
+	if (ikot_host != IKOT_HOST && ikot_host != IKOT_HOST_PRIV)
+		return KERN_INVALID_HOST;
+
+	vm_map_lock(map);
+	if (max_limit > map->size_max_limit && ikot_host != IKOT_HOST_PRIV) {
+		vm_map_unlock(map);
+		return KERN_NO_ACCESS;
+	}
+
+	map->size_cur_limit = current_limit;
+	map->size_max_limit = max_limit;
+	vm_map_unlock(map);
+
+	return KERN_SUCCESS;
+}
+
+/*
+ *     vm_get_size_limit
+ *
+ *     Gets the current/maximum virtual adress space limits
+ *     of the provided `map`.
+ */
+kern_return_t
+vm_get_size_limit(
+       vm_map_t        map,
+       vm_size_t       *current_limit,
+       vm_size_t       *max_limit)
+{
+	if (map == VM_MAP_NULL)
+		return KERN_INVALID_TASK;
+
+       vm_map_lock_read(map);
+       *current_limit = map->size_cur_limit;
+       *max_limit = map->size_max_limit;
+       vm_map_unlock_read(map);
+
+       return KERN_SUCCESS;
+}

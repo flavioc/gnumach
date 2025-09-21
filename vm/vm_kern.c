@@ -108,7 +108,8 @@ projected_buffer_allocate(
 
 	vm_map_lock(kernel_map);
 	kr = vm_map_find_entry(kernel_map, &addr, size, (vm_offset_t) 0,
-			       VM_OBJECT_NULL, &k_entry);
+			       VM_OBJECT_NULL, &k_entry,
+			       VM_PROT_DEFAULT, VM_PROT_ALL);
 	if (kr != KERN_SUCCESS) {
 	  vm_map_unlock(kernel_map);
 	  vm_object_deallocate(object);
@@ -125,7 +126,8 @@ projected_buffer_allocate(
 
 	vm_map_lock(map);
 	kr = vm_map_find_entry(map, &addr, size, (vm_offset_t) 0,
-			       VM_OBJECT_NULL, &u_entry);
+			       VM_OBJECT_NULL, &u_entry,
+			       protection, protection);
 	if (kr != KERN_SUCCESS) {
 	  vm_map_unlock(map);
 	  vm_map_lock(kernel_map);
@@ -141,8 +143,6 @@ projected_buffer_allocate(
              /*Creates coupling with kernel mapping of the buffer, and
                also guarantees that user cannot directly manipulate
                buffer VM entry*/
-	u_entry->protection = protection;
-	u_entry->max_protection = protection;
 	u_entry->inheritance = inheritance;
 	vm_map_unlock(map);
        	*user_p = addr;
@@ -209,7 +209,8 @@ projected_buffer_map(
 
 	vm_map_lock(map);
 	kr = vm_map_find_entry(map, &user_addr, size, (vm_offset_t) 0,
-			       VM_OBJECT_NULL, &u_entry);
+			       VM_OBJECT_NULL, &u_entry,
+			       protection, protection);
 	if (kr != KERN_SUCCESS) {
 	  vm_map_unlock(map);
 	  return kr;
@@ -222,8 +223,6 @@ projected_buffer_map(
              /*Creates coupling with kernel mapping of the buffer, and
                also guarantees that user cannot directly manipulate
                buffer VM entry*/
-	u_entry->protection = protection;
-	u_entry->max_protection = protection;
 	u_entry->inheritance = inheritance;
 	u_entry->wired_count = k_entry->wired_count;
 	vm_map_unlock(map);
@@ -393,7 +392,8 @@ kmem_alloc(
 retry:
 	vm_map_lock(map);
 	kr = vm_map_find_entry(map, &addr, size, (vm_offset_t) 0,
-			       VM_OBJECT_NULL, &entry);
+			       VM_OBJECT_NULL, &entry,
+			       VM_PROT_DEFAULT, VM_PROT_ALL);
 	if (kr != KERN_SUCCESS) {
 		vm_map_unlock(map);
 
@@ -465,7 +465,8 @@ kmem_valloc(
 retry:
 	vm_map_lock(map);
 	kr = vm_map_find_entry(map, &addr, size, (vm_offset_t) 0,
-			       kernel_object, &entry);
+			       kernel_object, &entry,
+			       VM_PROT_DEFAULT, VM_PROT_ALL);
 	if (kr != KERN_SUCCESS) {
 		vm_map_unlock(map);
 
@@ -585,7 +586,8 @@ kmem_alloc_aligned(
 retry:
 	vm_map_lock(map);
 	kr = vm_map_find_entry(map, &addr, size, size - 1,
-			       kernel_object, &entry);
+			       kernel_object, &entry,
+			       VM_PROT_DEFAULT, VM_PROT_ALL);
 	if (kr != KERN_SUCCESS) {
 		vm_map_unlock(map);
 

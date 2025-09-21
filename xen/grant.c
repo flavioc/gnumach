@@ -135,7 +135,8 @@ void hyp_grant_init(void) {
 	
 	simple_lock_init(&lock);
 	vm_map_find_entry(kernel_map, &addr, NR_GRANT_PAGES * PAGE_SIZE,
-			  (vm_offset_t) 0, kernel_object, &grants_map_entry);
+			  (vm_offset_t) 0, kernel_object, &grants_map_entry,
+			  VM_PROT_DEFAULT, VM_PROT_ALL);
 	grants = (void*) addr;
 
 	for (i = 0; i < NR_GRANT_PAGES; i++)

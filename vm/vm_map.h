@@ -184,6 +184,7 @@ struct vm_map {
 	pmap_t			pmap;		/* Physical map */
 	vm_size_t		size;		/* virtual size */
 	vm_size_t		size_wired;	/* wired size */
+	vm_size_t		size_none;	/* none protection size */
 	int			ref_count;	/* Reference count */
 	decl_simple_lock_data(,	ref_lock)	/* Lock for ref_count field */
 	vm_map_entry_t		hint;		/* hint for quick lookups */
@@ -198,6 +199,10 @@ struct vm_map {
 	unsigned int		timestamp;	/* Version number */
 
 	const char		*name;		/* Associated name */
+
+	vm_size_t		size_cur_limit; /* current limit on virtual memory size */
+	vm_size_t		size_max_limit; /* maximum size an unprivileged user can
+	                                           change current limit to */
 };
 
 #define vm_map_to_entry(map)	((struct vm_map_entry *) &(map)->hdr.links)
@@ -401,7 +406,7 @@ extern kern_return_t	vm_map_enter(vm_map_t, vm_offset_t *, vm_size_t,
 /* Enter a mapping primitive */
 extern kern_return_t	vm_map_find_entry(vm_map_t, vm_offset_t *, vm_size_t,
 					  vm_offset_t, vm_object_t,
-					  vm_map_entry_t *);
+					  vm_map_entry_t *, vm_prot_t, vm_prot_t);
 /* Deallocate a region */
 extern kern_return_t	vm_map_remove(vm_map_t, vm_offset_t, vm_offset_t);
 /* Change protection */
@@ -581,5 +586,13 @@ void _vm_map_clip_end(
 	vm_map_entry_t		entry,
 	vm_offset_t		end,
 	boolean_t		link_gap);
+
+/*
+ *      This function is called to inherit the virtual memory limits
+ *      from one vm_map_t to another.
+ */
+void vm_map_copy_limits(
+	vm_map_t dst,
+	vm_map_t src);
 
 #endif	/* _VM_VM_MAP_H_ */
