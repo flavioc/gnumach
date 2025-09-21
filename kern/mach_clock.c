@@ -90,6 +90,9 @@ unsigned	bigadj = 1000000;	/* adjust 10*tickadj if adjustment
  * and the difference between these two read is multiplied by the counter
  * period and added to the read value from time or uptime to get a more
  * accurate time read.  */
+#if NCPUS > 1
+#warning This needs fixing
+#endif
 uint32_t	last_hpc_read = 0;
 
 /*
