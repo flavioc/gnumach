@@ -132,24 +132,30 @@ MACRO_END
 
 #define read_mapped_time(time)						\
 MACRO_BEGIN								\
+	uint32_t _last_hpc;						\
 	do {								\
+		_last_hpc = last_hpc_read;				\
 		(time)->seconds = mtime->time_value.seconds;		\
 		__sync_synchronize();					\
 		(time)->nanoseconds = mtime->time_value.nanoseconds;	\
 		__sync_synchronize();					\
-	} while ((time)->seconds != mtime->check_seconds64);		\
-	time_value64_add_hpc(time);					\
+	} while (((time)->seconds != mtime->check_seconds64)		\
+	      || (_last_hpc != last_hpc_read));				\
+	time_value64_add_hpc(time, _last_hpc);				\
 MACRO_END
 
-#define read_mapped_uptime(uptime)				    	\
+#define read_mapped_uptime(uptime)					\
 MACRO_BEGIN								\
+	uint32_t _last_hpc;						\
 	do {								\
+		_last_hpc = last_hpc_read;				\
 		(uptime)->seconds = mtime->uptime_value.seconds;	\
 		__sync_synchronize();					\
 		(uptime)->nanoseconds = mtime->uptime_value.nanoseconds;\
 		__sync_synchronize();					\
-	} while ((uptime)->seconds != mtime->check_upseconds64);	\
-	time_value64_add_hpc(uptime);					\
+	} while (((uptime)->seconds != mtime->check_upseconds64)	\
+	      || (_last_hpc != last_hpc_read));				\
+	time_value64_add_hpc(uptime, _last_hpc);			\
 MACRO_END
 
 def_simple_lock_irq_data(static,	timer_lock)	/* lock for ... */
@@ -443,11 +449,11 @@ clock_boottime_update(const struct time_value64 *new_time)
  * Add the time value since last clock interrupt in nanosecond.
  */
 static void
-time_value64_add_hpc(time_value64_t *value)
+time_value64_add_hpc(time_value64_t *value, uint32_t last_hpc)
 {
 	uint32_t now = hpclock_read_counter();
 	/* Time since last clock interrupt in nanosecond.  */
-	int64_t ns = (now - last_hpc_read) * hpclock_get_counter_period_nsec();
+	int64_t ns = (now - last_hpc) * hpclock_get_counter_period_nsec();
 
 	/* Limit the value of ns under the period of a clock interrupt.  */
 	if (ns >= tick * 1000)
