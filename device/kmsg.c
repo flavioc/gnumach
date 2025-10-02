@@ -217,7 +217,6 @@ void
 kmsg_putchar (int c)
 {
   io_req_t ior;
-  int offset;
   spl_t s = -1;
 
   /* XXX: cninit is not called before cnputc is used. So call kmsginit
@@ -230,21 +229,19 @@ kmsg_putchar (int c)
 
   if (spl_init)
     s = simple_lock_irq (&kmsg_lock);
-  offset = kmsg_write_offset + 1;
-  if (offset == KMSGBUFSIZE)
-    offset = 0;
-
-  if (offset == kmsg_read_offset)
-    {
-      /* Discard C.  */
-      if (spl_init)
-	simple_unlock_irq (s, &kmsg_lock);
-      return;
-    }
 
   kmsg_buffer[kmsg_write_offset++] = c;
   if (kmsg_write_offset == KMSGBUFSIZE)
     kmsg_write_offset = 0;
+
+  if(kmsg_write_offset == kmsg_read_offset)
+    {
+      /* Drop first unread char */
+      kmsg_read_offset++;
+      if (kmsg_read_offset == KMSGBUFSIZE)
+        kmsg_read_offset = 0;
+    }
+
 
   while ((ior = (io_req_t) dequeue_head (&kmsg_read_queue)) != NULL)
     iodone (ior);
