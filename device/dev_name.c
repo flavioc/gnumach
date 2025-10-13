@@ -65,12 +65,12 @@ int nulldev_write(dev_t dev, io_req_t ior)
 
 io_return_t nulldev_getstat(dev_t dev, dev_flavor_t flavor, dev_status_t data, mach_msg_type_number_t *count)
 {
-	return (D_SUCCESS);
+	return (D_INVALID_OPERATION);
 }
 
 io_return_t nulldev_setstat(dev_t dev, dev_flavor_t flavor, dev_status_t data, mach_msg_type_number_t count)
 {
-	return (D_SUCCESS);
+	return (D_INVALID_OPERATION);
 }
 
 int nulldev_portdeath(dev_t dev, mach_port_t port)
