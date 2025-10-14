@@ -28,5 +28,6 @@ void __enable_irq (irq_t irq);
 void __disable_irq (irq_t irq);
 
 extern struct irqdev irqtab;
+extern int pic_mode;
 
 #endif

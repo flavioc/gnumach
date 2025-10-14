@@ -15,8 +15,6 @@
 #ifndef __INTR_H__
 #define __INTR_H__
 
-#ifndef MACH_XEN
-
 #include <mach/kern_return.h>
 #include <mach/port.h>
 #include <kern/queue.h>
@@ -26,6 +24,8 @@
 #define DEVICE_NOTIFY_MSGH_SEQNO 0
 
 #include <sys/types.h>
+
+#ifndef MACH_XEN
 
 struct irqdev;
 #include <machine/irq.h>
@@ -58,5 +58,7 @@ void intr_thread (void);
 kern_return_t irq_acknowledge (ipc_port_t receive_port);
 
 #endif /* MACH_XEN */
+
+extern io_return_t irqgetstat(dev_t dev, dev_flavor_t flavor, dev_status_t data, mach_msg_type_number_t *count);
 
 #endif

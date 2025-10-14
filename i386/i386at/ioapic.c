@@ -33,9 +33,11 @@
 #include <kern/printf.h>
 #include <kern/timer.h>
 #include <kern/lock.h>
+#include <device/irq_status.h>
 
 static int has_irq_specific_eoi = 0;
 int timer_pin;
+int pic_mode = ACPI_PICMODE_APIC;
 
 uint32_t lapic_timer_val = 0;
 uint32_t calibrated_ticks = 0;

@@ -156,7 +156,7 @@ struct dev_ops	dev_name_list[] =
 #endif	/* MACH_HYP */
 
         { irqname,      nulldev_open,   nulldev_close,    nulldev_read,
-          nulldev_write,nulldev_getstat,nulldev_setstat,  nomap,
+          nulldev_write,irqgetstat,	nulldev_setstat,  nomap,
           nodev_async_in,        nulldev_reset,        nulldev_portdeath,0,
           nodev_info },
 

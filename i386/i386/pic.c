@@ -73,6 +73,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <i386/pic.h>
 #include <i386/spl.h>
 #include <i386/pio.h>
+#include <device/irq_status.h>
+
+int	pic_mode = ACPI_PICMODE_PIC;
 
 spl_t	curr_ipl[NCPUS] = {0};
 int	curr_pic_mask;

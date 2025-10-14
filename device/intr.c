@@ -21,6 +21,32 @@
 #include <machine/spl.h>
 #include <machine/irq.h>
 #include <ipc/ipc_space.h>
+#include <device/irq_status.h>
+
+/*ARGSUSED*/
+io_return_t irqgetstat(
+  dev_t        dev,
+  dev_flavor_t flavor,
+  dev_status_t data,			/* pointer to OUT array */
+  mach_msg_type_number_t *count)	/* OUT */
+{
+  io_return_t result = D_SUCCESS;
+
+  switch (flavor)
+    {
+#ifndef MACH_XEN
+      case IRQGETPICMODE:
+        *data = pic_mode;
+        *count = 1;
+        break;
+#endif
+      default:
+        result = D_INVALID_OPERATION;
+        break;
+    }
+
+  return (result);
+}
 
 #ifndef MACH_XEN
 
