@@ -273,12 +273,10 @@ MACRO_BEGIN \
 	simple_lock_nocheck(l); \
 MACRO_END
 #define simple_lock_try(l)	({ \
-	lock_check_no_interrupts(); \
 	simple_lock_try_nocheck(l); \
 })
 #define simple_unlock(l)	\
 MACRO_BEGIN \
-	lock_check_no_interrupts(); \
 	simple_unlock_nocheck(l); \
 MACRO_END
 #endif
