@@ -1989,7 +1989,7 @@ void pmap_protect(
 	simple_lock(&map->lock);
 
 	while (s < e) {
-	    pt_entry_t *pde = pde = pmap_pde(map, s);
+	    pt_entry_t *pde = pmap_pde(map, s);
 
 	    l = (s + PDE_MAPPED_SIZE) & ~(PDE_MAPPED_SIZE-1);
 	    if (l > e || l < s)
