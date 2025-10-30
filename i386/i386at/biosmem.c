@@ -963,9 +963,9 @@ static void __init
 biosmem_unregister_temporary_boot_data(void)
 {
     struct biosmem_boot_data *data;
-    unsigned int i;
+    int i;
 
-    for (i = 0; i < biosmem_nr_boot_data; i++) {
+    for (i = 0; i < (int) biosmem_nr_boot_data; i++) {
         data = &biosmem_boot_data_array[i];
 
         if (!data->temporary) {
@@ -973,7 +973,7 @@ biosmem_unregister_temporary_boot_data(void)
         }
 
         biosmem_unregister_boot_data(data->start, data->end);
-        i = (unsigned int)-1;
+        i = -1;
     }
 }
 
