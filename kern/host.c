@@ -178,18 +178,18 @@ kern_return_t	host_info(
 	    {
 		host_load_info_t load_info;
 		extern long avenrun[3], mach_factor[3];
+		unsigned i;
 
 		if (*count < HOST_LOAD_INFO_COUNT)
 			return KERN_FAILURE;
 
 		load_info = (host_load_info_t) info;
 
-		memcpy(load_info->avenrun,
-		       avenrun,
-		       sizeof avenrun);
-		memcpy(load_info->mach_factor,
-		       mach_factor,
-		       sizeof mach_factor);
+		for (i = 0; i < 3; i++)
+		{
+			load_info->avenrun[i] = avenrun[i];
+			load_info->mach_factor[i] = mach_factor[i];
+		}
 
 		*count = HOST_LOAD_INFO_COUNT;
 		return KERN_SUCCESS;
