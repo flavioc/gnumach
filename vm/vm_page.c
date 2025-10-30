@@ -48,6 +48,7 @@
 #include <vm/memory_object.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
+#include <vm/vm_print.h>
 
 #define DEBUG 0
 
@@ -742,6 +743,21 @@ vm_page_seg_add_active_page(struct vm_page_seg *seg, struct vm_page *page)
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
     assert(page->order == VM_PAGE_ORDER_UNLISTED);
+if (page->free)
+{
+  vm_page_print(page);
+panic("page is free");
+}
+if (page->active)
+{
+  vm_page_print(page);
+panic("page is active");
+}
+if (page->inactive)
+{
+  vm_page_print(page);
+panic("page is inactive");
+}
     assert(!page->free && !page->active && !page->inactive);
     page->active = TRUE;
     page->reference = TRUE;
@@ -1569,6 +1585,10 @@ void vm_page_check(const struct vm_page *page)
 
                 real_page = vm_page_lookup_pa(page->phys_addr);
 
+                if (!real_page) {
+                    panic("vm_page: couldn't allocate page underlying private page");
+                }
+
                 if (vm_page_pageable(real_page)) {
                     panic("vm_page: page underlying private page is pageable");
                 }
@@ -1603,6 +1623,7 @@ vm_page_alloc_pa(unsigned int order, unsigned int selector, unsigned short type)
             return page;
     }
 
+    /* FIXME: rebalance segments? */
     if (!current_thread() || current_thread()->vm_privilege)
         panic("vm_page: privileged thread unable to allocate page");
 
