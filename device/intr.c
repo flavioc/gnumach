@@ -282,6 +282,8 @@ intr_thread (void)
   user_intr_t *e;
   int id;
   ipc_port_t dst_port;
+
+  current_thread()->vm_privilege = 1;
   queue_init (&main_intr_queue);
 
   for (;;)
