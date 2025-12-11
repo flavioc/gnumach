@@ -46,20 +46,20 @@ extern time_value64_t	uptime;		/* time since bootup */
 typedef void timer_func_t(void *);
 
 /* Time-out element.  */
-struct timer_elt {
-	queue_chain_t	chain;		/* chain in order of expiration */
+struct timeout {
+	queue_chain_t   chain;          /* chain of timeouts, we do not sort by expiry to save time */
 	timer_func_t	*fcn;		/* function to call */
 	void *		param;		/* with this parameter */
-	unsigned long	ticks;		/* expiration time, in ticks */
-	int		set;		/* unset | set | allocated */
+	unsigned long	t_time;		/* expiration time, in ticks elapsed from boot */
+	unsigned char	set;		/* active | pending | allocated from pool */
 };
-#define	TELT_UNSET	0		/* timer not set */
-#define	TELT_SET	1		/* timer set */
-#define	TELT_ALLOC	2		/* timer allocated from pool */
 
-typedef	struct timer_elt	timer_elt_data_t;
-typedef	struct timer_elt	*timer_elt_t;
+typedef	struct timeout	timeout_data_t;
+typedef	struct timeout	*timeout_t;
 
+#define	TIMEOUT_ALLOC	0x1		/* timeout allocated from pool */
+#define	TIMEOUT_ACTIVE	0x2		/* timeout active */
+#define	TIMEOUT_PENDING	0x4		/* timeout waiting for expiry */
 
 extern void clock_interrupt(
    int usec,
@@ -71,19 +71,18 @@ extern void softclock (void);
 
 /* For `private' timer elements.  */
 extern void set_timeout(
-   timer_elt_t telt,
+   timeout_t t,
    unsigned int interval);
-extern boolean_t reset_timeout(timer_elt_t telt);
+extern boolean_t reset_timeout(timeout_t t);
 
-#define	set_timeout_setup(telt,fcn,param,interval)	\
-	((telt)->fcn = (fcn),				\
-	 (telt)->param = (param),			\
-	 (telt)->private = TRUE,			\
-	set_timeout((telt), (interval)))
+#define	set_timeout_setup(t,fcn,param,interval)		\
+	((t)->fcn = (fcn),				\
+	 (t)->param = (param),				\
+	set_timeout((t), (interval)))
 
 #define	reset_timeout_check(t)				\
 	MACRO_BEGIN					\
-	if ((t)->set)					\
+	if ((t)->set & TIMEOUT_ACTIVE)			\
 	    reset_timeout((t));				\
 	MACRO_END
 
@@ -104,8 +103,7 @@ extern void read_time_stamp (const time_value64_t *stamp, time_value64_t *result
 extern void mapable_time_init (void);
 
 /* For public timer elements.  */
-extern void timeout(timer_func_t *fcn, void *param, int interval);
-extern boolean_t untimeout(timer_func_t *fcn, const void *param);
+extern timeout_t timeout(timer_func_t *fcn, void *param, int interval);
 
 extern int timeopen(dev_t dev, int flag, io_req_t ior);
 extern void timeclose(dev_t dev, int flag);

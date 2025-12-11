@@ -880,7 +880,7 @@ static void ttypush(void * _tp)
 	    if (state & TS_MIN_TO_RCV)
 	      { /* a character was received */
 		tp->t_state = state & ~TS_MIN_TO_RCV;
-		timeout(ttypush, tp, pdma_timeouts[tp->t_ispeed]);
+		tp->t_timeout = timeout(ttypush, tp, pdma_timeouts[tp->t_ispeed]);
 	      }
 	    else
 	      {
@@ -932,7 +932,7 @@ void ttyinput(
 	   */
 	  if (tp->t_state & TS_MIN_TO) {
 	    tp->t_state &= ~(TS_MIN_TO|TS_MIN_TO_RCV);
-	    untimeout(ttypush, tp);
+	    reset_timeout(tp->t_timeout);
 	  }
 	  tty_queue_completion(&tp->t_delayed_read);
       }
@@ -943,7 +943,7 @@ void ttyinput(
 	 * Otherwise set the character received during timeout interval
 	 * flag.
 	 * One alternative approach would be just to reset the timeout
-	 * into the future, but this involves making a timeout/untimeout
+	 * into the future, but this involves making a timeout/reset_timeout
 	 * call on every character.
 	 */
 	int ptime = pdma_timeouts[tp->t_ispeed];
@@ -952,7 +952,7 @@ void ttyinput(
 	    if ((tp->t_state & TS_MIN_TO) == 0)
 	      {
 		tp->t_state |= TS_MIN_TO;
-		timeout(ttypush, tp, ptime);
+		tp->t_timeout = timeout(ttypush, tp, ptime);
 	      }
 	    else
 	      {

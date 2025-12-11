@@ -67,7 +67,7 @@ unsigned	sched_tick;
 
 thread_t	sched_thread_id;
 
-timer_elt_data_t recompute_priorities_timer;
+timeout_data_t	recompute_priorities_timer;
 
 /*
  *	State machine
@@ -185,7 +185,7 @@ static void thread_timeout(
 	void *_thread)
 {
 	thread_t thread = _thread;
-	assert(thread->timer.set == TELT_UNSET);
+	assert(!(thread->timer.set & TIMEOUT_PENDING));
 
 	clear_wait(thread, THREAD_TIMED_OUT, FALSE);
 }

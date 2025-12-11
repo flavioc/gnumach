@@ -34,6 +34,7 @@
 #define	_DEVICE_TTY_H_
 
 #include <kern/lock.h>
+#include <kern/mach_clock.h>
 #include <kern/queue.h>
 #include <mach/port.h>
 
@@ -68,6 +69,7 @@ struct tty {
 	queue_head_t	t_delayed_write;/* pending write requests */
 	queue_head_t	t_delayed_open;	/* pending open requests */
 
+	timeout_t	t_timeout;	/* timeout pointer */
 /*
  * Items beyond this point should be removed to device-specific
  * extension structures.

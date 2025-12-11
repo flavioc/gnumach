@@ -228,7 +228,7 @@ timer_measure_10x_apic_hz(void)
 {
     volatile int done = 0;
     uint32_t start = 0xffffffff;
-    timer_elt_data_t tmp_timer;
+    timeout_data_t tmp_timer;
     tmp_timer.fcn = timer_expiry_callback;
     tmp_timer.param = (void *)&done;
 

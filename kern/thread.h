@@ -212,8 +212,8 @@ struct thread {
 	time_value64_t	creation_time;
 
 	/* Time-outs */
-	timer_elt_data_t timer;		/* timer for thread */
-	timer_elt_data_t depress_timer;	/* timer for priority depression */
+	timeout_data_t	timer;		/* timer for thread */
+	timeout_data_t	depress_timer;	/* timer for priority depression */
 
 	/* Ast/Halt data structures */
 	/* Defined above */

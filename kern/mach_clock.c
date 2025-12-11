@@ -66,11 +66,33 @@
 
 #define MICROSECONDS_IN_ONE_SECOND 1000000
 
+/* See Costello & Varghese 1995: https://doi.org/10.7936/K7VM49H5 */
+
+#define TIMEOUT_WHEEL_BITS 8
+#define TIMEOUT_WHEEL_SIZE (1 << TIMEOUT_WHEEL_BITS)
+#define TIMEOUT_WHEEL_MASK (TIMEOUT_WHEEL_SIZE - 1)
+#define TIMEOUT_WHEEL_QUEUE(ticks) (&timeoutwheel[ticks & TIMEOUT_WHEEL_MASK])
+#define MAX_SOFTCLOCK_STEPS 100
+
 int		hz = HZ;		/* number of ticks per second */
 int		tick = (MICROSECONDS_IN_ONE_SECOND / HZ);	/* number of usec per tick */
 time_value64_t	time = { 0, 0 };	/* wallclock time (unadjusted) */
 time_value64_t	uptime = { 0, 0 };	/* time since bootup */
 unsigned long	elapsed_ticks = 0;	/* ticks elapsed since bootup */
+unsigned long	softticks = 0;		/* last tick we have checked for timers */
+
+def_simple_lock_irq_data(static,	timeout_lock)	/* lock for accessing static list of timeouts */
+def_simple_lock_irq_data(static,	twheel_lock)	/* lock for accessing timeoutwheel of timeouts */
+
+/* Timeouts are now very fast to look up - dividing the complexity by up to
+ * TIMEOUT_WHEEL_SIZE, at the expense of TIMEOUT_WHEEL_SIZE times more storage.
+ *
+ * This is achieved by storing the elements by index into a circular array
+ * as the time to expiry modulo the wheel size.  Each spoke of the wheel
+ * stores a short queue containing the elements that match the expiry time.
+ * Each element per queue is inserted at the end, so not necessarily sorted by expiry. */
+queue_head_t	timeoutwheel[TIMEOUT_WHEEL_SIZE]; /* timeoutwheel of timeout lists */
+static timeout_t nextsoftcheck;		/* next timeout to be checked */
 
 int		timedelta = 0;
 int		tickdelta = 0;
@@ -82,6 +104,8 @@ unsigned	tickadj = 500 / HZ;	/* can adjust 100 usecs per second */
 #endif
 unsigned	bigadj = 1000000;	/* adjust 10*tickadj if adjustment
 					   > bigadj */
+#define NTIMERS	20
+timeout_data_t	timeout_timers[NTIMERS] = {0};
 
 /* A high-precision (hardware) clock is taken into account to increase the
  * accuracy of the functions used for getting time (e.g. host_get_time64()).
@@ -161,9 +185,6 @@ MACRO_BEGIN								\
 	time_value64_add_hpc(uptime, _last_hpc);			\
 MACRO_END
 
-def_simple_lock_irq_data(static,	timer_lock)	/* lock for ... */
-timer_elt_data_t	timer_head;	/* ordered list of timeouts */
-					/* (doubles as end-of-list) */
 
 /*
  *	Handle clock interrupts.
@@ -249,7 +270,6 @@ void clock_interrupt(
 	if (my_cpu == master_cpu) {
 
 	    spl_t s;
-	    timer_elt_t	telt;
 	    boolean_t	needsoft = FALSE;
 
 
@@ -258,14 +278,13 @@ void clock_interrupt(
 	     *	timeouts.
 	     */
 
-	    s = simple_lock_irq(&timer_lock);
+	    s = simple_lock_irq(&twheel_lock);
 
 	    elapsed_ticks++;
 
-	    telt = (timer_elt_t)queue_first(&timer_head.chain);
-	    if (telt->ticks <= elapsed_ticks)
+	    if (!queue_empty(TIMEOUT_WHEEL_QUEUE(elapsed_ticks)))
 		needsoft = TRUE;
-	    simple_unlock_irq(s, &timer_lock);
+	    simple_unlock_irq(s, &twheel_lock);
 
 	    /*
 	     *	Increment the time-of-day clock.
@@ -310,6 +329,10 @@ void clock_interrupt(
 		else {
 		    setsoftclock();
 		}
+	    } else if (softticks + 1 == elapsed_ticks) {
+	        /* When there are no timers expiring in this tick
+		 * we catch up softticks so it does not fall behind */
+		++softticks;
 	    }
 	}
 	last_hpc_read = hpclock_read_counter();
@@ -332,7 +355,7 @@ void clock_interrupt(
  *	timer off the queue, then thread_go resets timer_set (but
  *	reset_timeout does nothing), then thread_set_timeout puts the
  *	timer back on the queue and sets timer_set, then
- *	thread_timeout finally runs and clears timer_set, then
+ *     thread_timeout finally runs and checks it is unset, then
  *	thread_set_timeout tries to put the timer on the queue again
  *	and corrupts it.
  */
@@ -342,90 +365,135 @@ void softclock(void)
 	/*
 	 *	Handle timeouts.
 	 */
+	timeout_t t;
+	queue_head_t *spoke;
+
+	/* Number of timeouts in spoke that were checked
+	 * for nothing because they have not expired yet */
+	int steps;
+
+	unsigned long curticks;
 	spl_t	s;
-	timer_elt_t	telt;
-	void	(*fcn)( void * param );
-	void	*param;
 
-	while (TRUE) {
-	    s = simple_lock_irq(&timer_lock);
-	    telt = (timer_elt_t) queue_first(&timer_head.chain);
-	    if (telt->ticks > elapsed_ticks) {
-		simple_unlock_irq(s, &timer_lock);
-		break;
-	    }
-	    fcn = telt->fcn;
-	    param = telt->param;
+	steps = 0;
+	s = simple_lock_irq(&twheel_lock);
+	while (softticks != elapsed_ticks) {
+		++softticks;
+		curticks = softticks;
+		spoke = TIMEOUT_WHEEL_QUEUE(curticks);
+		t = (timeout_t)queue_next(spoke);
+		/* Iterate over all elements within spoke checking that we did not wrap back to a spoke */
+		while (! ((t >= (timeout_t)&timeoutwheel[0])
+		       && (t < (timeout_t)&timeoutwheel[TIMEOUT_WHEEL_SIZE])) ) {
+			if (t->t_time != curticks) {
+				t = (timeout_t)queue_next(&t->chain);
 
-	    remqueue(&timer_head.chain, (queue_entry_t)telt);
-	    telt->set = TELT_UNSET;
-	    simple_unlock_irq(s, &timer_lock);
+				if (++steps >= MAX_SOFTCLOCK_STEPS) {
+					nextsoftcheck = t;
+					/* Give hardclock() a chance, so that we don't delay the clock interrupts */
+					simple_unlock_irq(s, &twheel_lock);
+					s = simple_lock_irq(&twheel_lock);
+					t = nextsoftcheck;
+					steps = 0;
+				}
+			} else {
+				void (*t_fcn)(void *);
+				void *t_arg;
 
-	    assert(fcn != 0);
-	    (*fcn)(param);
+				nextsoftcheck = (timeout_t)queue_next(&t->chain);
+				queue_remove(spoke, t, timeout_t, chain);
+				t->chain.prev = t->chain.next = NULL;
+				t_fcn = t->fcn;
+				t_arg = t->param;
+				if (t->set & TIMEOUT_ALLOC)
+					t->set = TIMEOUT_ALLOC;
+				else
+					t->set &= ~TIMEOUT_PENDING;
+				simple_unlock_irq(s, &twheel_lock);
+				assert(t_fcn != 0);
+				t_fcn(t_arg); /* call function at elapsed */
+				s = simple_lock_irq(&twheel_lock);
+				steps = 0;
+				t = nextsoftcheck;
+			}
+		}
 	}
+	nextsoftcheck = NULL;
+	simple_unlock_irq(s, &twheel_lock);
 }
 
 /*
  *	Set timeout.
  *
  *	Parameters:
- *		telt	 timer element.  Function and param are already set.
- *		interval time-out interval, in hz.
+ *		t 	 preallocated timeout. Function and param are already set.
+ *		interval time-out interval, in ticks.
  */
 void set_timeout(
-	timer_elt_t	telt,	/* already loaded */
+	timeout_t	t,	/* already loaded */
 	unsigned int	interval)
 {
-	spl_t			s;
-	timer_elt_t		next;
+	spl_t s;
 
-	s = simple_lock_irq(&timer_lock);
+	/* A timeout is allowed to be already set and set again.
+	 * This results in a call to reset_timeout first to remove it
+	 * from the wheel before adding it again to ensure every timeout only
+	 * exists in the wheel exactly once. */
+	if (t->set & (TIMEOUT_ACTIVE | TIMEOUT_PENDING))
+		reset_timeout(t);
+
+	s = simple_lock_irq(&twheel_lock);
+
+	assert (!(t->set & (TIMEOUT_ACTIVE | TIMEOUT_PENDING)));
+
+	t->set |= TIMEOUT_ACTIVE | TIMEOUT_PENDING;
 
 	/* Start counting after next tick, to avoid partial ticks.  */
-	interval += elapsed_ticks + 1;
+	t->t_time = elapsed_ticks + interval + 1;
 
-	for (next = (timer_elt_t)queue_first(&timer_head.chain);
-	     ;
-	     next = (timer_elt_t)queue_next((queue_entry_t)next)) {
+	/* Insert new timeout at the end of the corresponding wheel entry.  */
+	queue_enter(TIMEOUT_WHEEL_QUEUE(t->t_time), t, timeout_t, chain);
 
-	    if (next->ticks > interval)
-		break;
-	}
-	telt->ticks = interval;
-	/*
-	 * Insert new timer element before 'next'
-	 * (after 'next'->prev)
-	 */
-	insque((queue_entry_t) telt, ((queue_entry_t)next)->prev);
-	telt->set = TELT_SET;
-	simple_unlock_irq(s, &timer_lock);
+	simple_unlock_irq(s, &twheel_lock);
 }
 
-boolean_t reset_timeout(timer_elt_t telt)
+boolean_t reset_timeout(timeout_t t)
 {
-	spl_t	s;
+	queue_head_t *spoke;
+	spl_t s;
 
-	s = simple_lock_irq(&timer_lock);
-	if (telt->set) {
-	    remqueue(&timer_head.chain, (queue_entry_t)telt);
-	    telt->set = TELT_UNSET;
-	    simple_unlock_irq(s, &timer_lock);
-	    return TRUE;
+	s = simple_lock_irq(&twheel_lock);
+	if (!(t->set & TIMEOUT_PENDING)) {
+		t->set &= ~TIMEOUT_ACTIVE;
+		simple_unlock_irq(s, &twheel_lock);
+		return FALSE;
 	}
-	else {
-	    simple_unlock_irq(s, &timer_lock);
-	    return FALSE;
-	}
+
+	t->set &= ~(TIMEOUT_PENDING | TIMEOUT_ACTIVE);
+
+	spoke = TIMEOUT_WHEEL_QUEUE(t->t_time);
+
+	if (nextsoftcheck == t)
+		nextsoftcheck = (timeout_t)queue_next(&t->chain);
+
+	assert (!queue_empty(spoke));
+
+	queue_remove(spoke, t, timeout_t, chain);
+	t->chain.prev = t->chain.next = NULL;
+	simple_unlock_irq(s, &twheel_lock);
+	return TRUE;
 }
 
 void init_timeout(void)
 {
-	simple_lock_init_irq(&timer_lock);
-	queue_init(&timer_head.chain);
-	timer_head.ticks = ~0;	/* MAXUINT - sentinel */
+	int i;
 
+	simple_lock_init_irq(&timeout_lock);
+	simple_lock_init_irq(&twheel_lock);
+	for (i = 0; i < TIMEOUT_WHEEL_SIZE; i++)
+		queue_init(&timeoutwheel[i]);
 	elapsed_ticks = 0;
+	softticks = 0;
 }
 
 /*
@@ -677,10 +745,6 @@ void timeclose(dev_t dev, int flag)
  *	it can be called from interrupt handlers.
  */
 
-#define NTIMERS		20
-
-timer_elt_data_t timeout_timers[NTIMERS];
-
 /*
  *	Set timeout.
  *
@@ -688,51 +752,30 @@ timer_elt_data_t timeout_timers[NTIMERS];
  *	param:		parameter to pass to function
  *	interval:	timeout interval, in hz.
  */
-void timeout(
+timeout_t timeout(
 	void	(*fcn)(void *param),
 	void *	param,
 	int	interval)
 {
-	spl_t	s;
-	timer_elt_t elt;
+	timeout_t t;
+	int i;
+	spl_t s;
 
-	s = simple_lock_irq(&timer_lock);
-	for (elt = &timeout_timers[0]; elt < &timeout_timers[NTIMERS]; elt++)
-	    if (elt->set == TELT_UNSET)
-		break;
-	if (elt == &timeout_timers[NTIMERS])
-	    panic("timeout");
-	elt->fcn = fcn;
-	elt->param = param;
-	elt->set = TELT_ALLOC;
-	simple_unlock_irq(s, &timer_lock);
-
-	set_timeout(elt, (unsigned int)interval);
-}
-
-/*
- * Returns a boolean indicating whether the timeout element was found
- * and removed.
- */
-boolean_t untimeout(void (*fcn)( void * param ), const void *param)
-{
-	spl_t	s;
-	timer_elt_t elt;
-
-	s = simple_lock_irq(&timer_lock);
-	queue_iterate(&timer_head.chain, elt, timer_elt_t, chain) {
-
-	    if ((fcn == elt->fcn) && (param == elt->param)) {
-		/*
-		 *	Found it.
-		 */
-		remqueue(&timer_head.chain, (queue_entry_t)elt);
-		elt->set = TELT_UNSET;
-
-		simple_unlock_irq(s, &timer_lock);
-		return (TRUE);
-	    }
+	s = simple_lock_irq(&timeout_lock);
+	for (i = 0; i < NTIMERS; i++) {
+		t = &timeout_timers[i];
+		if (!(t->set & TIMEOUT_ACTIVE))
+			break;
 	}
-	simple_unlock_irq(s, &timer_lock);
-	return (FALSE);
+	if (i == NTIMERS)
+		panic("more than NTIMERS timeouts");
+
+	t->set |= TIMEOUT_ALLOC;
+	t->fcn = fcn;
+	t->param = param;
+	simple_unlock_irq(s, &timeout_lock);
+
+	set_timeout(t, interval);
+
+	return t;
 }
