@@ -811,18 +811,6 @@ vm_page_seg_remove_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
     vm_page_inactive_count--;
 }
 
-static inline struct list*
-vm_page_next_page_list(struct list* cur_page_list,
-		       struct vm_page_queue* queue,
-		       boolean_t external_only)
-{
-  return (external_only
-	  ? NULL
-	  : (cur_page_list == &queue->external_pages
-	     ? &queue->internal_pages
-	     : NULL));
-}
-
 /*
  * Attempt to pull an active page.
  *
@@ -847,17 +835,10 @@ vm_page_seg_pull_active_page(struct vm_page_seg *seg, boolean_t external)
 		? NULL
 		: list_first_entry(page_list, struct vm_page, node));
 
-        if (page == NULL || page == first) {
-          page_list = NULL;
+        if (page == NULL || page == first)
+	  break;
 
-          if (page_list == NULL)
-            break;
-          else
-            {
-              first = NULL;
-              continue;
-            }
-        } else if (first == NULL) {
+        if (first == NULL) {
             first = page;
         }
 
@@ -907,17 +888,10 @@ vm_page_seg_pull_inactive_page(struct vm_page_seg *seg, boolean_t external)
 		? NULL
 		: list_first_entry(page_list, struct vm_page, node));
 
-        if (page == NULL || page == first) {
-          page_list = NULL;
+        if (page == NULL || page == first)
+	  break;
 
-          if (page_list == NULL)
-            break;
-          else
-            {
-              first = NULL;
-              continue;
-            }
-        } else if (first == NULL) {
+	if (first == NULL) {
             first = page;
         }
 
