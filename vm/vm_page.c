@@ -180,9 +180,14 @@ struct vm_page_free_list {
  * the Hurd default pager implementation suffers from bugs that can easily
  * cause the system to freeze.
  */
+struct vm_page_list {
+    struct list   pages;
+    unsigned long nr_pages;
+};
+
 struct vm_page_queue {
-    struct list internal_pages;
-    struct list external_pages;
+    struct vm_page_list internal;
+    struct vm_page_list external;
 };
 
 /*
@@ -217,10 +222,8 @@ struct vm_page_seg {
 
     /* Page cache related data */
     struct vm_page_queue active_pages;
-    unsigned long nr_active_pages;
     unsigned long high_active_pages;
     struct vm_page_queue inactive_pages;
-    unsigned long nr_inactive_pages;
 };
 
 /*
@@ -533,27 +536,37 @@ vm_page_cpu_pool_drain(struct vm_page_cpu_pool *cpu_pool,
 }
 
 static void
+vm_page_list_init(struct vm_page_list *list)
+{
+    list_init(&list->pages);
+    list->nr_pages = 0;
+}
+
+static void
 vm_page_queue_init(struct vm_page_queue *queue)
 {
-    list_init(&queue->internal_pages);
-    list_init(&queue->external_pages);
+    vm_page_list_init(&queue->internal);
+    vm_page_list_init(&queue->external);
 }
 
 static void
 vm_page_queue_push(struct vm_page_queue *queue, struct vm_page *page)
 {
-    if (page->external) {
-        list_insert_tail(&queue->external_pages, &page->node);
-    } else {
-        list_insert_tail(&queue->internal_pages, &page->node);
-    }
+    struct vm_page_list* list =
+      (page->external ? &queue->external : &queue->internal);
+
+    list_insert_tail(&list->pages, &page->node);
+    list->nr_pages++;
 }
 
 static void
 vm_page_queue_remove(struct vm_page_queue *queue, struct vm_page *page)
 {
-    (void)queue;
+    struct vm_page_list* list =
+      (page->external ? &queue->external : &queue->internal);
+
     list_remove(&page->node);
+    list->nr_pages--;
 }
 
 static struct vm_page_seg *
@@ -654,9 +667,7 @@ vm_page_seg_init(struct vm_page_seg *seg, phys_addr_t start, phys_addr_t end,
     vm_page_seg_compute_pageout_thresholds(seg);
 
     vm_page_queue_init(&seg->active_pages);
-    seg->nr_active_pages = 0;
     vm_page_queue_init(&seg->inactive_pages);
-    seg->nr_inactive_pages = 0;
 
     i = vm_page_seg_index(seg);
 
@@ -762,7 +773,6 @@ panic("page is inactive");
     page->active = TRUE;
     page->reference = TRUE;
     vm_page_queue_push(&seg->active_pages, page);
-    seg->nr_active_pages++;
     vm_page_active_count++;
 }
 
@@ -777,7 +787,6 @@ vm_page_seg_remove_active_page(struct vm_page_seg *seg, struct vm_page *page)
     assert(!page->free && page->active && !page->inactive);
     page->active = FALSE;
     vm_page_queue_remove(&seg->active_pages, page);
-    seg->nr_active_pages--;
     vm_page_active_count--;
 }
 
@@ -792,7 +801,6 @@ vm_page_seg_add_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
     assert(!page->free && !page->active && !page->inactive);
     page->inactive = TRUE;
     vm_page_queue_push(&seg->inactive_pages, page);
-    seg->nr_inactive_pages++;
     vm_page_inactive_count++;
 }
 
@@ -807,7 +815,6 @@ vm_page_seg_remove_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
     assert(!page->free && !page->active && page->inactive);
     page->inactive = FALSE;
     vm_page_queue_remove(&seg->inactive_pages, page);
-    seg->nr_inactive_pages--;
     vm_page_inactive_count--;
 }
 
@@ -826,8 +833,8 @@ vm_page_seg_pull_active_page(struct vm_page_seg *seg, boolean_t external)
     first = NULL;
 
     page_list = (external
-		 ? &seg->active_pages.external_pages
-		 : &seg->active_pages.internal_pages);
+		 ? &seg->active_pages.external.pages
+		 : &seg->active_pages.internal.pages);
 
     for (;;) {
 
@@ -879,8 +886,8 @@ vm_page_seg_pull_inactive_page(struct vm_page_seg *seg, boolean_t external)
     first = NULL;
 
     page_list = (external
-		 ? &seg->inactive_pages.external_pages
-		 : &seg->inactive_pages.internal_pages);
+		 ? &seg->inactive_pages.external.pages
+		 : &seg->inactive_pages.internal.pages);
 
     for (;;) {
 
@@ -953,7 +960,10 @@ vm_page_seg_page_available(const struct vm_page_seg *seg)
 static boolean_t
 vm_page_seg_usable(const struct vm_page_seg *seg)
 {
-    if ((seg->nr_active_pages + seg->nr_inactive_pages) == 0) {
+    if ((seg->active_pages.internal.nr_pages +
+	 seg->active_pages.external.nr_pages +
+	 seg->inactive_pages.internal.nr_pages +
+	 seg->inactive_pages.external.nr_pages) == 0) {
         /* Nothing to page out, assume segment is usable */
         return TRUE;
     }
@@ -1258,7 +1268,11 @@ vm_page_seg_compute_high_active_page(struct vm_page_seg *seg)
 {
     unsigned long nr_pages;
 
-    nr_pages = seg->nr_active_pages + seg->nr_inactive_pages;
+    nr_pages = (seg->active_pages.internal.nr_pages +
+		seg->active_pages.external.nr_pages +
+		seg->inactive_pages.internal.nr_pages +
+		seg->inactive_pages.external.nr_pages);
+
     seg->high_active_pages = nr_pages * VM_PAGE_HIGH_ACTIVE_PAGE_NUM
                              / VM_PAGE_HIGH_ACTIVE_PAGE_DENOM;
 }
@@ -1272,7 +1286,9 @@ vm_page_seg_refill_inactive(struct vm_page_seg *seg)
 
     vm_page_seg_compute_high_active_page(seg);
 
-    while (seg->nr_active_pages > seg->high_active_pages) {
+    while ((seg->active_pages.internal.nr_pages +
+	    seg->active_pages.external.nr_pages)
+	   > seg->high_active_pages) {
         page = vm_page_seg_pull_active_page(seg, TRUE);
 
         if (page == NULL)
@@ -2191,6 +2207,14 @@ void db_show_vmstat(void)
 
 	for (i = 0; i < vm_page_segs_size; i++)
 	{
+	        unsigned long nr_active_pages =
+		  (vm_page_segs[i].active_pages.internal.nr_pages +
+		   vm_page_segs[i].active_pages.external.nr_pages);
+
+	        unsigned long nr_inactive_pages =
+		  (vm_page_segs[i].inactive_pages.internal.nr_pages +
+		   vm_page_segs[i].inactive_pages.external.nr_pages);
+
 		db_printf("\nSegment %s:\n", vm_page_seg_name(i));
 		db_printf("%-20s %10uM\n", "size:",
 			vm_page_seg_size(&vm_page_segs[i]) >> 20);
@@ -2203,11 +2227,11 @@ void db_show_vmstat(void)
 		db_printf("%-20s %10uM\n", "high_free:",
 			vm_page_segs[i].high_free_pages / PAGES_PER_MB);
 		db_printf("%-20s %10uM\n", "active:",
-			vm_page_segs[i].nr_active_pages / PAGES_PER_MB);
+			nr_active_pages / PAGES_PER_MB);
 		db_printf("%-20s %10uM\n", "high active:",
 			vm_page_segs[i].high_active_pages / PAGES_PER_MB);
 		db_printf("%-20s %10uM\n", "inactive:",
-			vm_page_segs[i].nr_inactive_pages / PAGES_PER_MB);
+			nr_inactive_pages / PAGES_PER_MB);
 	}
 }
 #endif /* MACH_KDB */
