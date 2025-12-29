@@ -2203,10 +2203,22 @@ void db_show_vmstat(void)
 			vm_page_segs[i].high_free_pages / PAGES_PER_MB);
 		db_printf("%-20s %10uM\n", "active:",
 			nr_active_pages / PAGES_PER_MB);
+		db_printf("%-20s %10uM\n", "  external:",
+			  vm_page_segs[i].active_pages.external.nr_pages
+			  / PAGES_PER_MB);
+		db_printf("%-20s %10uM\n", "  internal:",
+			  vm_page_segs[i].active_pages.internal.nr_pages
+			  / PAGES_PER_MB);
 		db_printf("%-20s %10uM\n", "high active:",
 			vm_page_segs[i].high_active_pages / PAGES_PER_MB);
 		db_printf("%-20s %10uM\n", "inactive:",
 			nr_inactive_pages / PAGES_PER_MB);
+		db_printf("%-20s %10uM\n", "  external:",
+			  vm_page_segs[i].inactive_pages.external.nr_pages
+			  / PAGES_PER_MB);
+		db_printf("%-20s %10uM\n", "  internal:",
+			  vm_page_segs[i].inactive_pages.internal.nr_pages
+			  / PAGES_PER_MB);
 	}
 }
 #endif /* MACH_KDB */
