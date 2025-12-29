@@ -172,13 +172,15 @@ struct vm_page_free_list {
 #define VM_PAGE_HIGH_ACTIVE_PAGE_DENOM  3
 
 /*
- * Page cache queue.
+ * Page cache eviction strategy.
  *
- * XXX The current implementation hardcodes a preference to evict external
- * pages first and keep internal ones as much as possible. This is because
- * the Hurd default pager implementation suffers from bugs that can easily
- * cause the system to freeze.
+ * The current implementation evicts pages in preference order:
+ *   inactive/external,
+ *   inactive/internal,
+ *   active/external,
+ *   active/internal.
  */
+
 struct vm_page_list {
     struct list   pages;
     unsigned long nr_pages;
@@ -1105,12 +1107,11 @@ vm_page_seg_balance(struct vm_page_seg *seg)
 
 static boolean_t
 vm_page_seg_evict(struct vm_page_seg *seg, boolean_t external,
-                  boolean_t alloc_paused)
+		  boolean_t active, boolean_t alloc_paused)
 {
     struct vm_page *page;
     boolean_t reclaim, double_paging;
     vm_object_t object;
-    boolean_t was_active;
 
     page = NULL;
     object = NULL;
@@ -1123,7 +1124,9 @@ restart:
     if (page != NULL) {
         vm_object_lock(page->object);
     } else {
-        page = vm_page_seg_pull_cache_page(seg, external, &was_active);
+        page = (active
+		? vm_page_seg_pull_active_page(seg, external)
+		: vm_page_seg_pull_inactive_page(seg, external));
 
         if (page == NULL) {
             goto out;
@@ -1138,7 +1141,7 @@ restart:
 
     object = page->object;
 
-    if (!was_active
+    if (!active
         && (page->reference || pmap_is_referenced(page->phys_addr))) {
         vm_page_seg_add_active_page(seg, page);
         simple_unlock(&seg->lock);
@@ -2005,9 +2008,8 @@ vm_page_balance(void)
 }
 
 static boolean_t
-vm_page_evict_once(boolean_t external, boolean_t alloc_paused)
+vm_page_evict_once(boolean_t alloc_paused)
 {
-    boolean_t evicted;
     unsigned int i;
 
     /*
@@ -2016,12 +2018,13 @@ vm_page_evict_once(boolean_t external, boolean_t alloc_paused)
      */
 
     for (i = vm_page_segs_size - 1; i < vm_page_segs_size; i--) {
-        evicted = vm_page_seg_evict(vm_page_seg_get(i),
-                                    external, alloc_paused);
+        struct vm_page_seg *seg = vm_page_seg_get(i);
 
-        if (evicted) {
-            return TRUE;
-        }
+	if (vm_page_seg_evict(seg, TRUE, FALSE, alloc_paused) ||
+	    vm_page_seg_evict(seg, FALSE, FALSE, alloc_paused) ||
+	    vm_page_seg_evict(seg, TRUE, TRUE, alloc_paused) ||
+	    vm_page_seg_evict(seg, FALSE, TRUE, alloc_paused))
+	  return TRUE;
     }
 
     return FALSE;
@@ -2033,18 +2036,16 @@ vm_page_evict_once(boolean_t external, boolean_t alloc_paused)
 boolean_t
 vm_page_evict(boolean_t *should_wait)
 {
-    boolean_t pause, evicted, external, alloc_paused;
+    boolean_t pause, evicted, alloc_paused;
     unsigned int i;
 
     *should_wait = TRUE;
-    external = TRUE;
 
     simple_lock(&vm_page_queue_free_lock);
     vm_page_external_laundry_count = 0;
     alloc_paused = vm_page_alloc_paused;
     simple_unlock(&vm_page_queue_free_lock);
 
-again:
     vm_page_lock_queues();
     pause = (vm_page_laundry_count >= VM_PAGE_MAX_LAUNDRY);
     vm_page_unlock_queues();
@@ -2055,7 +2056,7 @@ again:
     }
 
     for (i = 0; i < VM_PAGE_MAX_EVICTIONS; i++) {
-        evicted = vm_page_evict_once(external, alloc_paused);
+        evicted = vm_page_evict_once(alloc_paused);
 
         if (!evicted) {
             break;
@@ -2076,16 +2077,6 @@ again:
         if (evicted) {
             *should_wait = FALSE;
             return FALSE;
-        }
-
-        /*
-         * Eviction failed, consider pages from internal objects on the
-         * next attempt.
-         */
-        if (external && IP_VALID(memory_manager_default)) {
-            simple_unlock(&vm_page_queue_free_lock);
-            external = FALSE;
-            goto again;
         }
 
         /*
