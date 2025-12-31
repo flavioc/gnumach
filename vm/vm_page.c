@@ -1113,6 +1113,9 @@ vm_page_seg_evict(struct vm_page_seg *seg, boolean_t external,
     boolean_t reclaim, double_paging;
     vm_object_t object;
 
+    if (!external && !IP_VALID(memory_manager_default))
+      return FALSE;
+
     page = NULL;
     object = NULL;
     double_paging = FALSE;
