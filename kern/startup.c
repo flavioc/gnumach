@@ -311,6 +311,9 @@ void cpu_launch_first_thread(thread_t th)
 	thread_lock(th);
 	th->state &= ~TH_UNINT;
 	thread_unlock(th);
+#if	NCPUS > 1
+	th->last_processor = cpu_to_processor(mycpu);
+#endif	/* NCPUS > 1 */
 	timer_switch(&th->system_timer);
 
 	PMAP_ACTIVATE_USER(vm_map_pmap(th->task->map), th, mycpu);
