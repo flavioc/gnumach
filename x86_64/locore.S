@@ -704,7 +704,7 @@ trap_from_kernel:
 	cmpq	CX(EXT(int_stack_base),%rcx),%rdx
 	je	1f			/* OK if so */
 
-	movl	%ecx,%edx
+	movq	%rcx,%rdx
 	cmpq	CX(EXT(kernel_stack),%rdx),%rsp
 					/* already on kernel stack? */
 	ja	0f
