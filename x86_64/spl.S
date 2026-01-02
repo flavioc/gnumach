@@ -24,7 +24,7 @@
 #include <i386/cpu_number.h>
 
 #if NCPUS > 1
-#define mb lock; addl $0,(%esp)
+#define mb lock; addl $0,(%rsp)
 #else
 #define mb
 #endif
