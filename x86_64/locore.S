@@ -832,7 +832,7 @@ ENTRY(all_intrs)
 
 	PUSH_SEGMENTS_ISR(%rdx)		/* save segment registers */
 
-	CPU_NUMBER_NO_GS(%ecx)
+	CPU_NUMBER_NO_GS(%rcx)
 	movq	%rsp,%rdx		/* on an interrupt stack? */
 	and	$(~(INTSTACK_SIZE-1)),%rdx
 	cmpq	%ss:CX(EXT(int_stack_base),%rcx),%rdx
@@ -893,7 +893,7 @@ LEXT(return_to_iret)			/* to find the return from calling interrupt) */
 	iretq				/* return to caller */
 
 int_from_intstack:
-	CPU_NUMBER_NO_GS(%edx)
+	CPU_NUMBER_NO_GS(%rdx)
 	cmpq	CX(EXT(int_stack_base),%rdx),%rsp /* seemingly looping? */
 	jb	stack_overflowed	/* if not: */
 	call	EXT(interrupt)		/* call interrupt routine */
@@ -1181,7 +1181,7 @@ syscall_entry_2:
 	movq	%rdx,R_CS(%rsp)		/* fix cs */
 	movq	%rbx,R_EFLAGS(%rsp)	/* fix eflags */
 
-	CPU_NUMBER_NO_STACK(%edx)
+	CPU_NUMBER_NO_STACK(%rdx)
 	TIME_TRAP_SENTRY
 
 	movq	CX(EXT(kernel_stack),%rdx),%rbx
@@ -1421,7 +1421,7 @@ ENTRY(syscall64)
 	mov	%r10,%rcx		/* fix arg3 location according to C ABI */
 
 	/* switch to kernel stack, then we can enable interrupts */
-	CPU_NUMBER_NO_STACK(%r11d)
+	CPU_NUMBER_NO_STACK(%r11)
 	movq	CX(EXT(kernel_stack),%r11),%rsp
 	sti
 
@@ -1464,7 +1464,7 @@ _syscall64_call:
 
 _syscall64_check_for_ast:
 	/* Check for ast. */
-	CPU_NUMBER_NO_GS(%r11d)
+	CPU_NUMBER_NO_GS(%r11)
 	cmpl	$0,CX(EXT(need_ast),%r11)
 	jz	_syscall64_restore_state
 
