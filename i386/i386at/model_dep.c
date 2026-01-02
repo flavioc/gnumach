@@ -383,7 +383,6 @@ i386at_init(void)
 #else	/* MACH_HYP */
 	hyp_intrinit();
 #endif	/* MACH_HYP */
-	spl_init = 1;
 
 	/*
 	 * Read memory map and load it into the physical page allocator.
@@ -501,6 +500,7 @@ i386at_init(void)
 #endif	/* MACH_XEN */
 
 	interrupt_stack_alloc();
+	spl_init = 1;
 }
 
 /*
