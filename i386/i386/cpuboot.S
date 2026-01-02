@@ -138,13 +138,8 @@ _apboot:
 	movl	%eax, %cr0
 
 	/* ljmpl with relocation from machine_init */
-	.byte 0x66
-	.byte 0xea
-apboot_jmp_offset:
-	.long M(0f)
-	.word BOOT_CS
-
-0:
+	ljmpl	*M(apboot_jmp_offset)
+apboot32:
 	.code32
 	/* Protected mode! */
 	movw	$BOOT_DS, %ax
@@ -276,6 +271,11 @@ gdt_tmp:
     .byte ACC_PL_K | ACC_DATA_W | ACC_P
     .byte ((SZ_32 | SZ_G) << 4) | 0xf
     .byte 0x00
+
+.align 16
+apboot_jmp_offset:
+	.long M(apboot32)
+	.word BOOT_CS
 
 _apbootend:
 apbootend:
