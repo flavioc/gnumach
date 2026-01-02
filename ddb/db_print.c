@@ -188,14 +188,14 @@ db_print_thread(
 	    } else if (flag & OPTION_SCHED) {
 		if (flag & OPTION_THREAD_TITLE) {
 		    db_printf("%s     "
-			      "STAT    PRIORITY            POLICY   USAGE                 LAST\n",
+			      "STAT     PRIORITY            POLICY   USAGE                    LAST\n",
 			      indent);
 		    db_printf("%s ID: "
-			      "RWSONF  SET  MAX COMP DEPR  P DATA   CPU        SCHED      UPDATED\n",
+			      "RWSONFP  SET  MAX COMP DEPR  P DATA   CPU      SCHED      LAST UPDATED\n",
 			      indent);
 		    db_printf(" \n");
 		}
-		db_printf("%s%3d%c %s %4d %4d %4d %4d  %c %4d  %10d %10d %10d\n",
+		db_printf("%s%3d%c %s %4d %4d %4d %4d  %c %4d %10d %10d %2d %10d\n",
 			  indent, thread_id,
 			  (thread == current_thread())? '#': ':',
 			  db_thread_stat(thread, status),
@@ -211,6 +211,11 @@ db_print_thread(
 #endif	/* MACH_FIXPRI */
 			  thread->cpu_usage,
 			  thread->sched_usage,
+#if	NCPUS > 1
+			  thread->last_processor ? thread->last_processor->slot_num : -1,
+#else
+			  0,
+#endif
 			  thread->sched_stamp);
 	    } else {
 		if (thread_id % 3 == 0) {
