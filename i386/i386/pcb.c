@@ -334,6 +334,7 @@ void load_context(thread_t new)
 {
 	switch_ktss(new->pcb);
 	Load_context(new);
+	/*NOTREACHED*/
 }
 
 /*

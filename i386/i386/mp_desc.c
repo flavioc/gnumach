@@ -225,7 +225,7 @@ paging_enable(void)
 #endif  /* MACH_HYP */
 }
 
-void
+static __attribute__((noreturn)) void
 cpu_setup(int cpu)
 {
     pmap_set_page_dir();
@@ -262,9 +262,10 @@ cpu_setup(int cpu)
     lapic_setup();
     lapic_enable();
     cpu_launch_first_thread(THREAD_NULL);
+    /*NOTREACHED*/
 }
 
-void
+void __attribute__((noreturn))
 cpu_ap_main()
 {
     int cpu = cpu_number();
