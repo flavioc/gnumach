@@ -201,8 +201,8 @@ void vm_map_setup(
 	map->name = NULL;
 	/* TODO add to default limit the swap size */
 	if (pmap != kernel_pmap) {
-		map->size_cur_limit = vm_page_mem_size() / 2;
-		map->size_max_limit = vm_page_mem_size() / 2;
+		map->size_cur_limit = vm_page_mem_size();
+		map->size_max_limit = vm_page_mem_size();
 	} else {
 		map->size_cur_limit = (~0UL);
 		map->size_max_limit = (~0UL);
