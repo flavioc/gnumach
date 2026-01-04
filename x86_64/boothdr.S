@@ -21,6 +21,10 @@
 #include <i386/i386asm.h>
 #include <i386/i386/proc_reg.h>
 #include <i386/i386/seg.h>
+
+#define BOOT_CS	0x8
+#define BOOT_DS	0x10
+
 	/*
 	 * This section will be put first into .boot.  See also	x86_64/ldscript.
 	 */
@@ -148,11 +152,11 @@ switch64:
 	movw	$0,%ax
 	movw	%ax,%fs
 	movw	%ax,%gs
-	movw	$16,%ax
+	movw	$BOOT_DS,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%ss
-	ljmp	$8,$boot_entry64
+	ljmp	$BOOT_CS,$boot_entry64
 
 	.code64
 
@@ -198,10 +202,14 @@ iplt_done:
 #define  SEG_ACCESS_OFS 40
 #define  SEG_GRANULARITY_OFS 52
 gdt64:
+	/* NULL segment = 0x0 */
 	.quad	0
-gdt64code:
+
+	/* BOOT_CS = 0x8 */
         .quad	(ACC_P << SEG_ACCESS_OFS) | (ACC_CODE_R << SEG_ACCESS_OFS) | (SZ_64 << SEG_GRANULARITY_OFS)
-gdt64data:
+
+	/* BOOT_DS = 0x10 */
+        .quad	(ACC_P << SEG_ACCESS_OFS) | (ACC_CODE_R << SEG_ACCESS_OFS) | (SZ_64 << SEG_GRANULARITY_OFS)
         .quad	(ACC_P << SEG_ACCESS_OFS) | (ACC_DATA_W << SEG_ACCESS_OFS)
 gdt64end:
 	.skip	(4096 - (gdt64end - gdt64))
