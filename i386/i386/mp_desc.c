@@ -285,7 +285,7 @@ start_other_cpus(void)
 
 	//Copy cpu initialization assembly routine
 	memcpy((void*) phystokv(apboot_addr), (void*) &apboot,
-	       (uint32_t)&apbootend - (uint32_t)&apboot);
+	       (uintptr_t)&apbootend - (uintptr_t)&apboot);
 
 	unsigned cpu = cpu_number_slow();
 
