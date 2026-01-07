@@ -209,7 +209,6 @@ gdt64:
         .quad	(ACC_P << SEG_ACCESS_OFS) | (ACC_CODE_R << SEG_ACCESS_OFS) | (SZ_64 << SEG_GRANULARITY_OFS)
 
 	/* BOOT_DS = 0x10 */
-        .quad	(ACC_P << SEG_ACCESS_OFS) | (ACC_CODE_R << SEG_ACCESS_OFS) | (SZ_64 << SEG_GRANULARITY_OFS)
         .quad	(ACC_P << SEG_ACCESS_OFS) | (ACC_DATA_W << SEG_ACCESS_OFS)
 gdt64end:
 	.skip	(4096 - (gdt64end - gdt64))
