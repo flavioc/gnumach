@@ -83,10 +83,10 @@ ENTRY(Switch_context)
 	lea     KERNEL_STACK_SIZE-IKS_SIZE-IEL_SIZE(%rcx),%rbx
 	        				/* point to stack top */
 
-	CPU_NUMBER(%eax)
+	CPU_NUMBER(%edx)			/* Don't overwrite returned value %rax */
 	movq	%rsi,MY(ACTIVE_THREAD)		/* new thread is active */
 	movq	%rcx,MY(ACTIVE_STACK)		/* set current stack */
-	movq	%rbx,CX(EXT(kernel_stack),%rax)	/* set stack top */
+	movq	%rbx,CX(EXT(kernel_stack),%rdx)	/* set stack top */
 
 	movq	KSS_ESP(%rcx),%rsp		/* switch stacks */
 	movq	KSS_EBP(%rcx),%rbp		/* restore registers */
