@@ -79,6 +79,7 @@ boot_entry:
 	movl	$solid_intstack+INTSTACK_SIZE-4, %esp
 	andl	$0xfffffff0,%esp
 
+#ifdef APIC
 	/* Enable local apic in xAPIC mode */
 	xorl	%eax, %eax
 	xorl	%edx, %edx
@@ -89,6 +90,7 @@ boot_entry:
 	andl	$(~APIC_MSR_X2APIC), %eax
 	movl	$APIC_MSR, %ecx
 	wrmsr
+#endif
 
 	/* Reset EFLAGS to a known state.  */
 	pushl	$0

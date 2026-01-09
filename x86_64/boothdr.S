@@ -21,6 +21,7 @@
 #include <i386/i386asm.h>
 #include <i386/i386/proc_reg.h>
 #include <i386/i386/seg.h>
+#include <i386/apic.h>
 
 #define BOOT_CS	0x8
 #define BOOT_DS	0x10
@@ -52,6 +53,18 @@ boot_hdr:
 	.global _start
 _start:
 boot_entry:
+#ifdef APIC
+	/* Enable local apic in xAPIC mode */
+	xorl	%eax, %eax
+	xorl	%edx, %edx
+	movl	$APIC_MSR, %ecx
+	rdmsr
+	orl	$APIC_MSR_ENABLE, %eax
+	orl	$APIC_MSR_BSP, %eax
+	andl	$(~APIC_MSR_X2APIC), %eax
+	movl	$APIC_MSR, %ecx
+	wrmsr
+#endif
 	/*
 	 * Prepare minimal page mapping to jump to 64 bit and to C code.
 	 * The first 4GB is identity mapped, and the first 2GB are re-mapped
