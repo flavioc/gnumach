@@ -163,6 +163,11 @@ switch64:
 	mov	%eax,%cr0
 
 	lgdt	gdt64pointer
+	ljmp	$BOOT_CS,$boot_entry64
+
+	.code64
+
+boot_entry64:
 	movw	$0,%ax
 	movw	%ax,%fs
 	movw	%ax,%gs
@@ -170,11 +175,7 @@ switch64:
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%ss
-	ljmp	$BOOT_CS,$boot_entry64
 
-	.code64
-
-boot_entry64:
 	/* Switch to our own interrupt stack.  */
 	movq	$solid_intstack+INTSTACK_SIZE-16, %rax
 	andq	$(~15),%rax
