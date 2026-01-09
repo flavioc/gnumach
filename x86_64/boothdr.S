@@ -20,6 +20,7 @@
 
 #include <i386/i386asm.h>
 #include <i386/i386/proc_reg.h>
+#include <i386/i386/msr.h>
 #include <i386/i386/seg.h>
 #include <i386/apic.h>
 
@@ -150,9 +151,9 @@ switch64:
 	mov	%cr4,%eax
 	or	$CR4_PAE,%eax
 	mov	%eax,%cr4
-	mov	$0xC0000080,%ecx  // select EFER register
+	mov	$MSR_REG_EFER,%ecx
 	rdmsr
-	or	$(1 << 8),%eax	// long mode enable bit
+	or	$MSR_REG_EFER_LONG_MODE_EN,%eax
 	wrmsr
 	mov	$p4table,%eax
 	mov	%eax,%cr3
