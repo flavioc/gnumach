@@ -193,7 +193,6 @@ include_mach_i386_HEADERS = \
 	i386/include/mach/i386/eflags.h \
 	i386/include/mach/i386/exception.h \
 	i386/include/mach/i386/fp_reg.h \
-	i386/include/mach/i386/ioccom.h \
 	i386/include/mach/i386/kern_return.h \
 	i386/include/mach/i386/mach_i386.defs \
 	i386/include/mach/i386/mach_i386_types.h \
