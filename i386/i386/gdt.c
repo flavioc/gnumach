@@ -60,7 +60,6 @@ gdt_fill(int cpu, struct real_descriptor *mygdt)
 #ifndef	MACH_PV_DESCRIPTORS
 	_fill_gdt_descriptor(mygdt, LINEAR_DS, 0, 0, ACC_PL_K|ACC_DATA_W, SZ_64);
 #endif	/* MACH_PV_DESCRIPTORS */
-	_fill_gdt_descriptor(mygdt, PERCPU_DS, 0, 0, ACC_PL_K|ACC_DATA_W, SZ_64);
 #else
 	_fill_gdt_descriptor(mygdt, KERNEL_CS,
 			    LINEAR_MIN_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,

@@ -176,8 +176,6 @@ boot_entry64:
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%ss
-	movw	$PERCPU_DS,%ax
-	movw	%ax,%gs
 
 	/* Switch to our own interrupt stack.  */
 	movq	$solid_intstack+INTSTACK_SIZE-16, %rax
@@ -185,14 +183,14 @@ boot_entry64:
 	movq	%rax,%rsp
 
 #if NCPUS > 1
-	/* Set GS base address */
+	/* Set GS base address for kernel */
 	movq	$percpu_array, %rdx
 	movl	%edx, %eax
 	shrq	$32, %rdx
 	movl	$MSR_REG_GSBASE, %ecx
 	wrmsr
 
-	/* Set KernelGS base address to 0 */
+	/* Set GS base address to 0 for user (currently in KGSBASE, until swapgs) */
 	xorl	%eax, %eax
 	xorl	%edx, %edx
 	movl	$MSR_REG_KGSBASE, %ecx
@@ -242,37 +240,6 @@ gdt64:
         .quad	((ACC_P | ACC_CODE_R) << SEG_ACCESS_OFS) | (SZ_64 << SEG_FLAGS_OFS)
 
 	/* BOOT_DS = 0x10 */
-        .quad	((ACC_P | ACC_DATA_W) << SEG_ACCESS_OFS) | (SZ_64 << SEG_FLAGS_OFS)
-
-	/* LDT = 0x18 */
-	.quad	0
-
-	/* TSS = 0x20 */
-	.quad	0
-
-	/* USER_LDT = 0x28 */
-	.quad	0
-
-	/* USER_TSS = 0x30 */
-	.quad	0
-
-	/* LINEAR = 0x38 */
-	.quad	0
-
-	/* FPREGS = 0x40 */
-	.quad	0
-
-	/* USER_GDT = 0x48 and 0x50 */
-	.quad	0
-	.quad	0
-
-	/* USER_TSS64 = 0x58 */
-	.quad	0
-
-	/* USER_TSS64 = 0x60 */
-	.quad	0
-
-	/* boot GS = 0x68 */
         .quad	((ACC_P | ACC_DATA_W) << SEG_ACCESS_OFS) | (SZ_64 << SEG_FLAGS_OFS)
 gdt64end:
 	.skip	(4096 - (gdt64end - gdt64))
