@@ -42,7 +42,7 @@
 
 
 /*
- * Helpers for thread state as saved in the pcb area, during trap or irq handling
+ * Helpers for thread state as saved in the pcb area in i386_saved_state, during trap or irq handling
  */
 #define pusha		\
 	pushq %rax	;\
@@ -80,6 +80,7 @@
 	popq %rcx	;\
 	popq %rax
 
+/* finish filling i386_interrupt_state */
 #define PUSH_REGS_ISR	\
 	pushq	%rcx    ;\
 	pushq	%rdx    ;\

@@ -39,6 +39,7 @@
 #include <i386/cpu_number.h>
 #include <i386/xen.h>
 
+/* finish filling i386_interrupt_state */
 #define PUSH_REGS_ISR	\
 	pushl	%ecx    ;\
 	pushl	%edx
