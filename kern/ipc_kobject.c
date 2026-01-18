@@ -285,10 +285,26 @@ void
 ipc_kobject_set(ipc_port_t port, ipc_kobject_t kobject, ipc_kobject_type_t type)
 {
 	ip_lock(port);
+	ipc_kobject_set_locked(port, kobject, type);
+	ip_unlock(port);
+}
+
+/*
+ *	Routine:	ipc_kobject_set_locked
+ *	Purpose:
+ *		As per ipc_kobject_set but see Conditions.
+ *	Conditions:
+ *		Port must be locked by the caller and remains locked after
+ *              return.  The port must be active.
+ */
+
+void
+ipc_kobject_set_locked(ipc_port_t port, ipc_kobject_t kobject,
+		       ipc_kobject_type_t type)
+{
 	assert(ip_active(port));
 	port->ip_bits = (port->ip_bits &~ IO_BITS_KOTYPE) | type;
 	port->ip_kobject = kobject;
-	ip_unlock(port);
 }
 
 /*

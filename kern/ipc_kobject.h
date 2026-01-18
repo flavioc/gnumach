@@ -112,6 +112,13 @@ extern void ipc_kobject_set(
 	ipc_kobject_t		kobject,
 	ipc_kobject_type_t	type);
 
+/* As ipc_kobject_set but with the condition that 'port' is
+ already locked by the caller. */
+extern void ipc_kobject_set_locked(
+	ipc_port_t		port,
+	ipc_kobject_t		kobject,
+	ipc_kobject_type_t	type);
+
 /* Release any kernel object resources associated with a port */
 extern void ipc_kobject_destroy(
 	ipc_port_t		port);

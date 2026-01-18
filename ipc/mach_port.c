@@ -1594,10 +1594,10 @@ mach_port_set_ktype(
 
 	/* port is locked and active */
 	if (ip_kotype(port) == IKOT_NONE || ip_kotype(port) == IKOT_USER_DEVICE)
-	  ipc_kobject_set(port, IKO_NULL,
-			  ktype == MACH_PORT_KTYPE_NONE
-			  ? IKOT_NONE
-			  : IKOT_USER_DEVICE);
+	  ipc_kobject_set_locked(port, IKO_NULL,
+				 ktype == MACH_PORT_KTYPE_NONE
+				 ? IKOT_NONE
+				 : IKOT_USER_DEVICE);
 	else
 	  kr = KERN_INVALID_ARGUMENT;
 
