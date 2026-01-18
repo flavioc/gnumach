@@ -169,7 +169,10 @@ switch64:
 	.code64
 
 boot_entry64:
-	movw	$0,%ax
+	xorl	%eax, %eax
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
 	movw	%ax,%fs
 	movw	%ax,%gs
 	movw	$BOOT_DS,%ax
