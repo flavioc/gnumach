@@ -77,7 +77,7 @@ unsigned long	in_interrupt[NCPUS];
 #endif
 
 /* Interrupt stack allocation */
-uint8_t solid_intstack[NCPUS*INTSTACK_SIZE] __aligned(NCPUS*INTSTACK_SIZE);
+uint8_t solid_intstack[NCPUS*INTSTACK_SIZE] __aligned(INTSTACK_SIZE);
 
 void
 interrupt_stack_alloc(void)
