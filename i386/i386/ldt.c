@@ -72,7 +72,7 @@ ldt_fill(struct real_descriptor *myldt, struct real_descriptor *mygdt)
 #if defined(__x86_64__) && ! defined(USER32)
         if (!CPU_HAS_FEATURE(CPU_FEATURE_SEP))
             panic("syscall support is missing on 64 bit");
-        /* Enable 64-bit syscalls */
+        /* Enable 64-bit syscalls with interrupts disabled on entry */
         wrmsr(MSR_REG_EFER, rdmsr(MSR_REG_EFER) | MSR_EFER_SCE);
         wrmsr(MSR_REG_LSTAR, (vm_offset_t)syscall64);
         wrmsr(MSR_REG_STAR, ((((long)USER_CS - 16) << 16) | (long)KERNEL_CS) << 32);

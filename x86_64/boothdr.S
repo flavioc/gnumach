@@ -185,7 +185,6 @@ boot_entry64:
 	andq	$(~15),%rax
 	movq	%rax,%rsp
 
-#if NCPUS > 1
 	/* Set GS base address for kernel */
 	movq	$percpu_array, %rdx
 	movl	%edx, %eax
@@ -198,7 +197,6 @@ boot_entry64:
 	xorl	%edx, %edx
 	movl	$MSR_REG_KGSBASE, %ecx
 	wrmsr
-#endif
 
 	/* Reset EFLAGS to a known state.  */
 	pushq	$0

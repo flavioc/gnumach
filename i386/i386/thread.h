@@ -183,6 +183,7 @@ struct i386_interrupt_state {
 	long	ds;
 #endif
 #ifdef __x86_64__
+	long	r12;
 	long	r11;
 	long	r10;
 	long	r9;

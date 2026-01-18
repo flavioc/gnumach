@@ -40,6 +40,7 @@
 
 #include "vm_param.h"
 #include "seg.h"
+#include "msr.h"
 #include "gdt.h"
 #include "mp_desc.h"
 
@@ -109,6 +110,17 @@ gdt_fill(int cpu, struct real_descriptor *mygdt)
 #endif	/* MACH_PV_DESCRIPTORS */
 }
 
+#ifdef __x86_64__
+static void
+reload_gs_base(int cpu)
+{
+	/* KGSBASE is kernels gs base while in userspace,
+	 * but when in kernel, GSBASE must point to percpu area. */
+	wrmsr(MSR_REG_GSBASE, (uint64_t)&percpu_array[cpu]);
+	wrmsr(MSR_REG_KGSBASE, 0);
+}
+#endif
+
 static void
 reload_segs(void)
 {
@@ -138,6 +150,9 @@ gdt_init(void)
 	gdt_fill(0, gdt);
 
 	reload_segs();
+#ifdef __x86_64__
+	reload_gs_base(0);
+#endif
 
 #ifdef	MACH_PV_PAGETABLES
 #if VM_MIN_KERNEL_ADDRESS != LINEAR_MIN_KERNEL_ADDRESS
@@ -157,5 +172,8 @@ ap_gdt_init(int cpu)
 	gdt_fill(cpu, mp_gdt[cpu]);
 
 	reload_segs();
+#ifdef __x86_64__
+	reload_gs_base(cpu);
+#endif
 }
 #endif

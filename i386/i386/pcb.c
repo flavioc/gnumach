@@ -230,7 +230,7 @@ void switch_ktss(pcb_t pcb)
 
 #if defined(__x86_64__) && !defined(USER32)
 	wrmsr(MSR_REG_FSBASE, pcb->ims.sbs.fsbase);
-	wrmsr(MSR_REG_GSBASE, pcb->ims.sbs.gsbase);
+	wrmsr(MSR_REG_KGSBASE, pcb->ims.sbs.gsbase);
 #endif
 
 	db_load_context(pcb);
@@ -710,11 +710,13 @@ kern_return_t thread_setstatus(
                             return KERN_INVALID_ARGUMENT;
 
                     state = (struct i386_fsgs_base_state *) tstate;
+                    if (state->gs_base & 0x8000000000000000UL)
+                            printf("WARNING: negative gs base not allowed\n");
                     thread->pcb->ims.sbs.fsbase = state->fs_base;
-                    thread->pcb->ims.sbs.gsbase = state->gs_base;
+                    thread->pcb->ims.sbs.gsbase = state->gs_base & 0x7fffffffffffffffUL;
                     if (thread == current_thread()) {
                             wrmsr(MSR_REG_FSBASE, state->fs_base);
-                            wrmsr(MSR_REG_GSBASE, state->gs_base);
+                            wrmsr(MSR_REG_KGSBASE, state->gs_base);
                     }
                     break;
             }

@@ -89,7 +89,8 @@
 	pushq	%r8     ;\
 	pushq	%r9     ;\
 	pushq	%r10     ;\
-	pushq	%r11
+	pushq	%r11	;\
+	pushq	%r12
 
 #define PUSH_AREGS_ISR	\
 	pushq	%rax    ;\
@@ -97,6 +98,7 @@
 
 
 #define POP_REGS_ISR	\
+	popq	%r12	;\
 	popq	%r11    ;\
 	popq	%r10     ;\
 	popq	%r9     ;\
@@ -164,21 +166,54 @@
 #define POP_SEGMENTS_ISR(reg)
 #endif
 
-#if NCPUS > 1
-#define SET_KERNEL_SEGMENTS(reg)                \
-	ud2		/* TODO: use swapgs or similar */
-#else // NCPUS > 1
 #ifdef USER32
-#define SET_KERNEL_SEGMENTS(reg)	       \
-	mov	%ss,reg /* switch to kernel segments */ ;\
-	mov	reg,%ds	/* (same as kernel stack segment) */ ;\
-	mov	reg,%es			;\
-	mov	reg,%fs			;\
-	mov	reg,%gs
-#else // USER32
+#define SET_KERNEL_SEGMENTS(reg)	\
+       mov	%ss,reg /* switch to kernel segments */ ;\
+       mov	reg,%ds	/* (same as kernel stack segment) */ ;\
+       mov	reg,%es			;\
+       mov	reg,%fs			;\
+       mov	reg,%gs
+#else
 #define SET_KERNEL_SEGMENTS(reg)
-#endif // USER32
-#endif // NCPUS > 1
+#endif
+
+#define RETURN_TO_KERN	0x7eadbeef
+#define RETURN_TO_USER	0x66666666
+
+#ifdef USER32
+# define SWAPGS_ENTRY_IF_NEEDED_R12
+# define SWAPGS_EXIT_IF_NEEDED_R12
+#else
+/* Keeps %r12 (callee-saved) value throughout interrupt context */
+# define SWAPGS_ENTRY_IF_NEEDED_R12	\
+	pushf				;\
+	cli				;\
+	pushq	%rax			;\
+	pushq	%rcx			;\
+	pushq	%rdx			;\
+	movl	$MSR_REG_GSBASE, %ecx	;\
+	rdmsr				;\
+	testl	%edx, %edx	/* gs base sign bit set ? */ ;\
+	js	0f		/* yes, dont swap then return to kernel mode */ ;\
+	swapgs			/* no, swap then return to user mode */ ;\
+	movq	$RETURN_TO_USER, %r12	;\
+	jmp	1f			;\
+0:	movq	$RETURN_TO_KERN, %r12	;\
+1:	popq	%rdx			;\
+	popq	%rcx			;\
+	popq	%rax			;\
+	popf
+
+# define SWAPGS_EXIT_IF_NEEDED_R12	\
+	cmpq	$RETURN_TO_USER, %r12 	;\
+	je	0f		/* return to user with swap */ ;\
+	cmpq	$RETURN_TO_KERN, %r12	;\
+	je	1f		/* return to kern without swap */ ;\
+	ud2			/* or die */ ;\
+0:	swapgs				;\
+1:
+
+#endif
 
 /*
  * Fault recovery.
@@ -618,6 +653,7 @@ ENTRY(alltraps)
 	pusha				/* save the general registers */
 trap_push_segs:
 	PUSH_SEGMENTS(%rax)		/* and the segment registers */
+	SWAPGS_ENTRY_IF_NEEDED_R12
 	SET_KERNEL_SEGMENTS(%rax)	/* switch to kernel data segment */
 trap_set_segs:
 	cld				/* clear direction flag */
@@ -674,6 +710,7 @@ _return_to_user:
  */
 
 _return_from_kernel:
+	SWAPGS_EXIT_IF_NEEDED_R12
 #ifdef USER32
 _kret_popl_gs:
 	popq	%gs			/* restore segment registers */
@@ -739,6 +776,7 @@ ENTRY(thread_bootstrap_return)
 	movq	%rsp,%rcx			/* get kernel stack */
 	or	$(KERNEL_STACK_SIZE-1),%rcx
 	movq	-7-IKS_SIZE(%rcx),%rsp		/* switch back to PCB stack */
+	movq	$RETURN_TO_USER, %r12
 	jmp	_return_from_trap
 
 /*
@@ -753,6 +791,7 @@ ENTRY(thread_syscall_return)
 	or	$(KERNEL_STACK_SIZE-1),%rcx
 	movq	-7-IKS_SIZE(%rcx),%rsp		/* switch back to PCB stack */
 	movq	%rax,R_EAX(%rsp)		/* save return value */
+	movq	$RETURN_TO_USER, %r12
 	jmp	_return_from_trap
 
 ENTRY(call_continuation)
@@ -830,8 +869,8 @@ INTERRUPT(255)
 ENTRY(all_intrs)
 	PUSH_REGS_ISR			/* save registers */
 	cld				/* clear direction flag */
-
 	PUSH_SEGMENTS_ISR(%rdx)		/* save segment registers */
+	SWAPGS_ENTRY_IF_NEEDED_R12
 
 	CPU_NUMBER_NO_GS(%rcx)
 	movq	%rsp,%rdx		/* on an interrupt stack? */
@@ -888,6 +927,7 @@ LEXT(return_to_iret)			/* to find the return from calling interrupt) */
 	cmpq	$0,CX(EXT(need_ast),%rdx)
 	jnz	ast_from_interrupt	/* take it if so */
 1:
+	SWAPGS_EXIT_IF_NEEDED_R12
 	POP_SEGMENTS_ISR(%rdx)		/* restore segment regs */
 	POP_AREGS_ISR			/* restore registers */
 
@@ -899,10 +939,10 @@ int_from_intstack:
 	jb	stack_overflowed	/* if not: */
 	call	EXT(interrupt)		/* call interrupt routine */
 _return_to_iret_i:			/* ( label for kdb_kintr) */
+	SWAPGS_EXIT_IF_NEEDED_R12
 	POP_SEGMENTS_ISR(%rdx)
 	POP_AREGS_ISR			/* restore registers */
 					/* no ASTs */
-
 	iretq
 
 stack_overflowed:
@@ -952,6 +992,7 @@ ast_from_interrupt:
  *		saved SPL
  *		saved IRQ
  *		return address == return_to_iret_i
+ *		saved %r12
  *		saved %r11
  *		saved %r10
  *		saved %r9
@@ -974,6 +1015,7 @@ ast_from_interrupt:
  *		saved %fs
  *		saved %es
  *		saved %ds
+ *		saved %r12
  *		saved %r11
  *		saved %r10
  *		saved %r9
@@ -1169,6 +1211,7 @@ syscall_entry_2:
 
 	pusha				/* save the general registers */
 	PUSH_SEGMENTS(%rdx)		/* and the segment registers */
+	SWAPGS_ENTRY_IF_NEEDED_R12
 	SET_KERNEL_SEGMENTS(%rdx)	/* switch to kernel data segment */
 
 /*
@@ -1304,6 +1347,7 @@ mach_call_addr:
 					/* set page-fault trap */
 	movq	$(T_PF_USER),R_ERR(%rbx)
 					/* set error code - read user space */
+	movq	$RETURN_TO_USER, %r12
 	jmp	_take_trap		/* treat as a trap */
 
 /*
@@ -1314,6 +1358,7 @@ mach_call_range:
 	movq	$(T_INVALID_OPCODE),R_TRAPNO(%rbx)
 					/* set invalid-operation trap */
 	movq	$0,R_ERR(%rbx)		/* clear error code */
+	movq	$RETURN_TO_USER, %r12
 	jmp	_take_trap		/* treat as a trap */
 
 /*
@@ -1357,6 +1402,7 @@ syscall_addr:
 	        			/* set page-fault trap */
 	movq	$(T_PF_USER),R_ERR(%rbx)
 					/* set error code - read user space */
+	movq	$RETURN_TO_USER, %r12
 	jmp	_take_trap		/* treat as a trap */
 END(syscall)
 
@@ -1368,6 +1414,8 @@ END(syscall)
  * the syscall.
  * Note: emulated syscalls seem to not be used anymore in GNU/Hurd, so they
  * are not handled here.
+ * Note: added complication: need gs base to be in kernel mode during execution
+ * to read the active thread twice.  Call swapgs twice, once at start and at end.
  * TODO:
      - for now we assume the return address is canonical, but apparently there
        can be cases where it's not (see how Linux handles this). Does it apply
@@ -1376,6 +1424,8 @@ END(syscall)
        iretq from return_from_trap, works fine in all combinations
  */
 ENTRY(syscall64)
+	/* interrupts are already disabled */
+	swapgs
 	/* RFLAGS[32:63] are reserved, so combine syscall num (32 bit) and
 	 * eflags in RAX to allow using r11 as temporary register
 	 */
@@ -1421,8 +1471,8 @@ ENTRY(syscall64)
 	mov	%r11,%rbx		/* prepare for error handling */
 	mov	%r10,%rcx		/* fix arg3 location according to C ABI */
 
-	/* switch to kernel stack, then we can enable interrupts */
-	CPU_NUMBER_NO_STACK(%r8b, %r8d, %r8, %r11d, %r11)
+	/* switch to kernel stack then enable interrupts */
+	CPU_NUMBER(%r11d)		/* we can call the fast version here */
 	movq	CX(EXT(kernel_stack),%r11),%rsp
 	sti
 
@@ -1465,7 +1515,8 @@ _syscall64_call:
 
 _syscall64_check_for_ast:
 	/* Check for ast. */
-	CPU_NUMBER_NO_GS(%r11)
+	CPU_NUMBER(%r11d)
+
 	cmpl	$0,CX(EXT(need_ast),%r11)
 	jz	_syscall64_restore_state
 
@@ -1514,6 +1565,7 @@ _syscall64_restore_state:
 	mov	R_R15(%r11),%r15	/* callee-preserved register */
 	mov	R_EFLAGS(%r11),%r11	/* sysret convention */
 
+	swapgs
 	sysretq		/* fast return to user-space, the thread didn't block */
 
 /* Error handling fragments, from here we jump directly to the trap handler */
@@ -1521,12 +1573,14 @@ _syscall64_addr_push:
 	movq	%r11,R_CR2(%rbx)	/* set fault address */
 	movq	$(T_PAGE_FAULT),R_TRAPNO(%rbx)	/* set page-fault trap */
 	movq	$(T_PF_USER),R_ERR(%rbx) /* set error code - read user space */
+	movq	$RETURN_TO_USER, %r12
 	jmp	_take_trap		/* treat as a trap */
 
 _syscall64_range:
 	movq	$(T_INVALID_OPCODE),R_TRAPNO(%rbx)
 					/* set invalid-operation trap */
 	movq	$0,R_ERR(%rbx)		/* clear error code */
+	movq	$RETURN_TO_USER, %r12
 	jmp	_take_trap		/* treat as a trap */
 
 END(syscall64)
