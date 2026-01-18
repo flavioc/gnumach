@@ -5,6 +5,9 @@
 #include <i386/seg.h>
 #include <i386/i386asm.h>
 
+#define BOOT_CS 0x8
+#define BOOT_DS 0x10
+
 #ifdef __ELF__
 #define AOUT_KLUDGE	0
 #else
@@ -61,14 +64,14 @@ boot_entry:
 
 	/* use segmentation to offset ourself. */
 	lgdt	boot_gdt_descr - KERNELBASE
-	ljmp	$0x8,$0f
+	ljmp	$BOOT_CS,$0f
 0:
-	movw	$0x0,%ax
+	xorw	%ax,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%fs
 	movw	%ax,%gs
-	movw	$0x10,%ax
+	movw	$BOOT_DS,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%ss
