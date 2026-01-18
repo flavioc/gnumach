@@ -24,7 +24,7 @@
 #include <i386/seg.h>
 #include <i386/gdt.h>
 
-#define M(addr)		(addr - apboot)
+#define RELOC(addr)		(addr - apboot)
 #define CR0_CLEAR_FLAGS_CACHE_ENABLE	(CR0_CD | CR0_NW)
 #define CR0_SET_FLAGS	(CR0_CLEAR_FLAGS_CACHE_ENABLE | CR0_PE)
 #define CR0_CLEAR_FLAGS	(CR0_PG | CR0_AM | CR0_WP | CR0_NE | CR0_TS | CR0_EM | CR0_MP)
@@ -114,7 +114,6 @@ apboot_percpu_high:
 .code16
 
 apboot:
-_apboot:
 	/* This is now address CS:0 in real mode */
 
 	/* Set data seg same as code seg */
@@ -130,15 +129,15 @@ _apboot:
 	mov	%ax, %gs
 	mov	%ax, %ss
 
-	lgdt	M(gdt_descr_tmp)
 
 	movl	%cr0, %eax
 	andl	$~CR0_CLEAR_FLAGS, %eax
 	orl	$CR0_SET_FLAGS, %eax
 	movl	%eax, %cr0
 
+	lgdt	RELOC(gdt_descr_tmp)
 	/* ljmpl with relocation from machine_init */
-	ljmpl	*M(apboot_jmp_offset)
+	ljmpl	*RELOC(apboot_jmp_offset)
 apboot32:
 	.code32
 	/* Protected mode! */
@@ -166,7 +165,7 @@ apboot32:
 	movl	$1, %eax
 	cpuid
 	shrl	$24, %ebx
-	andl	%cs:apic_id_mask, %ebx
+	andb	%cs:apic_id_mask, %bl
 	movl	%cs:CX(cpu_id_lut, %ebx), %ebp
 
 	/* Copy first gdt descriptor and gdt to cpu-th area */
@@ -233,7 +232,7 @@ apboot32:
 	movl	CX(EXT(int_stack_top), %edx), %esp
 
 	/* Ensure stack alignment */
-	andl	$0xfffffff0, %esp
+	andl	$(~0xf), %esp
 
 	/* Reset EFLAGS to a known state */
 	pushl $0
@@ -251,7 +250,7 @@ apboot32:
     .word 0
 gdt_descr_tmp:
     .short 3*8-1
-    .long M(gdt_tmp)
+    .long RELOC(gdt_tmp)
 
 .align 16
 gdt_tmp:
@@ -274,9 +273,8 @@ gdt_tmp:
 
 .align 16
 apboot_jmp_offset:
-	.long M(apboot32)
+	.long RELOC(apboot32)
 	.word BOOT_CS
 
-_apbootend:
 apbootend:
 #endif
