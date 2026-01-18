@@ -41,15 +41,25 @@
 #define	CX(addr, reg)	addr(,reg,8)
 #endif
 
-/* Slow version, always works.
- * Call with 32 bit wide reg on i386
- * Call with 64 bit wide reg on x86_64 */
+/* Slow version, always works. */
+#ifdef __i386__
 #define	CPU_NUMBER_NO_STACK(reg)	\
-	mov	%cs:lapic, reg		;\
-	mov	%cs:APIC_ID(reg), reg	;\
-	shr	$24, reg		;\
-	and	%cs:apic_id_mask, reg	;\
-	mov	%cs:CX(cpu_id_lut, reg), reg	;\
+	movl	%cs:lapic, reg		;\
+	movl	%cs:APIC_ID(reg), reg	;\
+	shrl	$24, reg		;\
+	andl	%cs:apic_id_mask, reg	;\
+	movl	%cs:CX(cpu_id_lut, reg), reg
+#endif
+#ifdef __x86_64__
+/* Specify 8/32/64 bit variants of clob and 32/64 variants of reg */
+#define	CPU_NUMBER_NO_STACK(clob8, clob32, clob64, reg32, reg64)\
+	movq	%cs:lapic, clob64	;\
+	movl	%cs:APIC_ID(clob64), clob32	;\
+	shrl	$24, clob32		;\
+	andb	%cs:apic_id_mask, clob8	;\
+	leaq	cpu_id_lut(%rip), reg64	;\
+	movl	%cs:(reg64, clob64, 8), reg32
+#endif
 
 /* Fast version, requires a stack */
 #ifdef __i386__
@@ -82,9 +92,10 @@
 	pushq	%rdx		;\
 	movl	$1, %eax	;\
 	cpuid			;\
-	shrq	$24, %rbx	;\
-	andq	%cs:apic_id_mask, %rbx	;\
-	movq	%cs:CX(cpu_id_lut, %rbx), %rsi	;\
+	shrl	$24, %ebx	;\
+	andb	%cs:apic_id_mask, %bl	;\
+	leaq	cpu_id_lut(%rip), %rsi	;\
+	movl	%cs:(%rsi, %rbx, 4), %esi ;\
 	popq	%rdx		;\
 	popq	%rcx		;\
 	popq	%rbx		;\
@@ -117,9 +128,18 @@ static inline int cpu_number(void)
 
 #define MY(stm)		(percpu_array + PERCPU_##stm)
 
-#define	CPU_NUMBER_NO_STACK(reg)
-#define	CPU_NUMBER_NO_GS(reg)
-#define	CPU_NUMBER(reg)
+#ifdef __x86_64__
+#define	CPU_NUMBER_NO_STACK(clob8, clob32, clob64, reg32, reg64) \
+	xorl	reg32, reg32
+#endif
+#ifdef __i386__
+#define CPU_NUMBER_NO_STACK(reg) \
+	xorl	reg, reg
+#endif
+#define	CPU_NUMBER_NO_GS(reg) \
+	xor	reg, reg
+#define	CPU_NUMBER(reg) \
+	xor	reg, reg
 #define	CX(addr,reg)	addr
 
 #endif	/* NCPUS == 1 */

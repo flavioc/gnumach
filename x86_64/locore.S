@@ -1182,7 +1182,7 @@ syscall_entry_2:
 	movq	%rdx,R_CS(%rsp)		/* fix cs */
 	movq	%rbx,R_EFLAGS(%rsp)	/* fix eflags */
 
-	CPU_NUMBER_NO_STACK(%rdx)
+	CPU_NUMBER_NO_STACK(%r8b, %r8d, %r8, %edx, %rdx)
 	TIME_TRAP_SENTRY
 
 	movq	CX(EXT(kernel_stack),%rdx),%rbx
@@ -1422,7 +1422,7 @@ ENTRY(syscall64)
 	mov	%r10,%rcx		/* fix arg3 location according to C ABI */
 
 	/* switch to kernel stack, then we can enable interrupts */
-	CPU_NUMBER_NO_STACK(%r11)
+	CPU_NUMBER_NO_STACK(%r8b, %r8d, %r8, %r11d, %r11)
 	movq	CX(EXT(kernel_stack),%r11),%rsp
 	sti
 
