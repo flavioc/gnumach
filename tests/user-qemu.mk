@@ -181,6 +181,9 @@ if HOST_x86_64
 QEMU_BIN = qemu-system-x86_64
 QEMU_OPTS += -cpu core2duo-v1
 endif
+if enable_smp
+QEMU_OPTS += -smp 2
+endif
 
 tests/test-%.iso: tests/module-% $(GNUMACH) $(srcdir)/tests/grub.cfg.single.template
 	rm -rf $(builddir)/tests/isofiles-$*
