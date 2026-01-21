@@ -742,6 +742,7 @@ kern_return_t thread_getstatus(
 {
 	switch (flavor)  {
 	    case THREAD_STATE_FLAVOR_LIST:
+	    {
 #if !defined(__x86_64__) || defined(USER32)
 		unsigned int ncount = 4;
 #else
@@ -757,6 +758,7 @@ kern_return_t thread_getstatus(
 #endif
 		*count = ncount;
 		break;
+	    }
 
 	    case i386_THREAD_STATE:
 	    case i386_REGS_SEGS_STATE:
