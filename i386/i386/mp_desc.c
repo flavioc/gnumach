@@ -284,8 +284,16 @@ start_other_cpus(void)
 	  return;
 
 	//Copy cpu initialization assembly routine
+#ifdef __i386__
 	memcpy((void*) phystokv(apboot_addr), (void*) &apboot,
 	       (uintptr_t)&apbootend - (uintptr_t)&apboot);
+#endif
+#ifdef __x86_64__
+	/* apboot is located in section .boot.text which is at a 32 bit offset.
+	 * To access it here, we need to add KERNEL_MAP_BASE. */
+	memcpy((void*) phystokv(apboot_addr), (void*) phystokv(&apboot),
+	       (uintptr_t)&apbootend - (uintptr_t)&apboot);
+#endif
 
 	unsigned cpu = cpu_number_slow();
 

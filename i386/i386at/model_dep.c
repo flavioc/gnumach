@@ -222,8 +222,16 @@ void machine_init(void)
 	 * Patch the realmode gdt with the correct offset and the first jmp to
 	 * protected mode with the correct target.
 	 */
+#ifdef __i386__
 	gdt_descr_tmp.linear_base += apboot_addr;
 	apboot_jmp_offset += apboot_addr;
+#endif
+#ifdef __x86_64__
+	/* Section .boot.text is located at a 32 bit offset.
+	 * To access it here, we need to add KERNEL_MAP_BASE to pointers. */
+	*(uint32_t *)phystokv(&gdt_descr_tmp.linear_base) += apboot_addr;
+	*(uint32_t *)phystokv(&apboot_jmp_offset) += apboot_addr;
+#endif
 #endif
 
 #ifdef APIC
