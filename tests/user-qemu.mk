@@ -112,7 +112,6 @@ TEST_FAILURE_MARKER = gnumach-test-failure
 
 TESTCFLAGS = -static -nostartfiles -nolibc \
 	-ffreestanding \
-	-ftrivial-auto-var-init=pattern \
 	-I$(srcdir)/tests/include \
 	-I$(MACH_TESTINCLUDE) \
 	-I$(MIG_OUTDIR) \

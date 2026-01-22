@@ -46,6 +46,28 @@ AC_ARG_VAR([USER_CPP], [C preprocessor for user-space tests])
 AC_ARG_VAR([USER_CFLAGS], [C compiler flags for user-space tests])
 AC_ARG_VAR([USER_CPPFLAGS], [C preprocessor flags for user-space tests])
 
+dnl APPEND_USER_CFLAGS_IF_SUPPORTED(-foobar)
+dnl will add -foobar to USER_CFLAGS if supported by compiler
+define([APPEND_USER_CFLAGS_IF_SUPPORTED],[
+  AC_MSG_CHECKING([if compiler flag $1 works])
+  save_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS $1"
+  pushdef(prog, [int main(){}])
+  flag_test=0
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([prog])], [flag_test=1],[flag_test=0])
+  popdef([prog])
+  if test $flag_test = 1
+  then
+    AC_MSG_RESULT(yes)
+    USER_CFLAGS="$USER_CFLAGS $1"
+  else
+    AC_MSG_RESULT(no)
+  fi
+  CFLAGS="$save_CFLAGS"
+])
+
+APPEND_USER_CFLAGS_IF_SUPPORTED(-ftrivial-auto-var-init=pattern)
+
 dnl Local Variables:
 dnl mode: autoconf
 dnl End:
