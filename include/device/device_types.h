@@ -124,6 +124,8 @@ typedef int		dev_status_data_t[DEV_STATUS_MAX];
 #	define	DEV_GET_RECORDS_RECORD_SIZE	1	/* 1 if sequential */
 #define	DEV_GET_RECORDS_COUNT		2
 
+#define	DEV_FLUSH_CACHE		2
+
 /*
  * Device error codes
  */
