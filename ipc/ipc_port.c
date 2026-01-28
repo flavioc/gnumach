@@ -35,6 +35,7 @@
  */
 
 #include <kern/printf.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <mach/port.h>
@@ -1197,7 +1198,7 @@ ipc_port_alloc_special(ipc_space_t space)
 	 *	the fast rpc path).
 	 */
 
-	ipc_port_init(port, space, (mach_port_name_t)port);
+	ipc_port_init(port, space, (mach_port_name_t)(uintptr_t) port);
 
 	return port;
 }
