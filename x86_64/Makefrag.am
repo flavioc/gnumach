@@ -28,8 +28,6 @@ if HOST_x86_64
 #
 
 libkernel_a_SOURCES += \
-	i386/i386at/acpi_parse_apic.h \
-	i386/i386at/acpi_parse_apic.c \
 	i386/i386at/autoconf.c \
 	i386/i386at/autoconf.h \
 	i386/i386at/biosmem.c \
@@ -44,11 +42,14 @@ libkernel_a_SOURCES += \
 
 if PLATFORM_at
 libkernel_a_SOURCES += \
+	i386/i386at/acpi_parse_apic.h \
+	i386/i386at/acpi_parse_apic.c \
 	x86_64/boothdr.S \
 	i386/i386at/com.c \
 	i386/i386at/com.h \
 	i386/i386at/comreg.h \
 	i386/i386at/cram.h \
+	x86_64/cpuboot.S \
 	i386/i386at/disk.h \
 	i386/i386at/i8250.h \
 	i386/i386at/immc.c \
@@ -92,7 +93,6 @@ libkernel_a_SOURCES += \
 	i386/i386/percpu.h \
 	i386/i386/percpu.c \
 	x86_64/cswitch.S \
-	x86_64/cpuboot.S \
 	x86_64/debug_trace.S \
 	x86_64/idt_inittab.S \
 	x86_64/locore.S \

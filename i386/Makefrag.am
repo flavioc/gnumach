@@ -30,8 +30,6 @@ if HOST_ix86
 #
 
 libkernel_a_SOURCES += \
-	i386/i386at/acpi_parse_apic.h \
-	i386/i386at/acpi_parse_apic.c \
 	i386/i386at/autoconf.c \
 	i386/i386at/autoconf.h \
 	i386/i386at/biosmem.c \
@@ -53,6 +51,7 @@ libkernel_a_SOURCES += \
 	i386/i386at/com.h \
 	i386/i386at/comreg.h \
 	i386/i386at/cram.h \
+	i386/i386/cpuboot.S \
 	i386/i386at/disk.h \
 	i386/i386at/i8250.h \
 	i386/i386at/immc.c \
@@ -99,8 +98,7 @@ libkernel_a_SOURCES += \
 	i386/i386/locore.S \
 	i386/i386/percpu.c \
 	i386/i386/percpu.h \
-	i386/i386/spl.S \
-	i386/i386/cpuboot.S
+	i386/i386/spl.S
 
 if PLATFORM_at
 libkernel_a_SOURCES += \

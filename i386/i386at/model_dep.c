@@ -217,6 +217,7 @@ void machine_init(void)
 	pmap_unmap_page_zero();
 #endif
 
+#ifndef MACH_XEN
 #if NCPUS > 1
 	/*
 	 * Patch the realmode gdt with the correct offset and the first jmp to
@@ -231,6 +232,7 @@ void machine_init(void)
 	 * To access it here, we need to add KERNEL_MAP_BASE to pointers. */
 	*(uint32_t *)phystokv(&gdt_descr_tmp.linear_base) += apboot_addr;
 	*(uint32_t *)phystokv(&apboot_jmp_offset) += apboot_addr;
+#endif
 #endif
 #endif
 

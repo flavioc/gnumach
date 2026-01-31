@@ -15,6 +15,8 @@
 #ifndef _I386_IRQ_H
 #define _I386_IRQ_H
 
+#ifndef MACH_XEN
+
 #ifdef APIC
 # include <i386/apic.h>
 #else
@@ -29,5 +31,7 @@ void __disable_irq (irq_t irq);
 
 extern struct irqdev irqtab;
 extern int pic_mode;
+
+#endif /* MACH_XEN */
 
 #endif

@@ -110,13 +110,15 @@
 
 #ifndef __ASSEMBLER__
 #include <kern/cpu_number.h>
-#include <i386/apic.h>
 #include <i386/percpu.h>
 
+#ifdef APIC
+#include <i386/apic.h>
 static inline int cpu_number_slow(void)
 {
 	return cpu_id_lut[apic_get_current_cpu()];
 }
+#endif
 
 static inline int cpu_number(void)
 {
