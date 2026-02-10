@@ -395,28 +395,43 @@ kern_return_t task_terminate(
 	/*
 	 *	Terminate each thread in the task.
 	 *
-         *      The task_port is closed down, so no more thread_create
-         *      operations can be done.  Thread_force_terminate closes the
-         *      thread port for each thread; when that is done, the
-         *      thread will eventually disappear.  Thus the loop will
-         *      terminate.  Call thread_force_terminate instead of
-         *      thread_terminate to avoid deadlock checks.  Need
-         *      to call thread_block() inside loop because some other
-         *      thread (e.g., the reaper) may have to run to get rid
-         *      of all references to the thread; it won't vanish from
-         *      the task's thread list until the last one is gone.
-         */
-        task_lock(task);
-        while (!queue_empty(list)) {
-                thread = (thread_t) queue_first(list);
-                thread_reference(thread);
-                task_unlock(task);
-                thread_force_terminate(thread);
-                thread_deallocate(thread);
-                thread_block(thread_no_continuation);
-                task_lock(task);
-        }
-        task_unlock(task);
+	 *      The task_port is closed down, so no more thread_create
+	 *      operations can be done.  Thread_force_terminate closes the
+	 *      thread port for each thread; when that is done, the
+	 *      thread will eventually disappear.  Thus the loop will
+	 *      terminate.  Call thread_force_terminate instead of
+	 *      thread_terminate to avoid deadlock checks.  Need
+	 *      to call thread_block() inside loop because some other
+	 *      thread (e.g., the reaper) may have to run to get rid
+	 *      of all references to the thread; it won't vanish from
+	 *      the task's thread list until the last one is gone.
+	 *
+	 *      Occasionally there are dependencies between threads
+	 *      that require a specific thread to be terminated before
+	 *      others are able to. These dependencies are unknown to
+	 *      the task so repeated iteration over the thread list is
+	 *      required.
+	 */
+	task_lock(task);
+	while (!queue_empty(list)) {
+		thread = (thread_t) queue_first(list);
+		thread_reference(thread);
+
+		do {
+			thread_t next = (thread_t) queue_next(&thread->thread_list);
+
+			if (!queue_end(list, (queue_entry_t) next))
+				thread_reference(next);
+
+			task_unlock(task);
+			thread_force_terminate(thread);
+			thread_deallocate(thread);
+			thread_block(thread_no_continuation);
+			thread = next;
+			task_lock(task);
+		} while (!queue_end(list, (queue_entry_t) thread));
+	}
+	task_unlock(task);
 
 	/*
 	 *	Shut down IPC.
