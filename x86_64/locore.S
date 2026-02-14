@@ -871,14 +871,13 @@ ENTRY(all_intrs)
 	cld				/* clear direction flag */
 	PUSH_SEGMENTS_ISR(%rdx)		/* save segment registers */
 	SWAPGS_ENTRY_IF_NEEDED_R12
+	SET_KERNEL_SEGMENTS(%rdx)	/* switch to kernel segments */
 
-	CPU_NUMBER_NO_GS(%rcx)
+	CPU_NUMBER(%ecx)
 	movq	%rsp,%rdx		/* on an interrupt stack? */
 	and	$(~(INTSTACK_SIZE-1)),%rdx
 	cmpq	%ss:CX(EXT(int_stack_base),%rcx),%rdx
 	je	int_from_intstack	/* if not: */
-
-	SET_KERNEL_SEGMENTS(%rdx)	/* switch to kernel segments */
 
 	CPU_NUMBER(%edx)
 
@@ -934,7 +933,7 @@ LEXT(return_to_iret)			/* to find the return from calling interrupt) */
 	iretq				/* return to caller */
 
 int_from_intstack:
-	CPU_NUMBER_NO_GS(%rdx)
+	CPU_NUMBER(%edx)
 	cmpq	CX(EXT(int_stack_base),%rdx),%rsp /* seemingly looping? */
 	jb	stack_overflowed	/* if not: */
 	call	EXT(interrupt)		/* call interrupt routine */
@@ -1225,7 +1224,7 @@ syscall_entry_2:
 	movq	%rdx,R_CS(%rsp)		/* fix cs */
 	movq	%rbx,R_EFLAGS(%rsp)	/* fix eflags */
 
-	CPU_NUMBER_NO_STACK(%r8b, %r8d, %r8, %edx, %rdx)
+	CPU_NUMBER(%edx)
 	TIME_TRAP_SENTRY
 
 	movq	CX(EXT(kernel_stack),%rdx),%rbx

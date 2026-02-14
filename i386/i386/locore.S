@@ -757,15 +757,14 @@ INTERRUPT(255)
 ENTRY(all_intrs)
 	PUSH_REGS_ISR			/* save registers */
 	cld				/* clear direction flag */
+	PUSH_SEGMENTS_ISR		/* save segment registers */
+	SET_KERNEL_SEGMENTS(%dx)	/* switch to kernel segments */
 
-	CPU_NUMBER_NO_GS(%ecx)
+	CPU_NUMBER(%ecx)
 	movl	%esp,%edx		/* on an interrupt stack? */
 	and	$(~(INTSTACK_SIZE-1)),%edx
 	cmpl	%ss:CX(EXT(int_stack_base),%ecx),%edx
 	je	int_from_intstack	/* if not: */
-
-	PUSH_SEGMENTS_ISR		/* save segment registers */
-	SET_KERNEL_SEGMENTS(%dx)	/* switch to kernel segments */
 
 	CPU_NUMBER(%edx)
 
@@ -818,12 +817,13 @@ LEXT(return_to_iret)			/* to find the return from calling interrupt) */
 	iret				/* return to caller */
 
 int_from_intstack:
-	CPU_NUMBER_NO_GS(%edx)
+	CPU_NUMBER(%edx)
 	cmpl	CX(EXT(int_stack_base),%edx),%esp /* seemingly looping? */
 	jb	stack_overflowed	/* if not: */
 	call	EXT(interrupt)		/* call interrupt routine */
 _return_to_iret_i:			/* ( label for kdb_kintr) */
 					/* must have been on kernel segs */
+	POP_SEGMENTS_ISR		/* restore segment regs */
 	POP_AREGS_ISR			/* restore registers */
 					/* no ASTs */
 
