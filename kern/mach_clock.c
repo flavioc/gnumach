@@ -334,8 +334,12 @@ void clock_interrupt(
 		 * we catch up softticks so it does not fall behind */
 		++softticks;
 	    }
+
+	    /*
+	     *	Only update high precision read on cpu0 once per clock interrupt
+	     */
+	    last_hpc_read = hpclock_read_counter();
 	}
-	last_hpc_read = hpclock_read_counter();
 }
 
 /*
