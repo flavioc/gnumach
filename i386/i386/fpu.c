@@ -469,6 +469,9 @@ ASSERT_IPL(SPL0);
 		    ifps->xfp_save_state.fp_ds	    = user_fp_state->fp_ds;
 		    for (i=0; i<8; i++)
 			memcpy(&ifps->xfp_save_state.fp_reg_word[i], &user_fp_regs->fp_reg_word[i], sizeof(user_fp_regs->fp_reg_word[i]));
+		    ifps->xfp_save_state.header.xfp_features = CPU_XCR0_X87;
+		    if (fp_save_kind == FP_XSAVES)
+			ifps->xfp_save_state.header.xcomp_bv = XSAVE_XCOMP_BV_COMPACT;
 		} else {
 		    ifps->fp_save_state.fp_control = user_fp_state->fp_control;
 		    ifps->fp_save_state.fp_status  = user_fp_state->fp_status;
