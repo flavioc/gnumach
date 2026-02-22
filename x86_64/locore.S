@@ -1021,6 +1021,7 @@ ast_from_interrupt:
 					/* switch to kernel stack */
 	call	EXT(i386_astintr)	/* take the AST */
 	popq	%rsp			/* back to PCB stack */
+	movq	$RETURN_TO_USER, %r12	/* definitely returning to user mode */
 	jmp	_return_from_trap	/* return */
 
 #if	MACH_KDB
