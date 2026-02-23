@@ -467,6 +467,8 @@ ASSERT_IPL(SPL0);
 		    ifps->xfp_save_state.fp_opcode  = user_fp_state->fp_opcode;
 		    ifps->xfp_save_state.fp_dp	    = user_fp_state->fp_dp;
 		    ifps->xfp_save_state.fp_ds	    = user_fp_state->fp_ds;
+		    ifps->xfp_save_state.fp_mxcsr   = 0x1f80;
+		    ifps->xfp_save_state.fp_mxcsr_mask = mxcsr_feature_mask;;
 		    for (i=0; i<8; i++)
 			memcpy(&ifps->xfp_save_state.fp_reg_word[i], &user_fp_regs->fp_reg_word[i], sizeof(user_fp_regs->fp_reg_word[i]));
 		    ifps->xfp_save_state.header.xfp_features = CPU_XCR0_X87;
