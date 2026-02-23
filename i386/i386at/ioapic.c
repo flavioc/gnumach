@@ -231,6 +231,7 @@ timer_measure_10x_apic_hz(void)
     timeout_data_t tmp_timer;
     tmp_timer.fcn = timer_expiry_callback;
     tmp_timer.param = (void *)&done;
+    tmp_timer.set = 0;
 
     printf("timer calibration...");
 

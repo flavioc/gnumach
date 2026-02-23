@@ -167,6 +167,7 @@ void sched_init(void)
 {
 	recompute_priorities_timer.fcn = recompute_priorities;
 	recompute_priorities_timer.param = NULL;
+	recompute_priorities_timer.set = 0;
 
 	min_quantum = MIN_QUANTUM;
 	wait_queue_init();
@@ -221,8 +222,10 @@ void thread_timeout_setup(
 {
 	thread->timer.fcn = thread_timeout;
 	thread->timer.param = thread;
+	thread->timer.set = 0;
 	thread->depress_timer.fcn = (void (*)(void*))thread_depress_timeout;
 	thread->depress_timer.param = thread;
+	thread->depress_timer.set = 0;
 }
 
 /*
