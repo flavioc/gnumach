@@ -41,7 +41,7 @@ ENTRY(Load_context)
 						/* point to stack top */
 	CPU_NUMBER(%eax)
 	movq	%rcx,MY(ACTIVE_STACK)		/* store stack address */
-	movq	%rdx,CX(EXT(kernel_stack),%rax)	/* store stack top */
+	movq	%rdx,CX8(EXT(kernel_stack),%rax) /* store stack top */
 
 /* XXX complete */
 
@@ -86,7 +86,7 @@ ENTRY(Switch_context)
 	CPU_NUMBER(%edx)			/* Don't overwrite returned value %rax */
 	movq	%rsi,MY(ACTIVE_THREAD)		/* new thread is active */
 	movq	%rcx,MY(ACTIVE_STACK)		/* set current stack */
-	movq	%rbx,CX(EXT(kernel_stack),%rdx)	/* set stack top */
+	movq	%rbx,CX8(EXT(kernel_stack),%rdx) /* set stack top */
 
 	movq	KSS_ESP(%rcx),%rsp		/* switch stacks */
 	movq	KSS_EBP(%rcx),%rbp		/* restore registers */
@@ -135,7 +135,7 @@ ud2
 	movq	S_ARG2,%rsi			/* get its argument */
 
 	CPU_NUMBER(%ecx)
-	movq	CX(EXT(int_stack_base),%rcx),%rcx	/* point to its interrupt stack */
+	movq	CX8(EXT(int_stack_base),%rcx),%rcx	/* point to its interrupt stack */
 	lea	INTSTACK_SIZE(%rcx),%rsp	/* switch to it (top) */
 
 	movq	%rax,%rdi			/* push thread */

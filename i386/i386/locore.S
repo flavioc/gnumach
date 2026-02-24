@@ -250,8 +250,8 @@ LEXT(retry_table_end)			;\
 	subl	%ebx,%ecx			/* elapsed = new-old */	;\
 	movl	CX(EXT(current_timer),%edx),%ebx	/* get current timer */	;\
 	addl	%ecx,LOW_BITS(%ebx)		/* add to low bits */	;\
-	leal	CX(0,%edx),%ecx			/* timer is 16 bytes */	;\
-	lea	CX(EXT(kernel_timer),%edx),%ecx	/* get interrupt timer*/;\
+	leal	CX(0,%edx),%ecx			/* timer is 16 bytes: CX(CX( = 4*4 */ ;\
+	lea	CX(EXT(kernel_timer),%ecx),%ecx	/* get interrupt timer*/;\
 	movl	%ecx,CX(EXT(current_timer),%edx)	/* set timer */
 
 /*

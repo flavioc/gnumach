@@ -34,12 +34,8 @@
 
 #define MY(stm)		%gs:PERCPU_##stm
 
-#ifdef __i386__
 #define	CX(addr, reg)	addr(,reg,4)
-#endif
-#ifdef __x86_64__
-#define	CX(addr, reg)	addr(,reg,8)
-#endif
+#define	CX8(addr, reg)	addr(,reg,8)
 
 /* Fastest version, requires gs being set up */
 #define CPU_NUMBER(reg)	\
@@ -70,6 +66,7 @@ static inline int cpu_number(void)
 #define	CPU_NUMBER(reg) \
 	xor	reg, reg
 #define	CX(addr,reg)	addr
+#define	CX8(addr,reg)	addr
 
 #endif	/* NCPUS == 1 */
 
