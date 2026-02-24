@@ -100,8 +100,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <device/cons.h>
 #include <util/atoi.h>
 
-#define DEBUG	1			/* export feep() */
-
 #if 0
 #define BROKEN_KEYBOARD_RESET
 #endif
@@ -347,7 +345,7 @@ short	font_byte_width	= 0;		/* num bytes in 1 scan line of font */
  */
 int	kd_pollc = 0;
 
-#ifdef	DEBUG
+#if MACH_KDB
 static void
 pause(void)
 {
@@ -385,7 +383,7 @@ kd_debug_put(
 
 	(*kd_dput)(pos, c, KA_NORMAL);
 }
-#endif /* DEBUG */
+#endif /* MACH_KDB */
 
 
 extern boolean_t	mouse_in_use;
