@@ -8,6 +8,15 @@
 /gnumach-undef
 /gnumach-undef-bad
 /gnumach.msgids
+dist
+build*
+
+patches
+.pc
+tags
+
+Makefile.in.rej
+Makefile.in.orig
 
 # Makerules.am
 *.gz
