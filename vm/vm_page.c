@@ -687,6 +687,11 @@ vm_page_seg_alloc(struct vm_page_seg *seg, unsigned int order,
     assert(order < VM_PAGE_NR_FREE_LISTS);
 
     if (order == 0) {
+
+        if (vm_page_alloc_paused && current_thread()
+	    && !current_thread()->vm_privilege)
+	  return NULL;
+
         thread_pin();
         cpu_pool = vm_page_cpu_pool_get(seg);
         simple_lock(&cpu_pool->lock);
