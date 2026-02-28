@@ -177,6 +177,11 @@ void machine_init(void)
 #if defined(APIC)
 	ioapic_configure();
 #endif
+	/*
+	 * Start PIT clock interrupts, this is used
+	 * initially before lapic timer is calibrated
+	 * for use as a periodic clock source.
+	 */
 	clkstart();
 
 	/*
@@ -631,11 +636,15 @@ void
 startrtclock(void)
 {
 #ifdef APIC
-	unmask_irq(timer_pin);
-	calibrate_lapic_timer();
-	if (cpu_number() != 0) {
-		lapic_enable_timer();
+	if (cpu_number() == 0) {
+		/* cpu0 calls this before other cpus do
+		 * to calibrate the lapic timer once for all cpus. */
+		unmask_irq(timer_pin);
+		calibrate_lapic_timer();
+		mask_irq(timer_pin);
+		/* The PIT is no longer required past here */
 	}
+	lapic_enable_timer();
 #else
 	clkstart();
 #ifndef MACH_HYP
