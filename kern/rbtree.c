@@ -24,11 +24,10 @@
  */
 
 #include <kern/assert.h>
+#include <kern/macros.h>
 #include <kern/rbtree.h>
 #include <kern/rbtree_i.h>
 #include <sys/types.h>
-
-#define unlikely(expr) __builtin_expect(!!(expr), 0)
 
 /*
  * Return the index of a node in the children array of its parent.
