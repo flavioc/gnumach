@@ -34,6 +34,7 @@
  */
 
 #include <kern/debug.h>
+#include <kern/macros.h>
 #include <kern/printf.h>
 #include <mach/port.h>
 #include <mach/kern_return.h>
@@ -87,7 +88,7 @@ ipc_kobject_server(ipc_kmsg_t request)
 	ipc_port_t *destp;
 
 	reply = ikm_alloc(reply_size);
-	if (reply == IKM_NULL) {
+	if (unlikely(reply == IKM_NULL)) {
 		printf("ipc_kobject_server: dropping request\n");
 		ipc_kmsg_destroy(request);
 		return IKM_NULL;
@@ -179,8 +180,8 @@ ipc_kobject_server(ipc_kmsg_t request)
 	    (*routine)(&request->ikm_header, &reply->ikm_header);
 	    kernel_task->messages_received++;
 	} else {
-	    if (!ipc_kobject_notify(&request->ikm_header,
-		&reply->ikm_header)) {
+	    if (unlikely(!ipc_kobject_notify(&request->ikm_header,
+		&reply->ikm_header))) {
 		((mig_reply_header_t *) &reply->ikm_header)->RetCode
 		    = MIG_BAD_ID;
 #if	MACH_IPC_TEST
@@ -226,7 +227,7 @@ ipc_kobject_server(ipc_kmsg_t request)
 	*destp = IP_NULL;
 
 	kr = ((mig_reply_header_t *) &reply->ikm_header)->RetCode;
-	if ((kr == KERN_SUCCESS) || (kr == MIG_NO_REPLY)) {
+	if (likely((kr == KERN_SUCCESS) || (kr == MIG_NO_REPLY))) {
 		/*
 		 *	The server function is responsible for the contents
 		 *	of the message.  The reply port right is moved
@@ -258,7 +259,8 @@ ipc_kobject_server(ipc_kmsg_t request)
 
 		ikm_free(reply);
 		return IKM_NULL;
-	} else if (!IP_VALID((ipc_port_t)reply->ikm_header.msgh_remote_port)) {
+	} else if (unlikely(!IP_VALID(
+		(ipc_port_t)reply->ikm_header.msgh_remote_port))) {
 		/*
 		 *	Can't queue the reply message if the destination
 		 *	(the reply port) isn't valid.
