@@ -36,6 +36,7 @@
 #include <kern/debug.h>
 #include <kern/host.h>
 #include <kern/mach_host.server.h>
+#include <kern/macros.h>
 #include <kern/processor.h>
 #include <kern/task.h>
 #include <kern/thread.h>
@@ -159,7 +160,7 @@ ipc_pset_enable(
 	processor_set_t		pset)
 {
 	pset_lock(pset);
-	if (pset->active) {
+	if (likely(pset->active)) {
 		ipc_kobject_set(pset->pset_self,
 				(ipc_kobject_t) pset, IKOT_PSET);
 		ipc_kobject_set(pset->pset_name_self,
@@ -210,7 +211,7 @@ processor_set_default(
 	const host_t	host,
 	processor_set_t	*pset)
 {
-	if (host == HOST_NULL)
+	if (unlikely(host == HOST_NULL))
 		return KERN_INVALID_ARGUMENT;
 
 	*pset = &default_pset;
@@ -233,7 +234,7 @@ convert_port_to_host(
 {
 	host_t host = HOST_NULL;
 
-	if (IP_VALID(port)) {
+	if (likely(IP_VALID(port))) {
 		ip_lock(port);
 		if (ip_active(port) &&
 		    ((ip_kotype(port) == IKOT_HOST) ||
@@ -260,7 +261,7 @@ convert_port_to_host_priv(
 {
 	host_t host = HOST_NULL;
 
-	if (IP_VALID(port)) {
+	if (likely(IP_VALID(port))) {
 		ip_lock(port);
 		if (ip_active(port) &&
 		    (ip_kotype(port) == IKOT_HOST_PRIV))
@@ -287,7 +288,7 @@ convert_port_to_processor(
 {
 	processor_t processor = PROCESSOR_NULL;
 
-	if (IP_VALID(port)) {
+	if (likely(IP_VALID(port))) {
 		ip_lock(port);
 		if (ip_active(port) &&
 		    (ip_kotype(port) == IKOT_PROCESSOR))
@@ -314,7 +315,7 @@ convert_port_to_pset(
 {
 	processor_set_t pset = PROCESSOR_SET_NULL;
 
-	if (IP_VALID(port)) {
+	if (likely(IP_VALID(port))) {
 		ip_lock(port);
 		if (ip_active(port) &&
 		    (ip_kotype(port) == IKOT_PSET)) {
@@ -343,7 +344,7 @@ convert_port_to_pset_name(
 {
 	processor_set_t pset = PROCESSOR_SET_NULL;
 
-	if (IP_VALID(port)) {
+	if (likely(IP_VALID(port))) {
 		ip_lock(port);
 		if (ip_active(port) &&
 		    ((ip_kotype(port) == IKOT_PSET) ||
