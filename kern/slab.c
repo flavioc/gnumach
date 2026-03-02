@@ -92,17 +92,6 @@
 #endif
 
 /*
- * Utility macros.
- */
-#define P2ALIGNED(x, a) (((x) & ((a) - 1)) == 0)
-#define ISP2(x)         P2ALIGNED(x, x)
-#define P2ALIGN(x, a)   ((x) & -(a))
-#define P2ROUND(x, a)   (-(-(x) & -(a)))
-#define P2END(x, a)     (-(~(x) & -(a)))
-#define likely(expr)    __builtin_expect(!!(expr), 1)
-#define unlikely(expr)  __builtin_expect(!!(expr), 0)
-
-/*
  * Minimum required alignment.
  */
 #define KMEM_ALIGN_MIN 8
