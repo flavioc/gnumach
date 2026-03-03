@@ -340,9 +340,5 @@ start_other_cpus(void)
 
 	/* Re-enable IOAPIC interrupts as per setup */
 	lapic_enable();
-
-	/* Re-enable lapic timer for clock interrupts on BSP.
-	 * This is needed after lapic was disabled/enabled */
-	lapic_enable_timer();
 }
 #endif	/* NCPUS > 1 */
