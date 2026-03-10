@@ -461,6 +461,9 @@ struct vm_page * vm_page_lookup_pa(phys_addr_t pa);
  * The selector is used to determine the segments from which allocation can
  * be attempted.
  *
+ * vm_page_queue_free_lock should be in an unlocked state pre-call but
+ * will always be locked on return.
+ *
  * This function should only be used by the vm_resident module.
  */
 struct vm_page * vm_page_alloc_pa(unsigned int order, unsigned int selector,

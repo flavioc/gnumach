@@ -808,8 +808,6 @@ vm_page_t vm_page_grab(unsigned flags)
 	else
 		selector = VM_PAGE_SEL_DMA;
 
-	simple_lock(&vm_page_queue_free_lock);
-
 	/*
 	 * XXX Mach has many modules that merely assume memory is
 	 * directly mapped in kernel space. Instead of updating all
@@ -900,8 +898,6 @@ vm_page_t vm_page_grab_contig(
 
 	order = vm_page_order(size);
 	nr_pages = 1 << order;
-
-	simple_lock(&vm_page_queue_free_lock);
 
 	/* TODO Allow caller to pass type */
 	mem = vm_page_alloc_pa(order, selector, VM_PT_KERNEL);

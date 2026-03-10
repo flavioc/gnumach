@@ -990,7 +990,8 @@ vm_page_seg_double_unlock(struct vm_page_seg *seg1, struct vm_page_seg *seg2)
  */
 static boolean_t
 vm_page_seg_balance_page(struct vm_page_seg *seg,
-                         struct vm_page_seg *remote_seg)
+                         struct vm_page_seg *remote_seg,
+                         boolean_t priv_alloc)
 {
     struct vm_page *src, *dest;
     vm_object_t object;
@@ -1002,7 +1003,9 @@ vm_page_seg_balance_page(struct vm_page_seg *seg,
     vm_page_seg_double_lock(seg, remote_seg);
 
     if (vm_page_seg_usable(seg)
-        || !vm_page_seg_page_available(remote_seg)) {
+        || (priv_alloc
+            ? remote_seg->nr_free_pages == 0
+            : !vm_page_seg_page_available(remote_seg))) {
         goto error;
     }
 
@@ -1082,7 +1085,7 @@ error:
 }
 
 static boolean_t
-vm_page_seg_balance(struct vm_page_seg *seg)
+vm_page_seg_balance(struct vm_page_seg *seg, boolean_t priv_alloc)
 {
     struct vm_page_seg *remote_seg;
     unsigned int i;
@@ -1100,7 +1103,7 @@ vm_page_seg_balance(struct vm_page_seg *seg)
             continue;
         }
 
-        balanced = vm_page_seg_balance_page(seg, remote_seg);
+        balanced = vm_page_seg_balance_page(seg, remote_seg, priv_alloc);
 
         if (balanced) {
             return TRUE;
@@ -1611,16 +1614,28 @@ vm_page_alloc_pa(unsigned int order, unsigned int selector, unsigned short type)
     struct vm_page *page;
     unsigned int i;
 
-    for (i = vm_page_select_alloc_seg(selector); i < vm_page_segs_size; i--) {
+    const unsigned int seg_index = vm_page_select_alloc_seg(selector);
+
+retry:
+    simple_lock(&vm_page_queue_free_lock);
+
+    for (i = seg_index; i < vm_page_segs_size; i--) {
         page = vm_page_seg_alloc(&vm_page_segs[i], order, type);
 
         if (page != NULL)
             return page;
     }
 
-    /* FIXME: rebalance segments? */
     if (!current_thread() || current_thread()->vm_privilege)
-        panic("vm_page: privileged thread unable to allocate page");
+      {
+	simple_unlock(&vm_page_queue_free_lock);
+
+	for (i = seg_index; i < vm_page_segs_size; i--)
+	  if (vm_page_seg_balance(vm_page_seg_get(i), TRUE))
+	    goto retry;
+
+	panic("vm_page: privileged thread unable to allocate page");
+      }
 
     return NULL;
 }
@@ -1989,7 +2004,7 @@ vm_page_balance_once(void)
      */
 
     for (i = 0; i < vm_page_segs_size; i++) {
-        balanced = vm_page_seg_balance(vm_page_seg_get(i));
+        balanced = vm_page_seg_balance(vm_page_seg_get(i), FALSE);
 
         if (balanced) {
             return TRUE;
