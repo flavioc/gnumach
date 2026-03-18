@@ -121,6 +121,7 @@ struct processor {
 	queue_chain_t	processors;	/* all processors in set */
 	decl_simple_lock_data(,	lock)
 	struct ipc_port *processor_self;	/* port for operations */
+	struct ipc_port *processor_name_self;	/* unprivileged name port */
 	int		slot_num;	/* machine-indep slot number */
 #if	NCPUS > 1
 	ast_check_t	ast_check_data;	/* for remote ast_check invocation */
@@ -239,6 +240,7 @@ extern processor_t	master_processor;
 #define processor_unlock(pr)	simple_unlock(&(pr)->lock)
 
 typedef mach_port_t	*processor_array_t;
+typedef mach_port_t	*processor_name_array_t;
 typedef mach_port_t	*processor_set_array_t;
 typedef mach_port_t	*processor_set_name_array_t;
 

@@ -231,6 +231,16 @@ type processor_t = mach_port_t
 type processor_array_t 		= ^array[] of processor_t;
 type processor_info_t		= array[*:1024] of integer_t;
 
+type processor_name_t = mach_port_t
+                ctype: mach_port_t
+#if     KERNEL_SERVER
+                intran: processor_t convert_port_to_processor_name(mach_port_t)
+                outtran: mach_port_t convert_processor_name_to_port(processor_t)
+#endif  /* KERNEL_SERVER */
+                ;
+
+type processor_name_array_t          = ^array[] of processor_name_t;
+
 type processor_set_t = mach_port_t
 		ctype: mach_port_t
 #if	KERNEL_SERVER

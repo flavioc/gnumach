@@ -109,7 +109,7 @@ mach_host_self(void)
 /*
  *	ipc_processor_init:
  *
- *	Initialize ipc access to processor by allocating port.
+ *	Initialize ipc access to processor by allocating the ports.
  *	Enable ipc control of processor by setting port object.
  */
 
@@ -124,6 +124,12 @@ ipc_processor_init(
 		panic("ipc_processor_init");
 	processor->processor_self = port;
 	ipc_kobject_set(port, (ipc_kobject_t) processor, IKOT_PROCESSOR);
+
+        port = ipc_port_alloc_kernel();
+        if (port == IP_NULL)
+                panic("ipc_processor_init");
+        processor->processor_name_self = port;
+        ipc_kobject_set(port, (ipc_kobject_t) processor, IKOT_PROCESSOR_NAME);
 }
 
 
@@ -300,6 +306,35 @@ convert_port_to_processor(
 }
 
 /*
+ *      Routine:        convert_port_to_processor_name
+ *      Purpose:
+ *              Convert from a port to a processor.
+ *              Doesn't consume the port ref;
+ *              the processor produced may be null.
+ *      Conditions:
+ *              Nothing locked.
+ */
+
+processor_t
+convert_port_to_processor_name(
+	ipc_port_t      port)
+{
+	processor_t processor = PROCESSOR_NULL;
+
+	if (likely(IP_VALID(port))) {
+		ip_lock(port);
+		if (ip_active(port) &&
+		    ((ip_kotype(port) == IKOT_PROCESSOR) ||
+		     (ip_kotype(port) == IKOT_PROCESSOR_NAME))) {
+		        processor = (processor_t) port->ip_kobject;
+		}
+		ip_unlock(port);
+	}
+
+	return processor;
+}
+
+/*
  *	Routine:	convert_port_to_pset
  *	Purpose:
  *		Convert from a port to a pset.
@@ -395,6 +430,25 @@ convert_processor_to_port(processor_t processor)
 	port = ipc_port_make_send(processor->processor_self);
 
 	return port;
+}
+
+/*
+ *      Routine:        convert_processor_name_to_port
+ *      Purpose:
+ *              Convert from a processor to a port.
+ *              Produces a naked send right which is always valid.
+ *      Conditions:
+ *              Nothing locked.
+ */
+
+ipc_port_t
+convert_processor_name_to_port(processor_t processor)
+{
+        ipc_port_t port;
+
+        port = ipc_port_make_send(processor->processor_name_self);
+
+        return port;
 }
 
 /*

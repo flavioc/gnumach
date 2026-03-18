@@ -207,6 +207,7 @@ void processor_init(
 	queue_init(&pr->processors);
 	simple_lock_init(&pr->lock);
 	pr->processor_self = IP_NULL;
+	pr->processor_name_self = IP_NULL;
 	pr->slot_num = slot_num;
 }
 

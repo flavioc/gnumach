@@ -54,8 +54,14 @@ convert_port_to_host_priv(struct ipc_port *);
 extern processor_t
 convert_port_to_processor(struct ipc_port *);
 
+extern processor_t
+convert_port_to_processor_name(struct ipc_port *);
+
 extern struct ipc_port *
 convert_processor_to_port(processor_t);
+
+extern struct ipc_port *
+convert_processor_name_to_port(processor_t);
 
 extern processor_set_t
 convert_port_to_pset(struct ipc_port *);
