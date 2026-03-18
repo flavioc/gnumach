@@ -330,7 +330,7 @@ routine host_info(
  *	Return information about this processor.
  */
 routine processor_info(
-		processor	: processor_t;
+		processor	: processor_name_t;
 		flavor		: int;
 	out	host		: host_t;
 	out	processor_info_out: processor_info_t, CountInOut);
