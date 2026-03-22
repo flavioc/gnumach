@@ -378,12 +378,12 @@ host_processor_set_priv(
 	processor_set_t	pset_name,
 	processor_set_t	*pset)
 {
-    if ((host == HOST_NULL) || (pset_name == PROCESSOR_SET_NULL)) {
-	*pset = PROCESSOR_SET_NULL;
-	return KERN_INVALID_ARGUMENT;
-    }
+	if ((host == HOST_NULL) || (pset_name == PROCESSOR_SET_NULL)) {
+		*pset = PROCESSOR_SET_NULL;
+		return KERN_INVALID_ARGUMENT;
+	}
 
-    *pset = pset_name;
-    pset_reference(*pset);
-    return KERN_SUCCESS;
+	*pset = pset_name;
+	pset_reference(*pset);
+	return KERN_SUCCESS;
 }
