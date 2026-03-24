@@ -367,7 +367,7 @@ routine	host_get_time64(
  *	Only available to privileged users.
  */
 routine	host_set_time64(
-		host		: host_t;
+		host_priv	: host_priv_t;
 		new_time	: time_value64_t);
 
 /*
