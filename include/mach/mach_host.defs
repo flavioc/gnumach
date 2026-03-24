@@ -92,7 +92,7 @@ skip;	/* old xxx_processor_set_default_priv */
  *	and name port for obtaining information.
  */
 routine processor_set_create(
-		host		: host_t;
+		host		: host_priv_t;
 	out	new_set		: processor_set_t;
 	out	new_name	: processor_set_name_t);
 
