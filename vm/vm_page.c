@@ -913,35 +913,6 @@ vm_page_seg_pull_inactive_page(struct vm_page_seg *seg, boolean_t external)
     return NULL;
 }
 
-/*
- * Attempt to pull a page cache page.
- *
- * If successful, the object containing the page is locked.
- */
-static struct vm_page *
-vm_page_seg_pull_cache_page(struct vm_page_seg *seg,
-                            boolean_t external,
-                            boolean_t *was_active)
-{
-    struct vm_page *page;
-
-    page = vm_page_seg_pull_inactive_page(seg, external);
-
-    if (page != NULL) {
-        *was_active = FALSE;
-        return page;
-    }
-
-    page = vm_page_seg_pull_active_page(seg, external);
-
-    if (page != NULL) {
-        *was_active = TRUE;
-        return page;
-    }
-
-    return NULL;
-}
-
 static boolean_t
 vm_page_seg_page_available(const struct vm_page_seg *seg)
 {
@@ -1009,10 +980,22 @@ vm_page_seg_balance_page(struct vm_page_seg *seg,
         goto error;
     }
 
-    src = vm_page_seg_pull_cache_page(seg, TRUE, &was_active);
-
+    /* Try to migrate an active page first.
+     * Since it is active, it will probably remain resident, so better move that
+     * and keep inactive pages here, since those will more probably get swapped
+     * out sooner. */
+    was_active = TRUE;
+    /* And similarly, try to migrate internal pages first. */
+    src = vm_page_seg_pull_active_page(seg, FALSE);
     if (src == NULL)
-      src = vm_page_seg_pull_cache_page(seg, FALSE, &was_active);
+        src = vm_page_seg_pull_active_page(seg, TRUE);
+
+    if (src == NULL) {
+	was_active = FALSE;
+	src = vm_page_seg_pull_inactive_page(seg, FALSE);
+	if (src == NULL)
+	    src = vm_page_seg_pull_inactive_page(seg, TRUE);
+    }
 
     if (src == NULL) {
         goto error;
