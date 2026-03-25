@@ -2040,12 +2040,22 @@ vm_page_evict_once(boolean_t alloc_paused)
      * segments first.
      */
 
+    /* Try to evict inactive pages first */
     for (i = vm_page_segs_size - 1; i < vm_page_segs_size; i--) {
         struct vm_page_seg *seg = vm_page_seg_get(i);
 
+	/* Try to evict external pages first */
 	if (vm_page_seg_evict(seg, TRUE, FALSE, alloc_paused) ||
-	    vm_page_seg_evict(seg, FALSE, FALSE, alloc_paused) ||
-	    vm_page_seg_evict(seg, TRUE, TRUE, alloc_paused) ||
+	    vm_page_seg_evict(seg, FALSE, FALSE, alloc_paused))
+	  return TRUE;
+    }
+
+    /* Then try to evict active pages */
+    for (i = vm_page_segs_size - 1; i < vm_page_segs_size; i--) {
+        struct vm_page_seg *seg = vm_page_seg_get(i);
+
+	/* Try to evict external pages first */
+	if (vm_page_seg_evict(seg, TRUE, TRUE, alloc_paused) ||
 	    vm_page_seg_evict(seg, FALSE, TRUE, alloc_paused))
 	  return TRUE;
     }
