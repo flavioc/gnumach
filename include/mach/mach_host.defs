@@ -393,3 +393,10 @@ routine	host_get_kernel_version(
 routine	host_get_uptime64(
 		host		: host_t;
 	out	uptime		: time_value64_t);
+
+/*
+ *	Get list of processors in processor set
+ */
+routine processor_set_processors(
+		set_name	: processor_set_name_t;
+	out	processors_list	: processor_name_array_t);
