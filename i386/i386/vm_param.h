@@ -82,7 +82,7 @@
  */
 #define VM_KERNEL_MAP_SIZE (512 * 1024 * 1024)
 #else
-#define VM_KERNEL_MAP_SIZE (152 * 1024 * 1024)
+#define VM_KERNEL_MAP_SIZE (170 * 1024 * 1024)
 #endif
 
 /* This is the kernel address range in linear addresses.  */
