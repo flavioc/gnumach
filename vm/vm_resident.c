@@ -260,7 +260,10 @@ vm_offset_t pmap_steal_memory(
 	 */
 
 	addr = virtual_space_start;
-	virtual_space_start += size;
+	vm_offset_t new_start = virtual_space_start + size;
+	if (new_start < virtual_space_start)
+		panic("not enough kernel virtual space for %dMB virtual allocation!\n", size >> 20);
+	virtual_space_start = new_start;
 
 	/*
 	 *	Allocate and map physical pages to back new virtual pages.
