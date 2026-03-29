@@ -349,6 +349,7 @@ static int ahci_do_port_request(struct port *port, unsigned long long sector, st
 		assert((((unsigned long) bh->b_data) & ~PAGE_MASK) ==
 			(((unsigned long) bh->b_data + bh->b_size - 1) & ~PAGE_MASK));
 		prdtl[slot].prdtl[i].dbau = 0;
+		assert(vmtophys(bh->b_data) < 0x100000000ULL);
 		prdtl[slot].prdtl[i].dba = vmtophys(bh->b_data);
 		prdtl[slot].prdtl[i].dbc = bh->b_size - 1;
 	}
@@ -605,6 +606,7 @@ static int ahci_identify(const volatile struct ahci_host *ahci_host, const volat
 		command[slot].opts |= (2 << 16);
 
 		prdtl[slot].prdtl[0].dbau = 0;
+		assert(vmtophys(&id) < 0x100000000ULL);
 		prdtl[slot].prdtl[0].dba = vmtophys((void*) &id);
 		prdtl[slot].prdtl[0].dbc = first_part - 1;
 		prdtl[slot].prdtl[1].dbau = 0;
@@ -735,7 +737,7 @@ static void ahci_probe_port(const volatile struct ahci_host *ahci_host, const vo
 		  cls * sizeof(*command)
 		+ sizeof(*fis)
 		+ cls * sizeof(*prdtl);
-	unsigned i;
+	unsigned i, portn;
 	unsigned long long timeout;
 
 	for (i = 0; i < MAX_PORTS; i++) {
@@ -744,13 +746,17 @@ static void ahci_probe_port(const volatile struct ahci_host *ahci_host, const vo
 	}
 	if (i == MAX_PORTS)
 		return;
-	port = &ports[i];
+	portn = i;
+	port = &ports[portn];
 
 	/* Has to be 1K-aligned */
 	mem = vmalloc (size);
-	if (!mem)
+	if (!mem) {
+		printk("sd%u: couldn't allocate %lu bytes for port\n", portn, (unsigned long) size);
 		return;
+	}
 	assert (!(((unsigned long) mem) & (1024-1)));
+	assert (vmtophys(mem) < 0x100000000ULL);
 	memset (mem, 0, size);
 
 	port->ahci_host = ahci_host;
@@ -766,7 +772,7 @@ static void ahci_probe_port(const volatile struct ahci_host *ahci_host, const vo
 	timeout = jiffies + WAIT_MAX;
 	while (readl(&ahci_port->cmd) & PORT_CMD_LIST_ON)
 		if (jiffies > timeout) {
-			printk("sd%u: timeout waiting for list completion\n", (unsigned) (port-ports));
+			printk("sd%u: timeout waiting for list completion\n", portn);
 			port->ahci_host = NULL;
 			port->ahci_port = NULL;
 			return;
@@ -776,7 +782,7 @@ static void ahci_probe_port(const volatile struct ahci_host *ahci_host, const vo
 	timeout = jiffies + WAIT_MAX;
 	while (readl(&ahci_port->cmd) & PORT_CMD_FIS_ON)
 		if (jiffies > timeout) {
-			printk("sd%u: timeout waiting for FIS completion\n", (unsigned) (port-ports));
+			printk("sd%u: timeout waiting for FIS completion\n", portn);
 			port->ahci_host = NULL;
 			port->ahci_port = NULL;
 			return;
@@ -807,7 +813,7 @@ static void ahci_probe_port(const volatile struct ahci_host *ahci_host, const vo
 	timeout = jiffies + WAIT_MAX;
 	while (readl(&ahci_port->cmd) & PORT_CMD_LIST_ON)
 		if (jiffies > timeout) {
-			printk("sd%u: timeout waiting for list completion\n", (unsigned) (port-ports));
+			printk("sd%u: timeout waiting for list completion\n", portn);
 			port->ahci_host = NULL;
 			port->ahci_port = NULL;
 			return;
