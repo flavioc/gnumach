@@ -76,11 +76,11 @@
 #ifdef __x86_64__
 /*
  * Vm structures are quite bigger on 64 bit.
- * This should be well enough for 8G of physical memory; on the other hand,
+ * This should be well enough for 30G of physical memory; on the other hand,
  * maybe not all of them need to be in directly-mapped memory, see the parts
  * allocated with pmap_steal_memory().
  */
-#define VM_KERNEL_MAP_SIZE (512 * 1024 * 1024)
+#define VM_KERNEL_MAP_SIZE (1000 * 1024 * 1024)
 #else
 #define VM_KERNEL_MAP_SIZE (170 * 1024 * 1024)
 #endif
