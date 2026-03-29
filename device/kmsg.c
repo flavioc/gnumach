@@ -31,7 +31,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <device/kmsg.h>
 
 
-#define KMSGBUFSIZE	(4096)  /* XXX */
+#define KMSGBUFSIZE	(16*1024)  /* XXX */
 
 /* Simple array for buffering messages */
 static char kmsg_buffer[KMSGBUFSIZE];
