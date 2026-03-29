@@ -776,6 +776,10 @@ void pmap_bootstrap(void)
 			|| kernel_virtual_end > VM_MAX_KERNEL_ADDRESS - PAGE_SIZE)
 		kernel_virtual_end = VM_MAX_KERNEL_ADDRESS - PAGE_SIZE;
 
+	printf("kernel virtual area: %lx-%lx\n",
+			(unsigned long) kernel_virtual_start,
+			(unsigned long) kernel_virtual_end);
+
 	/*
 	 * Allocate and clear a kernel page directory.
 	 */
