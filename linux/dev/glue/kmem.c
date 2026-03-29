@@ -558,7 +558,7 @@ vfree (void *addr)
   vmalloc_list_remove (p);
 }
 
-unsigned long
+phys_addr_t
 vmtophys (void *addr)
 {
 	return kvtophys((vm_offset_t) addr);
