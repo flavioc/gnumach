@@ -212,6 +212,10 @@ extern void		vm_page_wait(void (*)(void));
 extern vm_page_t	vm_page_alloc(
 	vm_object_t	object,
 	vm_offset_t	offset);
+extern vm_page_t	vm_page_alloc_flags(
+	vm_object_t	object,
+	vm_offset_t	offset,
+	unsigned flags);
 extern void		vm_page_init(
 	vm_page_t	mem);
 extern void		vm_page_free(vm_page_t);

@@ -955,15 +955,16 @@ void vm_page_free_contig(vm_page_t mem, vm_size_t size)
  *	Object must be locked.
  */
 
-vm_page_t vm_page_alloc(
+vm_page_t vm_page_alloc_flags(
 	vm_object_t	object,
-	vm_offset_t	offset)
+	vm_offset_t	offset,
+	unsigned	flags)
 {
 	vm_page_t	mem;
 
 	assert(vm_object_lock_taken(object));
 
-	mem = vm_page_grab(VM_PAGE_HIGHMEM);
+	mem = vm_page_grab(flags);
 	if (mem == VM_PAGE_NULL)
 		return VM_PAGE_NULL;
 
@@ -972,6 +973,13 @@ vm_page_t vm_page_alloc(
 	vm_page_unlock_queues();
 
 	return mem;
+}
+
+vm_page_t vm_page_alloc(
+	vm_object_t	object,
+	vm_offset_t	offset)
+{
+	return vm_page_alloc_flags(object, offset, VM_PAGE_HIGHMEM);
 }
 
 /*

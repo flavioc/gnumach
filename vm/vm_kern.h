@@ -54,6 +54,7 @@ extern kern_return_t	kmem_alloc_pageable(vm_map_t, vm_offset_t *,
 					    vm_size_t);
 extern kern_return_t	kmem_valloc(vm_map_t, vm_offset_t *, vm_size_t);
 extern kern_return_t	kmem_alloc_wired(vm_map_t, vm_offset_t *, vm_size_t);
+extern kern_return_t	kmem_alloc_wired_flags(vm_map_t, vm_offset_t *, vm_size_t, unsigned flags);
 extern kern_return_t	kmem_alloc_aligned(vm_map_t, vm_offset_t *, vm_size_t);
 extern void*		kmem_map_aligned_table(phys_addr_t, vm_size_t, int);
 
@@ -88,7 +89,8 @@ extern void kmem_alloc_pages(
 	vm_offset_t	offset,
 	vm_offset_t	start,
 	vm_offset_t	end,
-	vm_prot_t	protection);
+	vm_prot_t	protection,
+	unsigned	flags);
 
 extern void kmem_remap_pages(
 	vm_object_t	object,

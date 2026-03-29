@@ -153,7 +153,8 @@ projected_buffer_allocate(
 	 */
 	kmem_alloc_pages(object, 0,
 			 *kernel_p, *kernel_p + size,
-			 VM_PROT_READ | VM_PROT_WRITE);
+			 VM_PROT_READ | VM_PROT_WRITE,
+			 VM_PAGE_HIGHMEM);
 	memset((void*) *kernel_p, 0, size);         /*Zero fill*/
 
 	/* Set up physical mappings for user pmap */
@@ -424,7 +425,8 @@ retry:
 	 */
 	kmem_alloc_pages(object, 0,
 			 addr, addr + size,
-			 VM_PROT_DEFAULT);
+			 VM_PROT_DEFAULT,
+			 VM_PAGE_HIGHMEM);
 
 	/*
 	 *	Return the memory, not zeroed.
@@ -521,10 +523,11 @@ retry:
  */
 
 kern_return_t
-kmem_alloc_wired(
+kmem_alloc_wired_flags(
 	vm_map_t 	map,
 	vm_offset_t 	*addrp,
-	vm_size_t 	size)
+	vm_size_t 	size,
+	unsigned	flags)
 {
 	vm_offset_t offset;
 	vm_offset_t addr;
@@ -542,13 +545,22 @@ kmem_alloc_wired(
 	 */
 	kmem_alloc_pages(kernel_object, offset,
 			 addr, addr + size,
-			 VM_PROT_DEFAULT);
+			 VM_PROT_DEFAULT,
+			 flags);
 
 	/*
 	 *	Return the memory, not zeroed.
 	 */
 	*addrp = addr;
 	return KERN_SUCCESS;
+}
+kern_return_t
+kmem_alloc_wired(
+	vm_map_t 	map,
+	vm_offset_t 	*addrp,
+	vm_size_t 	size)
+{
+	return kmem_alloc_wired_flags(map, addrp, size, VM_PAGE_HIGHMEM);
 }
 
 /*
@@ -630,7 +642,8 @@ retry:
 	 */
 	kmem_alloc_pages(kernel_object, offset,
 			 addr, addr + size,
-			 VM_PROT_DEFAULT);
+			 VM_PROT_DEFAULT,
+			 VM_PAGE_HIGHMEM);
 
 	/*
 	 *	Return the memory, not zeroed.
@@ -740,7 +753,8 @@ kmem_alloc_pages(
 	vm_offset_t	offset,
 	vm_offset_t	start, 
 	vm_offset_t	end,
-	vm_prot_t	protection)
+	vm_prot_t	protection,
+	unsigned	flags)
 {
 	/*
 	 *	Mark the pmap region as not pageable.
@@ -755,7 +769,7 @@ kmem_alloc_pages(
 	    /*
 	     *	Allocate a page
 	     */
-	    while ((mem = vm_page_alloc(object, offset))
+	    while ((mem = vm_page_alloc_flags(object, offset, flags))
 			 == VM_PAGE_NULL) {
 		vm_object_unlock(object);
 		VM_PAGE_WAIT((void (*)()) 0);

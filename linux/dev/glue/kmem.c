@@ -536,7 +536,7 @@ vmalloc (unsigned long size)
   kern_return_t ret;
   vm_offset_t addr;
   
-  ret = kmem_alloc_wired (kernel_map, &addr, round_page (size));
+  ret = kmem_alloc_wired_flags (kernel_map, &addr, round_page (size), VM_PAGE_DMA32);
   if (ret != KERN_SUCCESS)
     return NULL;
 
