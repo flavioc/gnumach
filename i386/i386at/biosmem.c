@@ -918,6 +918,18 @@ biosmem_load_segment(struct biosmem_segment *seg, uint64_t max_phys_end)
         phys_end = max_phys_end;
     }
 
+    if (phys_end > MAX_PHYS_END) {
+        if (MAX_PHYS_END <= phys_start) {
+            printf("biosmem: warning: segment %s beyond tested memory size, "
+                   "not loaded\n", vm_page_seg_name(seg_index));
+            return;
+        }
+
+        printf("biosmem: warning: segment %s truncated to tested %#"PRIx64"\n",
+               vm_page_seg_name(seg_index), MAX_PHYS_END);
+        phys_end = MAX_PHYS_END;
+    }
+
     vm_page_load(seg_index, phys_start, phys_end);
 
     /*
@@ -1034,10 +1046,17 @@ biosmem_free_usable(void)
         if (start >= VM_PAGE_HIGHMEM_LIMIT)
             break;
 
+        if (start >= MAX_PHYS_END)
+            break;
+
         end = vm_page_trunc(entry->base_addr + entry->length);
 
         if (end > VM_PAGE_HIGHMEM_LIMIT) {
             end = VM_PAGE_HIGHMEM_LIMIT;
+        }
+
+        if (end > MAX_PHYS_END) {
+            end = MAX_PHYS_END;
         }
 
         if (start < BIOSMEM_BASE)

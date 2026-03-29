@@ -85,6 +85,16 @@
 #define VM_KERNEL_MAP_SIZE (170 * 1024 * 1024)
 #endif
 
+/*
+ * Maximum supported memory size.
+ * These were tested as working.
+ */
+#ifdef __x86_64__
+#define MAX_PHYS_END (30ULL * 1024 * 1024 * 1024)
+#else
+#define MAX_PHYS_END (8ULL * 1024 * 1024 * 1024)
+#endif
+
 /* This is the kernel address range in linear addresses.  */
 #ifdef __x86_64__
 #define LINEAR_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
