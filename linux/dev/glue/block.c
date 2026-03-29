@@ -84,10 +84,10 @@
 
 #include <linux/dev/glue/glue.h>
 
-#ifdef PAE
+#if defined(VM_PAGE_DMA32_LIMIT) && VM_PAGE_DMA32_LIMIT < VM_PAGE_DIRECTMAP_LIMIT
 #define VM_PAGE_LINUX VM_PAGE_DMA32
 #else
-#define VM_PAGE_LINUX VM_PAGE_HIGHMEM
+#define VM_PAGE_LINUX VM_PAGE_DIRECTMAP
 #endif
 
 /* This task queue is not used in Mach: just for fixing undefined symbols. */
@@ -312,7 +312,7 @@ alloc_buffer (int size)
 
   if (! linux_auto_config)
     {
-      while ((m = vm_page_grab (VM_PAGE_DMA32)) == 0)
+      while ((m = vm_page_grab (VM_PAGE_LINUX)) == 0)
 	VM_PAGE_WAIT (0);
       d = current_thread ()->pcb->data;
       assert (d);
