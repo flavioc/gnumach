@@ -659,7 +659,7 @@ kmem_map_aligned_table(
 {
 	vm_offset_t virt_addr;
 	kern_return_t ret;
-	phys_addr_t into_page = phys_address % PAGE_SIZE;
+	vm_offset_t into_page = phys_address % PAGE_SIZE;
 	phys_addr_t nearest_page = phys_address - into_page;
 
 	size += into_page;
