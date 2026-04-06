@@ -39,7 +39,6 @@ libkernel_a_SOURCES += \
 	i386/i386/ipl.h \
 	i386/i386/ktss.c \
 	i386/i386/ktss.h \
-	i386/i386/kttd_interface.c \
 	i386/i386/kttd_machdep.h \
 	i386/i386/ldt.c \
 	i386/i386/ldt.h \

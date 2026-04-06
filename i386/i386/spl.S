@@ -131,7 +131,7 @@ ENTRY(spl7)
 ENTRY(splx)
 	movl	S_ARG0,%edx		/* get ipl */
 	CPU_NUMBER(%eax)
-#if (MACH_KDB || MACH_TTD) && !defined(MACH_XEN)
+#if MACH_KDB && !defined(MACH_XEN)
 	/* First make sure that if we're exitting from ipl7, IF is still cleared */
 	cmpl	$SPL7,CX(EXT(curr_ipl),%eax)	/* from ipl7? */
 	jne	0f
@@ -142,7 +142,7 @@ ENTRY(splx)
 	int3				/* Oops, interrupts got enabled?! */
 
 0:
-#endif	/* (MACH_KDB || MACH_TTD) && !MACH_XEN */
+#endif	/* MACH_KDB && !MACH_XEN */
 	testl	%edx,%edx		/* spl0? */
 	jz	EXT(spl0)		/* yes, handle specially */
 	CPU_NUMBER(%eax)
@@ -214,7 +214,7 @@ splx_cli:
 	.globl	spl
 spl:
 	CPU_NUMBER(%eax)
-#if (MACH_KDB || MACH_TTD) && !defined(MACH_XEN)
+#if MACH_KDB && !defined(MACH_XEN)
 	/* First make sure that if we're exitting from ipl7, IF is still cleared */
 	cmpl	$SPL7,CX(EXT(curr_ipl),%eax)	/* from ipl7? */
 	jne	0f
@@ -225,7 +225,7 @@ spl:
 	int3				/* Oops, interrupts got enabled?! */
 
 0:
-#endif	/* (MACH_KDB || MACH_TTD) && !MACH_XEN */
+#endif	/* MACH_KDB && !MACH_XEN */
 	cmpl	$SPL7,%edx		/* spl7? */
 	je	EXT(spl7)		/* yes, handle specially */
 #ifdef MACH_XEN

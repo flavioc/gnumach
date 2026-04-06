@@ -86,10 +86,6 @@ thread_kdb_return(void)
 }
 #endif	/* MACH_KDB */
 
-#if	MACH_TTD
-extern boolean_t kttd_enabled;
-boolean_t debug_all_traps_with_kttd = TRUE;
-#endif	/* MACH_TTD */
 
 static void
 user_page_fault_continue(kern_return_t kr)
@@ -339,10 +335,6 @@ dump_ss(regs);
 		else
 			printf("trap %ld", type);
 		printf(", eip 0x%lx, code %lx, cr2 %lx\n", regs->eip, code, regs->cr2);
-#if	MACH_TTD
-		if (kttd_enabled && kttd_trap(type, code, regs))
-			return;
-#endif	/* MACH_TTD */
 #if	MACH_KDB
 		if (kdb_trap(type, code, regs))
 		    return;
@@ -395,12 +387,6 @@ int user_trap(struct i386_saved_state *regs)
 		break;
 
 	    case T_DEBUG:
-#if	MACH_TTD
-		if (kttd_enabled && kttd_in_single_step()) {
-			if (kttd_trap(type, regs->err, regs))
-				return 0;
-		}
-#endif	/* MACH_TTD */
 #if	MACH_KDB
 		if (db_in_single_step()) {
 		    if (kdb_trap(type, regs->err, regs))
@@ -417,11 +403,6 @@ int user_trap(struct i386_saved_state *regs)
 		break;
 
 	    case T_INT3:
-#if	MACH_TTD
-		if (kttd_enabled && kttd_trap(type, regs->err, regs))
-			return 0;
-		break;
-#endif	/* MACH_TTD */
 #if	MACH_KDB
 	    {
 		if (db_find_breakpoint_here(
@@ -554,10 +535,6 @@ int user_trap(struct i386_saved_state *regs)
 		return 0;
 
 	    default:
-#if	MACH_TTD
-		if (kttd_enabled && kttd_trap(type, regs->err, regs))
-			return 0;
-#endif	/* MACH_TTD */
 #if	MACH_KDB
 		if (kdb_trap(type, regs->err, regs))
 		    return 0;
@@ -570,11 +547,6 @@ int user_trap(struct i386_saved_state *regs)
 		return 0;
 	}
 
-#if	MACH_TTD
-	if ((debug_all_traps_with_kttd || thread->task->essential) &&
-	    kttd_trap(type, regs->err, regs))
-		return 0;
-#endif	/* MACH_TTD */
 #if	MACH_KDB
 	if ((debug_all_traps_with_kdb || thread->task->essential) &&
 	    kdb_trap(type, regs->err, regs))

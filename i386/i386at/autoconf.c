@@ -119,12 +119,6 @@ void probeio(void)
 			i++;
 	}
 
-#if	MACH_TTD
-	/*
-	 * Initialize Remote kernel debugger.
-	 */
-	ttd_init();
-#endif	/* MACH_TTD */
 }
 
 void take_dev_irq(

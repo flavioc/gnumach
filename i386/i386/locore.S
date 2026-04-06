@@ -583,7 +583,7 @@ _kret_iret:
  * Trap from kernel mode.  No need to switch stacks.
  */
 trap_from_kernel:
-#if	MACH_KDB || MACH_TTD
+#if	MACH_KDB
 	movl	%esp,%ebx		/* save current stack */
 	movl	%esp,%edx		/* on an interrupt stack? */
 
@@ -606,12 +606,12 @@ trap_from_kernel:
 	call	EXT(kernel_trap)	/* to kernel trap routine */
 	addl	$4,%esp			/* pop parameter */
 	popl	%esp			/* return to old stack */
-#else	/* MACH_KDB || MACH_TTD */
+#else	/* MACH_KDB */
 
 	pushl	%esp			/* pass parameter */
 	call	EXT(kernel_trap)	/* to kernel trap routine */
 	addl	$4,%esp			/* pop parameter */
-#endif	/* MACH_KDB || MACH_TTD */
+#endif	/* MACH_KDB */
 
 	jmp	_return_from_kernel
 
@@ -995,81 +995,6 @@ kdb_from_iret_i:			/* on interrupt stack */
 
 #endif	/* MACH_KDB */
 
-#if	MACH_TTD
-/*
- * Same code as that above for the keyboard entry into kdb.
- */
-ENTRY(kttd_intr)
-	movl	%ebp,%eax		/* save caller`s frame pointer */
-	movl	$EXT(return_to_iret),%ecx	/* interrupt return address 1 */
-	movl	$_return_to_iret_i,%edx	/* interrupt return address 2 */
-
-0:	cmpl	16(%eax),%ecx		/* does this frame return to */
-					/* interrupt handler (1)? */
-	je	1f
-	cmpl	16(%eax),%edx		/* interrupt handler (2)? */
-	je	2f			/* if not: */
-	movl	(%eax),%eax		/* try next frame */
-	jmp	0b
-
-1:	movl	$ttd_from_iret,16(%eax)	/* returns to kernel/user stack */
-	ret
-
-2:	movl	$ttd_from_iret_i,16(%eax)
-					/* returns to interrupt stack */
-	ret
-
-/*
- * On return from keyboard interrupt, we will execute
- * ttd_from_iret_i
- *	if returning to an interrupt on the interrupt stack
- * ttd_from_iret
- *	if returning to an interrupt on the user or kernel stack
- */
-ttd_from_iret:
-					/* save regs in known locations */
-#if	STAT_TIME
-	pushl	%ebx			/* caller`s %ebx is in reg */
-#else
-	movl	4(%esp),%eax		/* get caller`s %ebx */
-	pushl	%eax			/* push on stack */
-#endif
-	pushl	%ebp
-	pushl	%esi
-	pushl	%edi
-	pushl	%esp			/* pass regs */
-	call	_kttd_netentry		/* to kdb */
-	addl	$4,%esp			/* pop parameters */
-	popl	%edi			/* restore registers */
-	popl	%esi
-	popl	%ebp
-#if	STAT_TIME
-	popl	%ebx
-#else
-	popl	%eax
-	movl	%eax,4(%esp)
-#endif
-	jmp	EXT(return_to_iret)	/* normal interrupt return */
-
-ttd_from_iret_i:			/* on interrupt stack */
-	pop	%edx			/* restore saved registers */
-	pop	%ecx
-	pop	%eax
-	pushl	$0			/* zero error code */
-	pushl	$0			/* zero trap number */
-	pusha				/* save general registers */
-	PUSH_SEGMENTS_ISR		/* save segment registers */
-	pushl	%esp			/* pass regs, */
-	pushl	$0			/* code, */
-	pushl	$-1			/* type to kdb */
-	call	_kttd_trap
-	addl	$12,%esp		/* remove parameters */
-	POP_SEGMENTS_ISR		/* restore segment registers */
-	popa				/* restore general registers */
-	addl	$8,%esp
-	iret
-
-#endif	/* MACH_TTD */
 
 /*
  * System call enters through a call gate.  Flags are not saved -

@@ -733,7 +733,7 @@ _kret_iret:
  * Trap from kernel mode.  No need to switch stacks.
  */
 trap_from_kernel:
-#if	MACH_KDB || MACH_TTD
+#if	MACH_KDB
 	movq	%rsp,%rbx		/* save current stack */
 	movq	%rsp,%rdx		/* on an interrupt stack? */
 
@@ -756,12 +756,12 @@ trap_from_kernel:
 	call	EXT(kernel_trap)	/* to kernel trap routine */
 
 	popq	%rsp			/* return to old stack */
-#else	/* MACH_KDB || MACH_TTD */
+#else	/* MACH_KDB */
 
 	movq	%rsp,%rdi		/* pass parameter */
 	call	EXT(kernel_trap)	/* to kernel trap routine */
 
-#endif	/* MACH_KDB || MACH_TTD */
+#endif	/* MACH_KDB */
 
 	jmp	_return_from_kernel
 
@@ -1150,86 +1150,6 @@ ud2
 
 #endif	/* MACH_KDB */
 
-#if	MACH_TTD
-/*
- * Same code as that above for the keyboard entry into kdb.
- */
-ENTRY(kttd_intr)
-// TODO: test it before dropping ud2
-ud2
-	movq	%rbp,%rax		/* save caller`s frame pointer */
-	movq	$EXT(return_to_iret),%rcx	/* interrupt return address 1 */
-	movq	$_return_to_iret_i,%rdx	/* interrupt return address 2 */
-
-0:	cmpq	32(%rax),%rcx		/* does this frame return to */
-					/* interrupt handler (1)? */
-	je	1f
-	cmpq	32(%rax),%rdx		/* interrupt handler (2)? */
-	je	2f			/* if not: */
-	movq	(%rax),%rax		/* try next frame */
-	jmp	0b
-
-1:	movq	$ttd_from_iret,32(%rax)	/* returns to kernel/user stack */
-	ret
-
-2:	movq	$ttd_from_iret_i,32(%rax)
-					/* returns to interrupt stack */
-	ret
-
-/*
- * On return from keyboard interrupt, we will execute
- * ttd_from_iret_i
- *	if returning to an interrupt on the interrupt stack
- * ttd_from_iret
- *	if returning to an interrupt on the user or kernel stack
- */
-ttd_from_iret:
-					/* save regs in known locations */
-#if	STAT_TIME
-	pushq	%rbx			/* caller`s %ebx is in reg */
-#else
-	movq	8(%rsp),%rax		/* get caller`s %ebx */
-	pushq	%rax			/* push on stack */
-#endif
-	pushq	%rbp
-	pushq	%rsi
-	pushq	%rdi
-	movq	%rsp,%rdi		/* pass regs */
-	call	_kttd_netentry		/* to kdb */
-	popq	%rdi			/* restore registers */
-	popq	%rsi
-	popq	%rbp
-#if	STAT_TIME
-	popq	%rbx
-#else
-	popq	%rax
-	movq	%rax,8(%rsp)
-#endif
-	jmp	EXT(return_to_iret)	/* normal interrupt return */
-
-ttd_from_iret_i:			/* on interrupt stack */
-	pop	%rdx			/* restore saved registers */
-	pop	%rcx
-	pop	%rax
-	pushq	$0			/* zero error code */
-	pushq	$0			/* zero trap number */
-	pusha				/* save general registers */
-	PUSH_SEGMENTS_ISR(%rdx)		/* save segment registers */
-	ud2	// TEST it
-	movq	%rsp,%rdx		/* pass regs, */
-	movq	$0,%rsi			/* code, */
-	movq	$-1,%rdi		/* type to kdb */
-	call	_kttd_trap
-	POP_SEGMENTS_ISR(%rdx)		/* restore segment registers */
-	popa				/* restore general registers */
-	addq	$16,%rsp
-
-// TODO: test it before dropping ud2
-movq (%rsp),%rax
-ud2
-	iretq
-
-#endif	/* MACH_TTD */
 
 #ifdef USER32
 /*

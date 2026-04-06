@@ -66,13 +66,6 @@
 
 #include <machine/spl.h>
 
-#if	MACH_TTD
-#include <ttd/ttd_stub.h>
-#endif	/* MACH_TTD */
-
-#if	MACH_TTD
-int kttd_async_counter= 0;
-#endif	/* MACH_TTD */
 
 
 /*
@@ -637,25 +630,6 @@ net_packet(
 {
 	boolean_t awake;
 
-#if	MACH_TTD
-	/*
-	 * Do a quick check to see if it is a kernel TTD packet.
-	 *
-	 * Only check if KernelTTD is enabled, ie. the current
-	 * device driver supports TTD, and the bootp succeeded.
-	 */
-	if (kttd_enabled && kttd_handle_async(kmsg)) {
-		/* 
-		 * Packet was a valid ttd packet and
-		 * doesn't need to be passed up to filter.
-		 * The ttd code put the used kmsg buffer
-		 * back onto the free list.
-		 */
-		if (kttd_debug)
-			printf("**%x**", kttd_async_counter++);
-		return;
-	}
-#endif	/* MACH_TTD */
 
 	kmsg->ikm_header.msgh_remote_port = (mach_port_t) ifp;
 	net_kmsg(kmsg)->net_rcv_msg_packet_count = count;
