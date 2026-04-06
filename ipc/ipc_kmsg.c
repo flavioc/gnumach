@@ -1392,45 +1392,52 @@ ipc_kmsg_copyin_body(
 
 			addr = * (vm_offset_t *) saddr;
 
-			if (length == 0)
-				data = 0;
-			else if (is_port) {
+			if (is_port) {
 				const vm_size_t user_length = length;
+
 				/*
 				 * In 64 bit architectures, out of line port names are
 				 * represented as an array of mach_port_name_t which are
 				 * smaller than mach_port_t.
 				 */
 				if (sizeof(mach_port_name_t) != sizeof(mach_port_t)) {
+					if (longform)
+						type->msgtl_size = sizeof(mach_port_t) * 8;
+					else
+						((mach_msg_type_t *)type)->msgt_size = sizeof(mach_port_t) * 8;
 					length = sizeof(mach_port_t) * number;
-					type->msgtl_size = sizeof(mach_port_t) * 8;
 				}
 
-				data = kalloc(length);
-				if (data == 0)
-					goto invalid_memory;
+				if (length == 0) {
+					data = 0;
+				else {
+					data = kalloc(length);
+					if (data == 0)
+						goto invalid_memory;
 
-				if (user_length != length)
-				{
-					mach_port_name_t *src = (mach_port_name_t*)addr;
-					mach_port_t *dst = (mach_port_t*)data;
-					for (int i=0; i<number; i++) {
-						if (copyin_port(src + i, dst + i)) {
-							kfree(data, length);
-							goto invalid_memory;
+					if (user_length != length)
+					{
+						mach_port_name_t *src = (mach_port_name_t*)addr;
+						mach_port_t *dst = (mach_port_t*)data;
+						for (int i=0; i<number; i++) {
+							if (copyin_port(src + i, dst + i)) {
+								kfree(data, length);
+								goto invalid_memory;
+							}
 						}
+					} else if (copyinmap(map, (char *) addr,
+						      (char *) data, length)) {
+						kfree(data, length);
+						goto invalid_memory;
 					}
-				} else if (copyinmap(map, (char *) addr,
-					      (char *) data, length)) {
-					kfree(data, length);
-					goto invalid_memory;
+					if (dealloc &&
+					    (vm_deallocate(map, addr, user_length) != KERN_SUCCESS)) {
+						kfree(data, length);
+						goto invalid_memory;
+					}
 				}
-				if (dealloc &&
-				    (vm_deallocate(map, addr, user_length) != KERN_SUCCESS)) {
-					kfree(data, length);
-					goto invalid_memory;
-				}
-
+			} else if (length == 0) { /* !is_port */
+				data = 0;
 			} else {
 				vm_map_copy_t copy;
 
