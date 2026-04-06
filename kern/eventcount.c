@@ -345,11 +345,7 @@ simpler_thread_setrun(
 	if (whichq < (rq)->low || (rq)->count == 0)
 		 (rq)->low = whichq;	/* minimize */
 	(rq)->count++;
-#ifdef MIGRATING_THREADS
-	(th)->shuttle.runq = (rq);
-#else
 	(th)->runq = (rq);
-#endif
 	runq_unlock(rq);
 
 	/*

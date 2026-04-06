@@ -305,40 +305,8 @@ routine mach_port_set_seqno(
 		name		: mach_port_name_t;
 		seqno		: mach_port_seqno_t);
 
-#ifdef MIGRATING_THREADS
-/*
- *	Only valid for receive rights.
- *	Set the user-mode entry info for RPCs coming through this port.
- *	Do this BEFORE attaching an ActPool to this port,
- *	unless you can be sure no RPCs will be coming through it yet.
- */
-
-routine mach_port_set_rpcinfo(
-		task		: ipc_space_t;
-		name		: mach_port_name_t;
-		rpc_info	: thread_info_t);	/* XXX */
-
-/*
- *	Only valid for receive rights.
- *	Create a new activation for migrating RPC, and attach it to the port's ActPool.
- *	Create an ActPool for the port if it doesn't already have one.
- *	Supply a stack and receive memory buffer.
- */
-
-routine mach_port_create_act(
-		task		: task_t;
-		name		: mach_port_name_t;
-		user_stack	: vm_offset_t;
-		user_rbuf	: vm_offset_t;
-		user_rbuf_size	: vm_size_t;
-	out	new_act		: thread_t);
-
-#else  /* MIGRATING_THREADS */
-
 skip; /* mach_port_set_rpcinfo */
 skip; /* mach_port_create_act */
-
-#endif /* MIGRATING_THREADS */
 
 /*
  *	Only valid for receive rights.

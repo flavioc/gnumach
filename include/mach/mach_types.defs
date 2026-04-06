@@ -79,17 +79,6 @@ type task_t = mach_port_t
 #endif	/* KERNEL_SERVER */
 		;
 
-#ifdef	MIGRATING_THREADS
-#if	KERNEL
-/* What the conventional external Mach interfaces see as a thread_t
-   is really an act_t within the kernel.  */
-#define thread_t act_t
-#define convert_port_to_thread convert_port_to_act
-#define convert_thread_to_port convert_act_to_port
-#define thread_deallocate act_deallocate
-#endif	/* KERNEL */
-#endif	/* MIGRATING_THREADS */
-
 type thread_t = mach_port_t
 		ctype: mach_port_t
 #if	KERNEL_SERVER

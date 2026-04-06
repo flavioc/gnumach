@@ -24,17 +24,4 @@
 
 #define KERNEL_SERVER 1
 
-#ifdef MIGRATING_THREADS
-#define task_threads		task_acts
-#define thread_terminate	act_terminate
-#define thread_set_state	act_set_state_immediate
-#define thread_get_state	act_get_state_immediate
-#define thread_info		act_thread_info
-#define thread_suspend		act_suspend
-#define thread_resume		act_resume
-#define thread_abort		act_abort
-#define thread_set_special_port	act_set_special_port
-#define thread_get_special_port	act_get_special_port
-#endif /* MIGRATING_THREADS */
-
 #include <mach/mach.defs>

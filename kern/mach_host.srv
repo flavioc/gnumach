@@ -23,15 +23,4 @@
 
 #define KERNEL_SERVER 1
 
-#ifdef MIGRATING_THREADS
-#define thread_assign		act_thread_assign
-#define thread_assign_default	act_thread_assign_default
-#define thread_get_assignment	act_thread_get_assignment
-#define thread_priority		act_thread_priority
-#define thread_max_priority	act_thread_max_priority
-#define thread_policy		act_thread_policy
-#define thread_depress_abort	act_thread_depress_abort
-#define	thread_wire		act_thread_wire
-#endif /* MIGRATING_THREADS */
-
 #include <mach/mach_host.defs>

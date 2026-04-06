@@ -126,8 +126,6 @@ EXTRA_DIST += \
 #
 
 libkernel_a_SOURCES += \
-	kern/act.c \
-	kern/act.h \
 	kern/assert.h \
 	kern/ast.c \
 	kern/ast.h \

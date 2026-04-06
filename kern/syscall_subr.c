@@ -185,7 +185,6 @@ kern_return_t thread_switch(
 	    return(KERN_INVALID_ARGUMENT);
     }
 
-#ifndef MIGRATING_THREADS /* XXX thread_run defunct */
     /*
      *	Check and act on thread hint if appropriate.
      */
@@ -240,7 +239,6 @@ kern_return_t thread_switch(
 	    }
 	    ip_unlock(port);
     }
-#endif /* not MIGRATING_THREADS */
 
     /*
      *	No handoff hint supplied, or hint was wrong.  Call thread_block() in

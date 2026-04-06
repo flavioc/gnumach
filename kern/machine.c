@@ -645,9 +645,7 @@ void processor_doshutdown(processor_t processor)
 	 *	Ok, now exit this cpu.
 	 */
 	PMAP_DEACTIVATE_KERNEL(cpu);
-#ifndef MIGRATING_THREADS
 	percpu_array[cpu].active_thread = THREAD_NULL;
-#endif
 	cpu_down(cpu);
 	thread_wakeup((event_t)processor);
 	halt_cpu();

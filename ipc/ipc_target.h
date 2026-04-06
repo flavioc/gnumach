@@ -35,21 +35,6 @@ typedef struct ipc_target {
 	mach_port_name_t ipt_name;
 	struct ipc_mqueue ipt_messages;
 
-#ifdef MIGRATING_THREADS
-	/*** Migrating RPC stuff ***/
-
-	int ipt_type;
-
-	/* User entry info for migrating RPC */
-	rpc_info_t ipt_rpcinfo;
-
-	/* List of available activations, all active but not in use.  */
-	struct Act *ipt_acts;
-
-	/* TRUE if someone is waiting for an activation from this pool.  */
-	int ipt_waiting;
-#endif /* MIGRATING_THREADS */
-
 } *ipc_target_t;
 
 #define IPT_TYPE_MESSAGE_RPC	1

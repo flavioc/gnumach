@@ -666,7 +666,6 @@ ipc_kmsg_copyin_header(
 	mach_port_name_t reply_name = (mach_port_name_t)msg->msgh_local_port;
 	kern_return_t kr;
 
-#ifndef MIGRATING_THREADS
 	/* first check for common cases */
 
 	if (notify == MACH_PORT_NULL) switch (MACH_MSGH_BITS_PORTS(mbits)) {
@@ -878,7 +877,6 @@ ipc_kmsg_copyin_header(
 		/* don't bother optimizing */
 		break;
 	}
-#endif	/* MIGRATING_THREADS */
 
     {
 	mach_msg_type_name_t dest_type = MACH_MSGH_BITS_REMOTE(mbits);
@@ -1732,7 +1730,6 @@ ipc_kmsg_copyout_header(
 
 	assert(IP_VALID(dest));
 
-#ifndef MIGRATING_THREADS
 	/* first check for common cases */
 
 	if (notify == MACH_PORT_NULL) switch (MACH_MSGH_BITS_PORTS(mbits)) {
@@ -1941,7 +1938,6 @@ ipc_kmsg_copyout_header(
 		/* don't bother optimizing */
 		break;
 	}
-#endif	/* MIGRATING_THREADS */
 
     {
 	mach_msg_type_name_t dest_type = MACH_MSGH_BITS_REMOTE(mbits);
@@ -2264,7 +2260,6 @@ ipc_kmsg_copyout_object(
 		return MACH_MSG_SUCCESS;
 	}
 
-#ifndef MIGRATING_THREADS
 	/*
 	 *	Attempt quick copyout of send rights.  We optimize for a
 	 *	live port for which the receiver holds send (and not
@@ -2320,7 +2315,6 @@ ipc_kmsg_copyout_object(
     }
 
     slow_copyout:
-#endif	/* MIGRATING_THREADS */
 
    {
 	kern_return_t kr;
