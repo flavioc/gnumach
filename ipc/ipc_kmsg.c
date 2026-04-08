@@ -1410,7 +1410,7 @@ ipc_kmsg_copyin_body(
 
 				if (length == 0) {
 					data = 0;
-				else {
+				} else {
 					data = kalloc(length);
 					if (data == 0)
 						goto invalid_memory;
