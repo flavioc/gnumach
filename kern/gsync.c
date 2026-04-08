@@ -409,6 +409,9 @@ kern_return_t gsync_wake (task_t task,
 
           addr = paddr + (addr & (PAGE_SIZE - 1));
           *(unsigned int *)addr = val;
+
+          /* Note that the call to 'vm_map_remove' will unreference
+           * the VM object, so we don't have to do it ourselves. */
           vm_map_remove (kernel_map, addr, addr + sizeof (int));
         }
       else if (copyout (&val, (void *) addr, 4))
