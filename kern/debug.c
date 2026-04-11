@@ -121,9 +121,9 @@ void
 panic_init(void)
 {
 #if NCPUS > 1
-	simple_lock_init(&Assert_print_lock);
+	simple_lock_init_irq(&Assert_print_lock);
 #endif
-	simple_lock_init(&panic_lock);
+	simple_lock_init_irq(&panic_lock);
 }
 
 #if ! MACH_KBD
