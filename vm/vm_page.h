@@ -78,7 +78,8 @@
  */
 
 struct vm_page {
-	struct list node;		/* page queues or free list (P) */
+	struct list node;		/* segment page queues or free list (P) */
+	struct list node_lru;		/* LRU page queues */
 	void *priv;
 
 	/*

@@ -191,6 +191,15 @@ struct vm_page_queue {
     struct vm_page_list external;
 };
 
+struct vm_page_lru_queue {
+	struct list internal;
+	struct list external;
+};
+
+/* Protected by vm_page_lock_queues.  */
+struct vm_page_lru_queue vm_page_active_lru_list;
+struct vm_page_lru_queue vm_page_inactive_lru_list;
+
 /*
  * Segment name buffer size.
  */
@@ -571,6 +580,19 @@ vm_page_queue_remove(struct vm_page_queue *queue, struct vm_page *page)
     list->nr_pages--;
 }
 
+static void
+vm_page_lru_queue_push(struct vm_page_lru_queue *queue, struct vm_page *page)
+{
+    struct list* list = (page->external ? &queue->external: &queue->internal);
+    list_insert_tail(list, &page->node_lru);
+}
+
+static void
+vm_page_lru_queue_remove(struct vm_page_lru_queue *queue, struct vm_page *page)
+{
+    list_remove(&page->node_lru);
+}
+
 static struct vm_page_seg *
 vm_page_seg_get(unsigned short index)
 {
@@ -757,6 +779,7 @@ static void
 vm_page_seg_add_active_page(struct vm_page_seg *seg, struct vm_page *page)
 {
     assert(simple_lock_taken(&seg->lock));
+    assert(vm_page_locked_queues());
     assert(page->object != NULL);
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
@@ -765,6 +788,7 @@ vm_page_seg_add_active_page(struct vm_page_seg *seg, struct vm_page *page)
     page->active = TRUE;
     page->reference = TRUE;
     vm_page_queue_push(&seg->active_pages, page);
+    vm_page_lru_queue_push(&vm_page_active_lru_list, page);
     vm_page_active_count++;
 }
 
@@ -772,6 +796,7 @@ static void
 vm_page_seg_remove_active_page(struct vm_page_seg *seg, struct vm_page *page)
 {
     assert(simple_lock_taken(&seg->lock));
+    assert(vm_page_locked_queues());
     assert(page->object != NULL);
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
@@ -779,6 +804,7 @@ vm_page_seg_remove_active_page(struct vm_page_seg *seg, struct vm_page *page)
     assert(!page->free && page->active && !page->inactive);
     page->active = FALSE;
     vm_page_queue_remove(&seg->active_pages, page);
+    vm_page_lru_queue_remove(&vm_page_active_lru_list, page);
     vm_page_active_count--;
 }
 
@@ -786,6 +812,7 @@ static void
 vm_page_seg_add_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
 {
     assert(simple_lock_taken(&seg->lock));
+    assert(vm_page_locked_queues());
     assert(page->object != NULL);
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
@@ -793,6 +820,7 @@ vm_page_seg_add_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
     assert(!page->free && !page->active && !page->inactive);
     page->inactive = TRUE;
     vm_page_queue_push(&seg->inactive_pages, page);
+    vm_page_lru_queue_push(&vm_page_inactive_lru_list, page);
     vm_page_inactive_count++;
 }
 
@@ -800,6 +828,7 @@ static void
 vm_page_seg_remove_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
 {
     assert(simple_lock_taken(&seg->lock));
+    assert(vm_page_locked_queues());
     assert(page->object != NULL);
     assert(page->seg_index == vm_page_seg_index(seg));
     assert(page->type != VM_PT_FREE);
@@ -807,6 +836,7 @@ vm_page_seg_remove_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
     assert(!page->free && !page->active && page->inactive);
     page->inactive = FALSE;
     vm_page_queue_remove(&seg->inactive_pages, page);
+    vm_page_lru_queue_remove(&vm_page_inactive_lru_list, page);
     vm_page_inactive_count--;
 }
 
@@ -1446,6 +1476,11 @@ vm_page_setup(void)
     phys_addr_t pa;
 
     vm_page_check_boot_segs();
+
+    list_init(&vm_page_active_lru_list.internal);
+    list_init(&vm_page_active_lru_list.external);
+    list_init(&vm_page_inactive_lru_list.internal);
+    list_init(&vm_page_inactive_lru_list.external);
 
     /*
      * Compute the page table size.

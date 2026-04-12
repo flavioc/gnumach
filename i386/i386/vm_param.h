@@ -90,7 +90,7 @@
  * These were tested as working.
  */
 #ifdef __x86_64__
-#define MAX_PHYS_END (30ULL * 1024 * 1024 * 1024)
+#define MAX_PHYS_END (27ULL * 1024 * 1024 * 1024)
 #else
 #define MAX_PHYS_END (8ULL * 1024 * 1024 * 1024)
 #endif
