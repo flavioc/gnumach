@@ -333,6 +333,7 @@ vm_page_remove_mappings(struct vm_page *page)
     pmap_page_protect(page->phys_addr, VM_PROT_NONE);
 
     if (!page->dirty) {
+        /* Do not forget that this page was modified.  */
         page->dirty = pmap_is_modified(page->phys_addr);
     }
 }
@@ -1014,6 +1015,7 @@ vm_page_seg_balance_page(struct vm_page_seg *seg,
     simple_unlock(&vm_page_queue_free_lock);
 
     if (!was_active && !src->reference && pmap_is_referenced(src->phys_addr)) {
+        /* Do not forget that this inactive page was referenced.  */
         src->reference = TRUE;
     }
 
@@ -1137,6 +1139,7 @@ restart:
 
     if (!active
         && (page->reference || pmap_is_referenced(page->phys_addr))) {
+        /* This page got referenced while being marked as inactive, reactivate it.  */
         vm_page_seg_add_active_page(seg, page);
         simple_unlock(&seg->lock);
         vm_object_unlock(object);
@@ -1279,6 +1282,9 @@ vm_page_seg_refill_inactive(struct vm_page_seg *seg)
             break;
         }
 
+        /* Try to put this page to the inactive list and clear the reference,
+         * to let the processor tell us if it's actually still active when we
+         * try to evict it.  */
         page->reference = FALSE;
         pmap_clear_reference(page->phys_addr);
         vm_page_seg_add_inactive_page(seg, page);
