@@ -28,6 +28,10 @@
  * it is filled by transferring multiple pages from the backend buddy system.
  * The symmetric case is handled likewise.
  *
+ * active/inactive lists are kept up to date per segment *and* globally, to be
+ * able to both balance between segments, and page-out pages with a global LRU
+ * view.
+ *
  * TODO Limit number of dirty pages, block allocations above a top limit.
  */
 
@@ -841,7 +845,7 @@ vm_page_seg_remove_inactive_page(struct vm_page_seg *seg, struct vm_page *page)
 }
 
 /*
- * Attempt to pull an active page.
+ * Attempt to pull an active page from a given segment.
  *
  * If successful, the object containing the page is locked.
  */
@@ -892,7 +896,7 @@ vm_page_seg_pull_active_page(struct vm_page_seg *seg, boolean_t external)
 }
 
 /*
- * Attempt to pull an inactive page.
+ * Attempt to pull an inactive page from a given segment.
  *
  * If successful, the object containing the page is locked.
  *
@@ -935,6 +939,124 @@ vm_page_seg_pull_inactive_page(struct vm_page_seg *seg, boolean_t external)
         if (!vm_page_can_move(page)) {
             vm_page_seg_add_inactive_page(seg, page);
             vm_object_unlock(page->object);
+            continue;
+        }
+
+        return page;
+    }
+
+    return NULL;
+}
+
+/*
+ * Attempt to pull an active page from the LRU.
+ *
+ * If successful, the segment and the object containing the page are locked.
+ *
+ * XXX See vm_page_seg_pull_active_page (duplicated code).
+ */
+static struct vm_page *
+vm_page_pull_active_page(boolean_t external)
+{
+    struct vm_page *page, *first;
+    struct list* page_list;
+    struct vm_page_seg *seg;
+    boolean_t locked;
+
+    first = NULL;
+
+    page_list = (external
+		 ? &vm_page_active_lru_list.external
+		 : &vm_page_active_lru_list.internal);
+
+    for (;;) {
+
+        page = (list_empty(page_list)
+		? NULL
+                : list_first_entry(page_list, struct vm_page, node_lru));
+
+        if (page == NULL || page == first)
+	  break;
+
+        if (first == NULL) {
+            first = page;
+        }
+
+        seg = &vm_page_segs[page->seg_index];
+        simple_lock(&seg->lock);
+
+        vm_page_seg_remove_active_page(seg, page);
+        locked = vm_object_lock_try(page->object);
+
+        if (!locked) {
+            vm_page_seg_add_active_page(seg, page);
+            simple_unlock(&seg->lock);
+            continue;
+        }
+
+        if (!vm_page_can_move(page)) {
+            vm_page_seg_add_active_page(seg, page);
+            vm_object_unlock(page->object);
+            simple_unlock(&seg->lock);
+            continue;
+        }
+
+        return page;
+    }
+
+    return NULL;
+}
+
+/*
+ * Attempt to pull an inactive page from the LRU.
+ *
+ * If successful, the segment and the object containing the page are locked.
+ *
+ * XXX See vm_page_pull_active_page (duplicated code).
+ */
+static struct vm_page *
+vm_page_pull_inactive_page(boolean_t external)
+{
+    struct vm_page *page, *first;
+    struct list* page_list;
+    struct vm_page_seg *seg;
+    boolean_t locked;
+
+    first = NULL;
+
+    page_list = (external
+		 ? &vm_page_inactive_lru_list.external
+		 : &vm_page_inactive_lru_list.internal);
+
+    for (;;) {
+
+        page = (list_empty(page_list)
+		? NULL
+                : list_first_entry(page_list, struct vm_page, node_lru));
+
+        if (page == NULL || page == first)
+	  break;
+
+        if (first == NULL) {
+            first = page;
+        }
+
+        seg = &vm_page_segs[page->seg_index];
+        simple_lock(&seg->lock);
+
+        vm_page_seg_remove_inactive_page(seg, page);
+        locked = vm_object_lock_try(page->object);
+
+        if (!locked) {
+            vm_page_seg_add_inactive_page(seg, page);
+            simple_unlock(&seg->lock);
+            continue;
+        }
+
+        if (!vm_page_can_move(page)) {
+            vm_page_seg_add_inactive_page(seg, page);
+            vm_object_unlock(page->object);
+            simple_unlock(&seg->lock);
             continue;
         }
 
@@ -1129,34 +1251,36 @@ vm_page_seg_balance(struct vm_page_seg *seg, boolean_t priv_alloc)
 }
 
 static boolean_t
-vm_page_seg_evict(struct vm_page_seg *seg, boolean_t external,
-		  boolean_t active, boolean_t alloc_paused)
+vm_page_evict_one(boolean_t external, boolean_t active, boolean_t alloc_paused)
 {
     struct vm_page *page;
     boolean_t reclaim, double_paging;
     vm_object_t object;
+    struct vm_page_seg *seg;
 
     if (!external && !IP_VALID(memory_manager_default))
       return FALSE;
 
+    seg = NULL;
     page = NULL;
     object = NULL;
     double_paging = FALSE;
 
 restart:
     vm_page_lock_queues();
-    simple_lock(&seg->lock);
 
     if (page != NULL) {
+        simple_lock(&seg->lock);
         vm_object_lock(page->object);
     } else {
         page = (active
-		? vm_page_seg_pull_active_page(seg, external)
-		: vm_page_seg_pull_inactive_page(seg, external));
+                ? vm_page_pull_active_page(external)
+                : vm_page_pull_inactive_page(external));
 
         if (page == NULL) {
             goto out;
         }
+        seg = &vm_page_segs[page->seg_index];
     }
 
     assert(page->object != NULL);
@@ -1176,6 +1300,7 @@ restart:
         vm_stat.reactivations++;
         current_task()->reactivations++;
         vm_page_unlock_queues();
+        seg = NULL;
         page = NULL;
         object = NULL;
         goto restart;
@@ -1224,7 +1349,8 @@ restart:
     }
 
 out:
-    simple_unlock(&seg->lock);
+    if (seg)
+        simple_unlock(&seg->lock);
 
     if (object == NULL) {
         vm_page_unlock_queues();
@@ -2057,32 +2183,17 @@ vm_page_balance(void)
 static boolean_t
 vm_page_evict_once(boolean_t alloc_paused)
 {
-    unsigned int i;
-
-    /*
-     * It's important here that pages are evicted from lower priority
-     * segments first.
-     */
-
     /* Try to evict inactive pages first */
-    for (i = vm_page_segs_size - 1; i < vm_page_segs_size; i--) {
-        struct vm_page_seg *seg = vm_page_seg_get(i);
-
-	/* Try to evict external pages first */
-	if (vm_page_seg_evict(seg, TRUE, FALSE, alloc_paused) ||
-	    vm_page_seg_evict(seg, FALSE, FALSE, alloc_paused))
-	  return TRUE;
-    }
+    /* Try to evict external pages first */
+    if (vm_page_evict_one(TRUE, FALSE, alloc_paused) ||
+	vm_page_evict_one(FALSE, FALSE, alloc_paused))
+      return TRUE;
 
     /* Then try to evict active pages */
-    for (i = vm_page_segs_size - 1; i < vm_page_segs_size; i--) {
-        struct vm_page_seg *seg = vm_page_seg_get(i);
-
-	/* Try to evict external pages first */
-	if (vm_page_seg_evict(seg, TRUE, TRUE, alloc_paused) ||
-	    vm_page_seg_evict(seg, FALSE, TRUE, alloc_paused))
-	  return TRUE;
-    }
+    /* Try to evict external pages first */
+    if (vm_page_evict_one(TRUE, TRUE, alloc_paused) ||
+	vm_page_evict_one(FALSE, TRUE, alloc_paused))
+      return TRUE;
 
     return FALSE;
 }
