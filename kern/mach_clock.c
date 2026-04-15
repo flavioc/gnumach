@@ -689,7 +689,7 @@ host_adjust_time64(
 	oadj.nanoseconds = (timedelta % MICROSECONDS_IN_ONE_SECOND) * 1000;
 
 	if (timedelta == 0) {
-	    if (ndelta_microseconds > bigadj)
+	    if (ndelta_microseconds > bigadj || ndelta_microseconds < -bigadj)
 		tickdelta = 10 * tickadj;
 	    else
 		tickdelta = tickadj;
