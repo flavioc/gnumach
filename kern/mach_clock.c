@@ -667,15 +667,10 @@ host_adjust_time64(
 	time_value64_t	*old_adjustment	/* OUT */)
 {
 	time_value64_t	oadj;
-	uint64_t ndelta_microseconds;
 	spl_t		s;
 
 	if (host == HOST_NULL)
 		return (KERN_INVALID_HOST);
-
-	/* Note we only adjust up to microsecond precision */
-	ndelta_microseconds = new_adjustment.seconds * MICROSECONDS_IN_ONE_SECOND
-		+ new_adjustment.nanoseconds / 1000;
 
 #if	NCPUS > 1
 	thread_bind(current_thread(), master_processor);
@@ -688,17 +683,26 @@ host_adjust_time64(
 	oadj.seconds = timedelta / MICROSECONDS_IN_ONE_SECOND;
 	oadj.nanoseconds = (timedelta % MICROSECONDS_IN_ONE_SECOND) * 1000;
 
-	if (timedelta == 0) {
-	    if (ndelta_microseconds > bigadj || ndelta_microseconds < -bigadj)
-		tickdelta = 10 * tickadj;
-	    else
-		tickdelta = tickadj;
-	}
-	/* Make ndelta_microseconds a multiple of tickdelta */
-	if (ndelta_microseconds % tickdelta)
-	    ndelta_microseconds = ndelta_microseconds / tickdelta * tickdelta;
+	if (new_adjustment.nanoseconds != MACH_ADJTIME_NSECS_OMIT)
+	  {
+	    int64_t ndelta_microseconds;
 
-	timedelta = ndelta_microseconds;
+	    /* Note we only adjust up to microsecond precision */
+	    ndelta_microseconds = new_adjustment.seconds * MICROSECONDS_IN_ONE_SECOND
+	      + new_adjustment.nanoseconds / 1000;
+
+	    if (timedelta == 0) {
+	      if (ndelta_microseconds > bigadj || ndelta_microseconds < -bigadj)
+		tickdelta = 10 * tickadj;
+	      else
+		tickdelta = tickadj;
+	    }
+	    /* Make ndelta_microseconds a multiple of tickdelta */
+	    if (ndelta_microseconds % tickdelta)
+	      ndelta_microseconds = ndelta_microseconds / tickdelta * tickdelta;
+
+	    timedelta = ndelta_microseconds;
+	  }
 
 	splx(s);
 #if	NCPUS > 1

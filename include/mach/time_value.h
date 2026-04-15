@@ -87,6 +87,15 @@ static __inline__ time_value_t convert_time_value_from_user(rpc_time_value_t tv)
 #define	TIME_MICROS_MAX	(1000000)
 #define	TIME_NANOS_MAX	(1000000000)
 
+/* The host_adjust_time/host_adjust_time64 interfaces do not directly
+   support returning the outstanding time adjustment without
+   specifiying a new time adjustment. To overcome this limitation
+   these calls will not modify the time adjustment when the following
+   MACH_ADJTIME_ constants are specified as the sub-second component.
+ */
+#define MACH_ADJTIME_USECS_OMIT TIME_MICROS_MAX
+#define MACH_ADJTIME_NSECS_OMIT TIME_NANOS_MAX
+
 #define time_value_assert(val)			\
   assert(0 <= (val)->microseconds && (val)->microseconds < TIME_MICROS_MAX);
 
